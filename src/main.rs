@@ -1,85 +1,39 @@
+use std::collections::HashMap;
 use std::env;
-use std::fs::File;
 
 use rss::Channel;
-use url::Url;
 
-fn main() -> Result<(), String> {
-    let url_arg = env::args().nth(1);
+use crate::param_validation::{ArgumentsError, validate_params};
 
-    let result = validate_url_arg(url_arg);
+mod param_validation;
 
-    // result.unwrap_or_else(|e| {
-    //     panic!("!!!!");
-    // });
+/**
+URL: https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml
+ */
+fn main() -> Result<(), ArgumentsError> {
+    let cli_arg = env::args().nth(1);
+    let url = validate_params(cli_arg)?;
 
-    match result.is_ok() {
-        true => {
-            println!("Input is valid. Starting to parse it.");
+    println!("Input is valid. Starting to parse it.");
 
-            let content = reqwest::blocking::get(result.unwrap())
-                .unwrap()
-                .bytes()
-                .unwrap();
+    let content = reqwest::blocking::get(url)
+        .unwrap()
+        .bytes()
+        .unwrap();
 
-            let channel = Channel::read_from(&content[..]).unwrap();
+    let channel = Channel::read_from(&content[..]).unwrap();
 
-            // for item in channel.items {
-            //     item.
-            // }
+    let affected_locations = channel.items.len();
+    println!("Scheduled downtime locations: {}", affected_locations);
 
-            println!("items: {:?}", channel.items);
-
-            Ok(())
-        }
-        false => Err(result.err().unwrap())
+    if affected_locations > 10 {
+        send_sms(affected_locations);
     }
 
-    // if result.is_ok() {
-    //     println!("Input is valid. Starting to parse it.");
-    //     Ok(())
-    // } else {
-    //     result
-    // }
 
-    // if result.is_err() {
-    //     result
-    // }
-    //
-    // println!("Input is valid. Starting to parse it.");
-    //
-    // Ok(())
-
-    // if rss_url.is_err() {
-    //     // panic!("The provided RSS URL is not valid");
-    //     return Err(rss_url.err().unwrap());
-    // }
-
-    //
-    // let rss_path = args.get(0).unwrap_or_else(|| {
-    //     println!("no rss path for the program");
-    //     std::process::exit(-1);
-    // });
-    //
-    // let rss_path = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml";
-    // let rss_path = String::from("https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml");
-    //
-    // println!("Scanning the RSS at the following address: ");
+    Ok(())
 }
 
-fn validate_url_arg(cli_arg: Option<String>) -> Result<Url, String> {
-    if let Some(url_path) = cli_arg {
-        let rss_url = Url::parse(&url_path);
-
-        match rss_url.is_err() {
-            true => Err(String::from("The provided URL is not valid.")),
-            false => {
-                let url = rss_url.unwrap();
-                println!("Using URL: {}", url);
-                Ok(url)
-            }
-        }
-    } else {
-        Err(String::from("No RSS URL has been provided."))
-    }
+fn send_sms(locations_counter: usize) {
+    todo!()
 }
