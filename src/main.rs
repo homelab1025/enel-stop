@@ -38,11 +38,10 @@ fn main() {
                 }
             }).collect();
 
-            let category_filtered: Vec<&Item> = channel.items.iter().filter(|x| {
-                x.categories.contains(&Category {
-                    domain: None,
-                    name: String::from("Jud. ILFOV"),
-                })
+            let filtering_categs = convert_config_categs(config.categories);
+
+            let category_filtered: Vec<&Item> = channel.items.iter().filter(|item| {
+                filtering_categs.iter().all(|x| item.categories.contains(x))
             }).collect();
 
             if title_filtered.len() > 1 {
@@ -54,6 +53,15 @@ fn main() {
             }
         }
     }
+}
+
+fn convert_config_categs(config_categs: Vec<String>) -> Vec<Category> {
+    config_categs.iter().map(|x| {
+        Category {
+            domain: None,
+            name: String::from(x),
+        }
+    }).collect()
 }
 
 fn validate_config_file(cli_arg: Option<String>) -> String {

@@ -2,5 +2,8 @@
 url = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml"
 refresh_ms = 30
 
+[filter]
+categories = ["Jud. ILFOV", "POPESTI LEORDENI"]
+
 [notifs]
 auth_token = "aaaa"
