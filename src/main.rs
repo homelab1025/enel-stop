@@ -2,7 +2,7 @@ extern crate core;
 
 use std::env;
 
-use rss::Channel;
+use rss::{Category, Channel, Item};
 
 mod configuration;
 
@@ -29,11 +29,28 @@ fn main() {
 
             let channel = Channel::read_from(&content[..]).unwrap();
 
-            let affected_locations = channel.items.len();
-            println!("Scheduled downtime locations: {}", affected_locations);
+            println!("Scheduled downtime locations: {}", channel.items.len());
 
-            if affected_locations > 10 {
-                send_sms(affected_locations);
+            let title_filtered: Vec<&Item> = channel.items.iter().filter(|x| {
+                match x.title.as_ref() {
+                    Some(title) => title.to_lowercase().contains("ilfov"),
+                    None => false
+                }
+            }).collect();
+
+            let category_filtered: Vec<&Item> = channel.items.iter().filter(|x| {
+                x.categories.contains(&Category {
+                    domain: None,
+                    name: String::from("Jud. ILFOV"),
+                })
+            }).collect();
+
+            if title_filtered.len() > 1 {
+                println!("Found: {}", title_filtered.len());
+                send_sms(&title_filtered);
+                println!("-----------------------------");
+                println!("Found: {}", category_filtered.len());
+                send_sms(&category_filtered);
             }
         }
     }
@@ -58,6 +75,9 @@ fn validate_config_file(cli_arg: Option<String>) -> String {
     }
 }
 
-fn send_sms(locations_counter: usize) {
-    todo!()
+fn send_sms(locations_counter: &Vec<&Item>) {
+    for x in locations_counter {
+        println!("Location: {}", x.title.as_ref().unwrap());
+        // println!("Item: {}", x);
+    }
 }
