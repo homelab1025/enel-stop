@@ -3,6 +3,7 @@ extern crate core;
 use std::{env, thread};
 use std::time::Duration;
 
+use config::{Config, FileFormat};
 use log::{debug, info, LevelFilter};
 use rss::{Category, Channel, Item};
 use simple_logger::SimpleLogger;
@@ -23,7 +24,11 @@ fn main() {
     let cli_arg = env::args().nth(1);
     let file_path = validate_config_file(cli_arg);
 
-    let config_result = ServiceConfiguration::new(&file_path);
+    let config = Config::builder()
+        .add_source(config::File::new(&file_path, FileFormat::Toml))
+        .build().unwrap();
+
+    let config_result = ServiceConfiguration::new(&config);
 
     match config_result {
         Err(err) => {
@@ -32,8 +37,6 @@ fn main() {
         Ok(config) => {
             info!("Using configuration: {}", config);
             let filtering_categs = convert_config_categs(&config.categories);
-
-            // let mut timer = tokio::time::interval_at(Instant::now(), Duration::from_secs(5));
 
             loop {
                 print_incidents(&config, &filtering_categs);

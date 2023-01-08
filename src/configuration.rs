@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use config::{Config, FileFormat};
+use config::Config;
 use url::Url;
 
 const CONFIG_URL: &str = "service.url";
@@ -21,10 +21,10 @@ pub struct ServiceConfiguration {
 }
 
 impl ServiceConfiguration {
-    pub fn new(file_path: &str) -> Result<Self, Box<dyn Error>> {
-        let config = Config::builder()
-            .add_source(config::File::new(file_path, FileFormat::Toml))
-            .build()?;
+    pub fn new(config: &Config) -> Result<Self, Box<dyn Error>> {
+        // let config = Config::builder()
+        //     .add_source(config::File::new(file_path, FileFormat::Toml))
+        //     .build()?;
 
         let service_configuration = Self {
             url: config.get_string(CONFIG_URL)?,
@@ -42,7 +42,6 @@ impl ServiceConfiguration {
 
 impl Display for ServiceConfiguration {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "url: {}", self.url);
-        writeln!(f, "categories: {:?}", self.categories)
+        writeln!(f, "url: {}\ncategories: {:?}", self.url, self.categories)
     }
 }
