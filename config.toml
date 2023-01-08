@@ -1,6 +1,6 @@
 [service]
 url = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml"
-refresh_ms = 30
+refresh_ms = 2000
 
 [filter]
 categories = ["Jud. ILFOV", "POPESTI LEORDENI"]
