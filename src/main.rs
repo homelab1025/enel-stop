@@ -26,7 +26,12 @@ fn main() {
 
     let config = Config::builder()
         .add_source(config::File::new(&file_path, FileFormat::Toml))
+        .add_source(config::Environment::default())
         .build().unwrap();
+
+    for v in std::env::vars() {
+        println!("{} = {}", v.0, v.1)
+    }
 
     let config_result = ServiceConfiguration::new(&config);
 
