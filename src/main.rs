@@ -80,6 +80,7 @@ fn print_incidents(config: &ServiceConfiguration, filtering_categs: &Vec<Categor
     }
 }
 
+/// Convert the categories from the configuration into RSS categories.
 fn convert_config_categs(config_categs: &Vec<String>) -> Vec<Category> {
     config_categs.iter().map(|x| {
         Category {
