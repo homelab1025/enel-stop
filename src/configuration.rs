@@ -87,7 +87,7 @@ mod tests {
 
         assert!(service_config.is_err())
     }
-    
+
     #[test]
     fn config_fails_refresh_negative() {
         let config_sample = Config::builder()

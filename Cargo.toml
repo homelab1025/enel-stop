@@ -1,16 +1,20 @@
 [package]
-name = "enel-stop"
-version = "0.3.1"
+name = "enel_stop"
+version = "0.3.1-SNAPSHOT"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-url = "2.3.1"
+url = { version = "2.3.1" }
 rss = "2.0.1"
-config= "0.13.3"
+config = "0.13.3"
 log = "0.4.17"
 #env_logger = "0.10.0"
-simple_logger="4.0.0"
+simple_logger = "4.0.0"
 #replace this with async version
-reqwest = { version = "0.11.13", features = ["blocking", "json", "rustls-tls-native-roots"] }
+reqwest = { version = "0.11.13", features = [
+    "blocking",
+    "json",
+    "rustls-tls-native-roots",
+] }
