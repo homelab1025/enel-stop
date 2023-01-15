@@ -45,7 +45,7 @@ impl Display for ServiceConfiguration {
 }
 
 #[cfg(test)]
-mod tests {
+mod configuration_tests {
     use config::Config;
 
     use crate::configuration::CONFIG_REFRESH_MS;

@@ -82,7 +82,7 @@ fn send_sms(locations_counter: &Vec<Item>) {
 }
 
 #[cfg(test)]
-mod tests {
+mod lib_tests {
     use rss::{Category, ItemBuilder};
 
     use crate::{convert_config_categs, filter_incidents};
