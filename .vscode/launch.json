@@ -7,34 +7,36 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug executable 'enel-stop'",
+            "name": "Debug executable 'enel_stop'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=enel-stop",
-                    "--package=enel-stop"
+                    "--bin=enel_stop",
+                    "--package=enel_stop"
                 ],
                 "filter": {
-                    "name": "enel-stop",
+                    "name": "enel_stop",
                     "kind": "bin"
                 }
             },
-            "args": [],
+            "args": [
+                "conf/config.toml"
+            ],
             "cwd": "${workspaceFolder}"
         },
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug unit tests in executable 'enel-stop'",
+            "name": "Debug unit tests in executable 'enel_stop'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                    "--bin=enel-stop",
-                    "--package=enel-stop"
+                    "--bin=enel_stop",
+                    "--package=enel_stop"
                 ],
                 "filter": {
-                    "name": "enel-stop",
+                    "name": "enel_stop",
                     "kind": "bin"
                 }
             },
