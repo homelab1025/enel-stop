@@ -83,9 +83,9 @@ fn send_sms(locations_counter: &Vec<Item>) {
 
 #[cfg(test)]
 mod tests {
-    use rss::Category;
+    use rss::{Category, ItemBuilder};
 
-    use crate::convert_config_categs;
+    use crate::{convert_config_categs, filter_incidents};
 
     #[test]
     fn convert_config_categs_works() {
@@ -112,5 +112,76 @@ mod tests {
         let result = convert_config_categs(&config_categs);
 
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn filter_incidents_correctly() {
+        const FILTER_CATEG_1: &str = "one";
+        const FILTER_CATEG_2: &str = "two";
+
+        let config_categs = [FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()];
+        let filtering_categs = convert_config_categs(&config_categs);
+
+        let incorrect_cats = vec![
+            Category {
+                domain: None,
+                name: "c1".to_string(),
+            },
+            Category {
+                domain: None,
+                name: "c2".to_string(),
+            },
+        ];
+
+        let partial_correct_cats = vec![
+            Category {
+                domain: None,
+                name: FILTER_CATEG_1.to_string(),
+            },
+            Category {
+                domain: None,
+                name: "boom".to_string(),
+            },
+        ];
+
+        let single_cats = vec![Category {
+            domain: None,
+            name: FILTER_CATEG_1.to_string(),
+        }];
+
+        let correct_cats = vec![
+            Category {
+                domain: None,
+                name: FILTER_CATEG_1.to_string(),
+            },
+            Category {
+                domain: None,
+                name: FILTER_CATEG_2.to_string(),
+            },
+        ];
+
+        let all_incidents = [
+            ItemBuilder::default()
+                .categories(incorrect_cats)
+                .title(Some("incorrect".to_string()))
+                .build(),
+            ItemBuilder::default()
+                .categories(partial_correct_cats)
+                .title(Some("partial_correct".to_string()))
+                .build(),
+            ItemBuilder::default()
+                .categories(single_cats)
+                .title(Some("single_category".to_string()))
+                .build(),
+            ItemBuilder::default()
+                .categories(correct_cats)
+                .title(Some(String::from("correct")))
+                .build(),
+        ];
+
+        let result = filter_incidents(&all_incidents, &filtering_categs);
+
+        assert_eq!(1, result.len());
+        assert_eq!("correct", result.get(0).unwrap().title.as_ref().unwrap());
     }
 }
