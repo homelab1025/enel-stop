@@ -1,8 +1,25 @@
 # enel-stop
 
-Simple loop for scanning the RSS from E-distributie.com. Whenever a certain location is scheduled for downtime a notification will be sent out.
+Web crawler that whenever a new maintenance window is reported notifies users of the service using an SMS.
 
 ## Configuration
 
 The properties in the configuration file can be overwritten by setting environment variables in the shell the service is supposed to run in.
 Example: ``exec env service.refresh_ms=1000 RUST_LOG=debug cargo run config.toml``
+
+## Iterations
+
+### version0
+Simple loop for scanning the RSS from E-distributie.com. Whenever a certain location is scheduled for downtime a notification will be sent out.
+
+### version1
+Persist the maintenance windows and don't send out notifications if they were already sent to the user.
+
+### version2
+Instead of using threads switch over to async programming using tokio and keep the functionality as it is.
+
+### version4
+Generalize the service to do web crawling as well. For example, watch of the changes of a price of particular product you watch.
+
+## Curiosities
+1. What would be needed to send notifications to the browser instead of using SMS.
