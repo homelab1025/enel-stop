@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 url = { version = "2.3.1" }
-rss = "2.0.1"
+rss = "2.0.3"
 config = "0.13.3"
 log = "0.4.17"
 #env_logger = "0.10.0"
