@@ -1,5 +1,5 @@
 use std::io::Read;
-use log::{debug, error, info};
+use log::{error, info};
 use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
 
@@ -33,7 +33,7 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<Category>, rss_client: &Client) 
         Err(err) => {
             error!("There was an error making the request for the RSS: {}", err);
 
-            return vec![];
+            vec![]
         }
     }
 }
@@ -59,7 +59,7 @@ mod rss_reader_tests {
         let filtering_categs = [FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
                 .map(|x| Category {
                     domain: None,
-                    name: String::from(x),
+                    name: x,
                 }).to_vec();
 
         let incorrect_cats = vec![

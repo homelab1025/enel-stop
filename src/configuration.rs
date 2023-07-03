@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use config::Config;
+use config::{Config, ConfigError};
 use url::Url;
 
 const CONFIG_URL: &str = "service.url";
@@ -27,8 +27,6 @@ impl ServiceConfiguration {
                 .collect(),
             refresh_ms: config.get_string(CONFIG_REFRESH_MS)?.parse::<u64>()?,
         };
-
-        Url::parse(&service_configuration.url)?;
 
         Ok(service_configuration)
     }
