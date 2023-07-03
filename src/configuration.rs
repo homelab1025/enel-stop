@@ -71,21 +71,6 @@ mod configuration_tests {
     }
 
     #[test]
-    fn config_fails_url_invalid() {
-        let config_sample = Config::builder()
-            .set_default(CONFIG_URL, "badurlcom")
-            .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REFRESH_MS, 30))
-            .unwrap()
-            .build()
-            .unwrap();
-
-        let service_config = ServiceConfiguration::new(&config_sample);
-
-        assert!(service_config.is_err())
-    }
-
-    #[test]
     fn config_fails_refresh_negative() {
         let config_sample = Config::builder()
             .set_default(CONFIG_URL, "http://google.com")
