@@ -25,10 +25,7 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<Category>, rss_client: &Client) 
                 }
             };
 
-            let filtered_items = filter_incidents(&channel.items, filter_categs);
-
-            return filtered_items;
-
+            filter_incidents(&channel.items, filter_categs)
         }
         Err(err) => {
             error!("There was an error making the request for the RSS: {}", err);
