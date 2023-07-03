@@ -1,11 +1,15 @@
-mod configuration;
+use std::{error::Error, thread, time::Duration};
+use std::io::Read;
 
 use config::{Config, FileFormat};
-use log::{debug, info};
+use log::{debug, error, info};
+use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
-use std::{thread, time::Duration};
 
-use crate::configuration::ServiceConfiguration;
+use crate::{configuration::ServiceConfiguration};
+
+mod configuration;
+mod notifications;
 
 pub fn start_service(file_path: &str) {
     let config = Config::builder()
@@ -15,44 +19,70 @@ pub fn start_service(file_path: &str) {
         .unwrap();
 
     debug!("---- Environment variables ----");
-    for v in std::env::vars() {
-        debug!("{} = {}", v.0, v.1)
+    for env_var in std::env::vars() {
+        debug!("{} = {}", env_var.0, env_var.1)
     }
 
-    let config_result = ServiceConfiguration::new(&config);
+    let config_result: Result<ServiceConfiguration, Box<dyn Error>> = ServiceConfiguration::new(&config);
 
     match config_result {
+        Ok(config) => {
+            let rss_client = Client::new();
+            let parse_func = || {
+                debug!("running the parser");
+                parse_rss(&config.url, &convert_config_categs(&config.categories), &rss_client);
+            };
+
+            create_loop(parse_func, config.refresh_ms);
+        }
         Err(err) => {
             panic!("There was an error when loading the configuration: {}", err)
         }
-        Ok(config) => {
-            start_loop(&config);
+    }
+}
+
+fn parse_rss(url: &str, filter_categs: &Vec<Category>, rss_client: &Client) {
+    info!("Filtering for categs: {:?}", filter_categs);
+
+    let channel_resp = rss_client.get(url).send();
+
+    match channel_resp {
+        Ok(mut resp) => {
+            let mut buffer = Vec::new();
+            let read_result = resp.read_to_end(&mut buffer);
+            if read_result.is_err() {
+                return;
+            }
+
+            let channel = match Channel::read_from(&buffer[..]) {
+                Ok(channel) => channel,
+                Err(err) => {
+                    error!("There was an error parsing the RSS: {}", err);
+                    return;
+                }
+            };
+
+            let filtered_items = filter_incidents(&channel.items, filter_categs);
+
+            filtered_items.iter().for_each(|item| {
+                if let Some(title) = item.title.as_ref() {
+                    info!("Found: {}", title);
+                };
+            })
+        }
+        Err(err) => {
+            error!("There was an error making the request for the RSS: {}", err);
         }
     }
 }
 
-fn start_loop(config: &ServiceConfiguration) {
-    let filtering_categs = convert_config_categs(&config.categories);
-    info!("Filtering for categs: {:?}", filtering_categs);
+fn create_loop<F: Fn()>(processor: F, refresh_ms: u64) {
+    info!("Starting to query every {} seconds", refresh_ms);
 
     loop {
-        let all_incidents = retrieve_incidents(&config.url);
-        let filtered_incidents = filter_incidents(&all_incidents, &filtering_categs);
-        if filtered_incidents.len() > 1 {
-            debug!("Found: {}", all_incidents.len());
-            send_sms(&all_incidents);
-        }
-
-        thread::sleep(Duration::from_millis(config.refresh_ms));
+        processor();
+        thread::sleep(Duration::from_millis(refresh_ms));
     }
-}
-
-fn retrieve_incidents(url: &str) -> Vec<Item> {
-    let content = reqwest::blocking::get(url).unwrap().bytes().unwrap();
-    let channel = Channel::read_from(&content[..]).unwrap();
-    debug!("Scheduled downtime locations: {}", channel.items.len());
-
-    channel.items
 }
 
 fn filter_incidents(all_incidents: &[Item], filtering_categs: &[Category]) -> Vec<Item> {
@@ -72,13 +102,6 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
             name: String::from(x),
         })
         .collect()
-}
-
-fn send_sms(locations_counter: &Vec<Item>) {
-    for x in locations_counter {
-        info!("Location: {}", x.title.as_ref().unwrap());
-        // println!("Item: {}", x);
-    }
 }
 
 #[cfg(test)]

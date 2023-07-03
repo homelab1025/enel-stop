@@ -16,26 +16,17 @@ fn main() {
         .unwrap();
 
     let cli_arg = env::args().nth(1);
-    let file_path = validate_config_file(cli_arg);
-
-    start_service(&file_path);
-}
-
-fn validate_config_file(cli_arg: Option<String>) -> String {
-    match cli_arg {
+    let file_path = match cli_arg {
         Some(file_path) => {
             let file_exists = std::path::Path::new(&file_path).exists();
 
-            match file_exists {
-                true => {
-                    println!("Using file: {}", &file_path);
-                    file_path
-                }
-                false => {
-                    panic!("Configuration file does not exist!")
-                }
+            if !file_exists {
+                panic!("Configuration file does not exist!")
             }
+            file_path
         }
         None => panic!("Configuration file has not been provided."),
-    }
+    };
+
+    start_service(&file_path);
 }
