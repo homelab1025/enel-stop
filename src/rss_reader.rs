@@ -3,7 +3,7 @@ use log::{error, info};
 use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
 
-pub fn parse_rss(url: &str, filter_categs: &Vec<Category>, rss_client: &Client) -> Vec<Item> {
+pub fn parse_rss(url: &str, filter_categs: &Vec<String>, rss_client: &Client) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
 
     let channel_resp = rss_client.get(url).send();
@@ -25,7 +25,7 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<Category>, rss_client: &Client) 
                 }
             };
 
-            filter_incidents(&channel.items, filter_categs)
+            filter_incidents(&channel.items, &convert_config_categs(filter_categs))
         }
         Err(err) => {
             if err.is_builder() {
@@ -46,10 +46,48 @@ fn filter_incidents(all_incidents: &[Item], filtering_categs: &[Category]) -> Ve
         .collect()
 }
 
+/// Convert the categories from the configuration into RSS categories.
+fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
+    config_categs
+        .iter()
+        .map(|x| Category {
+            domain: None,
+            name: String::from(x),
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod rss_reader_tests {
     use rss::{Category, ItemBuilder};
-    use crate::rss_reader::filter_incidents;
+    use crate::rss_reader::{convert_config_categs, filter_incidents};
+
+    #[test]
+    fn convert_config_categs_works() {
+        let config_categs = ["one".to_string(), "two".to_string()];
+        let expected = vec![
+            Category {
+                domain: None,
+                name: "one".to_string(),
+            },
+            Category {
+                domain: None,
+                name: "two".to_string(),
+            },
+        ];
+        let result = convert_config_categs(&config_categs);
+
+        assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn convert_config_categs_empty() {
+        let config_categs = [];
+        let expected: Vec<Category> = vec![];
+        let result = convert_config_categs(&config_categs);
+
+        assert_eq!(expected, result);
+    }
 
     #[test]
     fn filter_incidents_correctly() {
@@ -57,10 +95,10 @@ mod rss_reader_tests {
         const FILTER_CATEG_2: &str = "two";
 
         let filtering_categs = [FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
-                .map(|x| Category {
-                    domain: None,
-                    name: x,
-                }).to_vec();
+            .map(|x| Category {
+                domain: None,
+                name: x,
+            }).to_vec();
 
         let incorrect_cats = vec![
             Category {

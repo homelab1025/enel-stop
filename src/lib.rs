@@ -30,7 +30,7 @@ pub fn start_service(file_path: &str) {
             let rss_client = Client::new();
             let parse_func = || {
                 debug!("running the parser");
-                let items = rss_reader::parse_rss(&config.url, &convert_config_categs(&config.categories), &rss_client);
+                let items = rss_reader::parse_rss(&config.url, &config.categories, &rss_client);
 
                 items.iter().for_each(|item| {
                     if let Some(title) = item.title.as_ref() {
@@ -53,50 +53,5 @@ fn create_loop<F: Fn()>(processor: F, refresh_ms: u64) {
     loop {
         processor();
         thread::sleep(Duration::from_millis(refresh_ms));
-    }
-}
-
-/// Convert the categories from the configuration into RSS categories.
-fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
-    config_categs
-        .iter()
-        .map(|x| Category {
-            domain: None,
-            name: String::from(x),
-        })
-        .collect()
-}
-
-#[cfg(test)]
-mod lib_tests {
-    use rss::{Category, ItemBuilder};
-
-    use crate::{convert_config_categs};
-
-    #[test]
-    fn convert_config_categs_works() {
-        let config_categs = ["one".to_string(), "two".to_string()];
-        let expected = vec![
-            Category {
-                domain: None,
-                name: "one".to_string(),
-            },
-            Category {
-                domain: None,
-                name: "two".to_string(),
-            },
-        ];
-        let result = convert_config_categs(&config_categs);
-
-        assert_eq!(expected, result);
-    }
-
-    #[test]
-    fn convert_config_categs_empty() {
-        let config_categs = [];
-        let expected: Vec<Category> = vec![];
-        let result = convert_config_categs(&config_categs);
-
-        assert_eq!(expected, result);
     }
 }
