@@ -3,7 +3,6 @@ use std::{error::Error, thread, time::Duration};
 use config::{Config, FileFormat};
 use log::{debug, info};
 use reqwest::blocking::Client;
-use rss::{Category};
 
 use crate::configuration::ServiceConfiguration;
 
