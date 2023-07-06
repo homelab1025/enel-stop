@@ -2,7 +2,7 @@ FROM rust:latest AS builder
 COPY ./ .
 RUN cargo build --release
 
-FROM debian:bookworm-slim
+FROM debian:bookworm-slim AS prod-crawler
 RUN apt-get update
 RUN apt-get install wget --yes
 #RUN apt-get install libssl3
