@@ -3,7 +3,7 @@ url = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_
 refresh_ms = 60000
 
 [filter]
-categories = ["Jud. ILFOV", "POPESTI LEORDENI"]
+categories = ["Jud. ILFOV"]
 
 [notifs]
 auth_token = "aaaa"

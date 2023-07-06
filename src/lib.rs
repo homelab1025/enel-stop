@@ -7,7 +7,6 @@ use reqwest::blocking::Client;
 use crate::configuration::ServiceConfiguration;
 
 mod configuration;
-mod notifications;
 mod rss_reader;
 
 pub fn start_service(file_path: &str) {
@@ -26,6 +25,8 @@ pub fn start_service(file_path: &str) {
 
     match config_result {
         Ok(config) => {
+            info!("Using configuration: {}", config);
+
             let rss_client = Client::new();
             let parse_func = || {
                 debug!("running the parser");
