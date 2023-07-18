@@ -2,7 +2,7 @@ FROM rust:latest AS builder
 COPY ./ .
 RUN cargo build --release
 
-FROM debian:bookworm-slim AS prod-crawler-amd64
+FROM --platform=amd64 debian:bookworm-slim AS prod-crawler-amd64
 RUN apt-get update
 RUN apt-get install wget --yes
 #RUN apt-get install libssl3
@@ -15,7 +15,7 @@ COPY --from=builder ./target/release/crawler ./target/release/crawler
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 CMD /target/release/crawler /target/release/config.toml
 
-FROM debian:bookworm-slim AS prod-crawler-arm64
+FROM --platform=arm64 debian:bookworm-slim AS prod-crawler-arm64
 RUN apt-get update
 RUN apt-get install wget --yes
 #RUN apt-get install libssl3
