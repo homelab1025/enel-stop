@@ -1,4 +1,4 @@
-name: Create ARM64 image
+name: Create AMD64 image
 
 on:
   push:
