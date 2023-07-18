@@ -14,8 +14,13 @@ async fn main() {
 
     info!("Server starting...");
 
-    let hello = warp::path("api").map(|| "Hello");
+    let api = warp::path("api");
+
+    let ping_api = api.and(warp::path("ping")).map(|| "pong");
+    let store_api = api.and(warp::path("store")).map(|| "stire");
+
+    let all_routes = ping_api.or(store_api);
 
     // TODO: understand Into and From traits
-    warp::serve(hello).run(([127, 0, 0, 1], 3030)).await;
+    warp::serve(all_routes).run(([127, 0, 0, 1], 3030)).await;
 }
