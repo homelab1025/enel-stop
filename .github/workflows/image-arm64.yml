@@ -35,7 +35,6 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
-          target: prod-crawler-arm64
           platforms: linux/arm64
           context: .
           push: true
