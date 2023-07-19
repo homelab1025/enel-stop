@@ -35,6 +35,7 @@ jobs:
         uses: docker/build-push-action@v4
         with:
           target: prod-crawler-arm64
+          platforms: linux/arm64
           context: .
           push: true
           tags: ${{ steps.meta.outputs.tags }}
