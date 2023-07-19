@@ -17,7 +17,6 @@ CMD /target/release/crawler /target/release/config.toml
 FROM --platform=arm64 debian:bookworm-slim AS prod-crawler-arm64
 RUN apt-get update
 RUN apt-get install wget --yes
-#RUN apt-get install libssl3
 RUN wget -O libssl1.1.deb http://security.debian.org/debian-security/pool/updates/main/o/openssl/libssl1.1_1.1.1n-0+deb11u5_arm64.deb
 RUN apt-get install apt-utils
 RUN echo 'debconf debconf/frontend select Noninteractive' | debconf-set-selections
