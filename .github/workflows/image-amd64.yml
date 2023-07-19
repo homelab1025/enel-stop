@@ -3,8 +3,8 @@ name: Create AMD64 image
 on:
   push:
     tags: ['*']
-  push:
     branches: [ "master" ]
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
