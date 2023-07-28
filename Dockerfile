@@ -15,6 +15,9 @@ FROM --platform=$TARGETPLATFORM alpine:latest AS web
 ARG TARGETARCH
 RUN apk update
 RUN apk add libssl1.1
+RUN apk add libgcc
+RUN apk add gcompat
 
 COPY --from=builder ./target/release/server ./target/release/server
+RUN chmod +x ./target/release/server
 CMD /target/release/server 8080
