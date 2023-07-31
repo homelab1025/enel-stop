@@ -3,7 +3,6 @@ name: Create AMD64 image
 on:
   push:
     tags: ['*']
-    branches: [ "master" ]
 
 env:
   REGISTRY: ghcr.io
