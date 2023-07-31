@@ -25,5 +25,5 @@ async fn main() {
     let all_routes = ping_api.or(store_api);
 
     // TODO: understand Into and From traits
-    warp::serve(all_routes).run(([127, 0, 0, 1], port)).await;
+    warp::serve(all_routes).run(([0, 0, 0, 0], port)).await;
 }
