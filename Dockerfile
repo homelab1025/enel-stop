@@ -2,8 +2,12 @@ FROM rust:latest AS builder
 COPY ./ .
 RUN cargo build --release
 
-FROM --platform=$TARGETPLATFORM alpine:latest AS crawler
+FROM --platform=$TARGETPLATFORM alpine:latest AS alpine_base
 ARG TARGETARCH
+RUN apk update
+RUN apk add libssl1.1
+
+FROM alpine_base AS crawler
 RUN apk update
 RUN apk add libssl1.1
 
@@ -11,10 +15,7 @@ COPY --from=builder ./target/release/crawler ./target/release/crawler
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 CMD /target/release/crawler /target/release/config.toml
 
-FROM --platform=$TARGETPLATFORM alpine:latest AS web
-ARG TARGETARCH
-RUN apk update
-RUN apk add libssl1.1
+FROM alpine_base AS web
 RUN apk add libgcc
 RUN apk add gcompat
 
