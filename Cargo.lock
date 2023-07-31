@@ -319,7 +319,7 @@ dependencies = [
 
 [[package]]
 name = "enel_stop"
-version = "0.7.0"
+version = "0.8.0"
 dependencies = [
  "config",
  "log",
