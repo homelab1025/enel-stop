@@ -4,7 +4,11 @@ metadata:
   name: enel
   labels:
     name: enel
+    # pod-security.kubernetes.io/enforce: restricted
+    istio-injection: enabled
 
+
+# Warning: would violate PodSecurity "restricted:latest": allowPrivilegeEscalation != false (container "enel-web" must set securityContext.allowPrivilegeEscalation=false), unrestricted capabilities (container "enel-web" must set securityContext.capabilities.drop=["ALL"]), runAsNonRoot != true (pod or container "enel-web" must set securityContext.runAsNonRoot=true), seccompProfile (pod or container "enel-web" must set securityContext.seccompProfile.type to "RuntimeDefault" or "Localhost")
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -21,9 +25,19 @@ spec:
       labels:
         app: enel-web
     spec:
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: enel-web
         image: image-registry:5000/enel/web:0.6.1
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
         resources:
           limits:
             memory: "64Mi"
