@@ -5,27 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb",
+            "type": "rt_lldb",
             "request": "launch",
-            "name": "Debug executable 'enel_stop'",
+            "name": "Debug executable 'crawler'",
             "cargo": {
                 "args": [
                     "build",
-                    "--bin=enel_stop",
+                    "--bin=crawler",
                     "--package=enel_stop"
                 ],
                 "filter": {
-                    "name": "enel_stop",
+                    "name": "crawler",
                     "kind": "bin"
                 }
             },
             "args": [
                 "conf/config.toml"
             ],
-            "cwd": "${workspaceFolder}"
+            "cwd": "${workspaceFolder}",
+						"program": "${workspaceFolder}/target/debug/crawler"
         },
         {
-            "type": "lldb",
+            "type": "rt_lldb",
             "request": "launch",
             "name": "Debug unit tests in executable 'enel_stop'",
             "cargo": {
