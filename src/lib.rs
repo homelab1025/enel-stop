@@ -1,4 +1,5 @@
-use std::{error::Error, thread, time::Duration};
+use regex::Regex;
+use std::{error::Error, thread, time::Duration, ops::Add};
 
 use config::{Config, FileFormat};
 use log::{debug, info};
@@ -32,6 +33,8 @@ pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
 
             let rss_client = Client::new();
             let redis_connection = redis_client.get_connection();
+            let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (\w+)";
+            let key_extractor = Regex::new(key_extract_pattern).unwrap();
 
             match redis_connection {
                 Ok(mut conn) => {
@@ -53,7 +56,16 @@ pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
                                     id.value()
                                 );
 
-                                let _:Result<String, RedisError> = conn.set(&config.categories.join(";"), title);
+                                if let Some(captures) = key_extractor.captures(title) {
+                                    let interval = captures.get(1).unwrap().as_str();
+                                    let judet = captures.get(2).unwrap().as_str();
+                                    let localitate = captures.get(3).unwrap().as_str();
+
+                                    info!("Creating a key from {} and {}.", judet, localitate);
+                                    let key = String::from(judet).add("-").add(localitate);
+                                    let _: Result<String, RedisError> =
+                                        conn.set(key, interval.trim());
+                                }
                             };
                         });
                     };

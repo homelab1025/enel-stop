@@ -1,9 +1,13 @@
 [service]
 url = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml"
-refresh_ms = 2000
+refresh_ms = 5000
 
 [filter]
 categories = ["Jud. ILFOV"]
+
+[storage]
+redis.server = "127.0.0.1:9090"
+redis.space = "enel"
 
 [notifs]
 auth_token = "aaaa"
