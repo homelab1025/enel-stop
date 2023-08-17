@@ -1,6 +1,6 @@
 extern crate core;
 
-use enel_stop::start_service;
+use enel_stop::start_crawler_service;
 use log::LevelFilter;
 use simple_logger::SimpleLogger;
 use std::env;
@@ -28,5 +28,7 @@ fn main() {
         None => panic!("Configuration file has not been provided."),
     };
 
-    start_service(&file_path);
+    let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+
+    start_crawler_service(&file_path, &redis_client);
 }
