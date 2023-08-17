@@ -11,7 +11,7 @@ warp = "0.3.5"
 
 rss = "2.0.5"
 config = "0.13.3"
-log = "0.4.17"
+log = "0.4.20"
 simple_logger = "4.0.0"
 #replace this with async version
 reqwest = { version = "0.11.13", features = [
