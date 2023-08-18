@@ -46,7 +46,10 @@ fn main() {
 
     match config_result {
         Ok(service_config) => {
-            let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+            let mut redis_url = String::from("redis://");
+            redis_url.push_str(&service_config.redis_server);
+            redis_url.push('/');
+            let redis_client = redis::Client::open(redis_url).unwrap();
 
             start_crawler_service(&service_config, &redis_client);
         }

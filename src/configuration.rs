@@ -6,12 +6,14 @@ use config::Config;
 const CONFIG_URL: &str = "service.url";
 const CONFIG_REFRESH_MS: &str = "service.refresh_ms";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
+const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
     pub url: String,
     pub categories: Vec<String>,
     pub refresh_ms: u64,
+    pub redis_server: String,
 }
 
 impl ServiceConfiguration {
@@ -25,6 +27,7 @@ impl ServiceConfiguration {
                 .map(|x| x.into_string().unwrap())
                 .collect(),
             refresh_ms: config.get_string(CONFIG_REFRESH_MS)?.parse::<u64>()?,
+            redis_server: config.get_string(CONFIG_REDIS_SERVER)?,
         };
 
         Ok(service_configuration)
