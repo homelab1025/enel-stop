@@ -1,10 +1,12 @@
 extern crate core;
 
+use config::{Config, FileFormat};
 use enel_stop::start_crawler_service;
-use log::LevelFilter;
+use log::{debug, LevelFilter};
 use simple_logger::SimpleLogger;
-use std::env;
+use std::{env, error::Error};
 
+use enel_stop::configuration::ServiceConfiguration;
 /**
 URL: https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml
  */
@@ -28,7 +30,28 @@ fn main() {
         None => panic!("Configuration file has not been provided."),
     };
 
-    let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+    let raw_config = Config::builder()
+        .add_source(config::File::new(&file_path, FileFormat::Toml))
+        .add_source(config::Environment::default())
+        .build()
+        .unwrap();
 
-    start_crawler_service(&file_path, &redis_client);
+    debug!("---- Environment variables ----");
+    for env_var in std::env::vars() {
+        debug!("{} = {}", env_var.0, env_var.1)
+    }
+
+    let config_result: Result<ServiceConfiguration, Box<dyn Error>> =
+        ServiceConfiguration::new(&raw_config);
+
+    match config_result {
+        Ok(service_config) => {
+            let redis_client = redis::Client::open("redis://127.0.0.1/").unwrap();
+
+            start_crawler_service(&service_config, &redis_client);
+        }
+        Err(err) => {
+            panic!("There was an error when loading the configuration: {}", err);
+        }
+    }
 }

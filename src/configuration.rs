@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use config::{Config};
+use config::Config;
 
 const CONFIG_URL: &str = "service.url";
 const CONFIG_REFRESH_MS: &str = "service.refresh_ms";

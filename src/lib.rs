@@ -1,83 +1,59 @@
 use regex::Regex;
-use std::{error::Error, thread, time::Duration, ops::Add};
+use std::{ops::Add, thread, time::Duration};
 
-use config::{Config, FileFormat};
 use log::{debug, info};
 
 use redis::{Commands, RedisError};
 
 use crate::configuration::ServiceConfiguration;
 
-mod configuration;
+pub mod configuration;
 mod rss_reader;
 
-pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
-    let config = Config::builder()
-        .add_source(config::File::new(file_path, FileFormat::Toml))
-        .add_source(config::Environment::default())
-        .build()
-        .unwrap();
+pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: &redis::Client) {
+    info!("Using configuration: {}", config);
 
-    debug!("---- Environment variables ----");
-    for env_var in std::env::vars() {
-        debug!("{} = {}", env_var.0, env_var.1)
-    }
+    let redis_connection = redis_client.get_connection();
+    let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
+    let key_extractor = Regex::new(key_extract_pattern).unwrap();
 
-    let config_result: Result<ServiceConfiguration, Box<dyn Error>> =
-        ServiceConfiguration::new(&config);
+    match redis_connection {
+        Ok(mut conn) => {
+            info!("Redis connection established.");
 
-    match config_result {
-        Ok(config) => {
-            info!("Using configuration: {}", config);
+            let parse_func = || {
+                debug!("running the parser");
+                let items = rss_reader::parse_rss(&config.url, &config.categories);
 
-            let redis_connection = redis_client.get_connection();
-            let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
-            let key_extractor = Regex::new(key_extract_pattern).unwrap();
+                items.iter().for_each(|item| {
+                    if let Some(title) = item.title.as_ref() {
+                        let pub_date = item.pub_date.as_ref().unwrap();
+                        let id = item.guid.as_ref().unwrap();
 
-            match redis_connection {
-                Ok(mut conn) => {
-                    info!("Redis connection established.");
+                        debug!(
+                            "Found: {} published at {} with GUID {}",
+                            title,
+                            pub_date,
+                            id.value()
+                        );
 
-                    let parse_func = || {
-                        debug!("running the parser");
-                        let items =
-                            rss_reader::parse_rss(&config.url, &config.categories);
+                        if let Some(captures) = key_extractor.captures(title) {
+                            let interval = captures.get(1).unwrap().as_str();
+                            let judet = captures.get(2).unwrap().as_str();
+                            let localitate = captures.get(3).unwrap().as_str();
 
-                        items.iter().for_each(|item| {
-                            if let Some(title) = item.title.as_ref() {
-                                let pub_date = item.pub_date.as_ref().unwrap();
-                                let id = item.guid.as_ref().unwrap();
-
-                                debug!(
-                                    "Found: {} published at {} with GUID {}",
-                                    title,
-                                    pub_date,
-                                    id.value()
-                                );
-
-                                if let Some(captures) = key_extractor.captures(title) {
-                                    let interval = captures.get(1).unwrap().as_str();
-                                    let judet = captures.get(2).unwrap().as_str();
-                                    let localitate = captures.get(3).unwrap().as_str();
-
-                                    let key = String::from(judet).add("-").add(localitate);
-                                    info!("Creating a key from {} and {}: {}", judet, localitate, key);
-                                    let _: Result<String, RedisError> =
-                                        conn.set(key, interval.trim());
-                                }
-                            };
-                        });
+                            let key = String::from(judet).add("-").add(localitate);
+                            info!("Creating a key from {} and {}: {}", judet, localitate, key);
+                            let _: Result<String, RedisError> = conn.set(key, interval.trim());
+                        }
                     };
+                });
+            };
 
-                    create_loop(parse_func, config.refresh_ms);
-                }
-                Err(err) => {
-                    panic!("Could not get connection to redis: {}", err)
-                }
-            }
+            create_loop(parse_func, config.refresh_ms);
         }
         Err(err) => {
-            panic!("There was an error when loading the configuration: {}", err)
+            panic!("Could not get connection to redis: {}", err)
         }
     }
 }
