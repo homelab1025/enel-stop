@@ -3,9 +3,10 @@ use log::{error, info};
 use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
 
-pub fn parse_rss(url: &str, filter_categs: &Vec<String>, rss_client: &Client) -> Vec<Item> {
+pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
-
+    
+    let rss_client = Client::new();
     let channel_resp = rss_client.get(url).send();
 
     match channel_resp {

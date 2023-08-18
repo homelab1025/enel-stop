@@ -11,7 +11,7 @@ URL: https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rs
 fn main() {
     SimpleLogger::new()
         .env()
-        .with_level(LevelFilter::Info)
+        .with_level(LevelFilter::Debug)
         .init()
         .unwrap();
 

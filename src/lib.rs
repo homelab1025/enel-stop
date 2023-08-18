@@ -5,7 +5,6 @@ use config::{Config, FileFormat};
 use log::{debug, info};
 
 use redis::{Commands, RedisError};
-use reqwest::blocking::Client;
 
 use crate::configuration::ServiceConfiguration;
 
@@ -31,9 +30,8 @@ pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
         Ok(config) => {
             info!("Using configuration: {}", config);
 
-            let rss_client = Client::new();
             let redis_connection = redis_client.get_connection();
-            let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (\w+)";
+            let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
             let key_extractor = Regex::new(key_extract_pattern).unwrap();
 
             match redis_connection {
@@ -43,13 +41,14 @@ pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
                     let parse_func = || {
                         debug!("running the parser");
                         let items =
-                            rss_reader::parse_rss(&config.url, &config.categories, &rss_client);
+                            rss_reader::parse_rss(&config.url, &config.categories);
 
                         items.iter().for_each(|item| {
                             if let Some(title) = item.title.as_ref() {
                                 let pub_date = item.pub_date.as_ref().unwrap();
                                 let id = item.guid.as_ref().unwrap();
-                                info!(
+
+                                debug!(
                                     "Found: {} published at {} with GUID {}",
                                     title,
                                     pub_date,
@@ -61,8 +60,8 @@ pub fn start_crawler_service(file_path: &str, redis_client: &redis::Client) {
                                     let judet = captures.get(2).unwrap().as_str();
                                     let localitate = captures.get(3).unwrap().as_str();
 
-                                    info!("Creating a key from {} and {}.", judet, localitate);
                                     let key = String::from(judet).add("-").add(localitate);
+                                    info!("Creating a key from {} and {}: {}", judet, localitate, key);
                                     let _: Result<String, RedisError> =
                                         conn.set(key, interval.trim());
                                 }
