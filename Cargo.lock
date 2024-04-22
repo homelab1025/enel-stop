@@ -1290,9 +1290,9 @@ dependencies = [
 
 [[package]]
 name = "rss"
-version = "2.0.5"
+version = "2.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "32100fb1eea9edc4be79553ae97914add78b55892a517995fe96d1ada50d09d7"
+checksum = "f7b2c77eb4450d7d5f98df52c381cd6c4e19b75dad9209a9530b85a44510219a"
 dependencies = [
  "atom_syndication",
  "derive_builder",
