@@ -1,40 +1,51 @@
-use std::io::Read;
 use log::{error, info};
 use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
+use std::io::Read;
 
 pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
-    
-    let rss_client = Client::new();
-    let channel_resp = rss_client.get(url).send();
 
-    match channel_resp {
-        Ok(mut resp) => {
-            let mut buffer = Vec::new();
-            let read_result = resp.read_to_end(&mut buffer);
-            if read_result.is_err() {
-                error!("There was an error reading the RSS into the buffer: {}", read_result.unwrap_err());
-                return vec![];
-            }
+    let client = Client::builder().cookie_store(true).build();
 
-            let channel = match Channel::read_from(&buffer[..]) {
-                Ok(channel) => channel,
-                Err(err) => {
-                    error!("There was an error parsing the RSS: {}", err);
-                    return vec![];
+    match client {
+        Ok(rss_client) => {
+            let channel_resp = rss_client.get(url).send();
+
+            match channel_resp {
+                Ok(mut resp) => {
+                    let mut buffer = Vec::new();
+                    let read_result = resp.read_to_end(&mut buffer);
+                    if read_result.is_err() {
+                        error!(
+                            "There was an error reading the RSS into the buffer: {}",
+                            read_result.unwrap_err()
+                        );
+                        return vec![];
+                    }
+
+                    let channel = match Channel::read_from(&buffer[..]) {
+                        Ok(channel) => channel,
+                        Err(err) => {
+                            error!("There was an error parsing the RSS: {}", err);
+                            return vec![];
+                        }
+                    };
+
+                    filter_incidents(&channel.items, &convert_config_categs(filter_categs))
                 }
-            };
+                Err(err) => {
+                    if err.is_builder() {
+                        panic!("The request can not be built: {}", err);
+                    }
 
-            filter_incidents(&channel.items, &convert_config_categs(filter_categs))
+                    error!("There was an error making the request for the RSS: {}", err);
+                    vec![]
+                }
+            }
         }
         Err(err) => {
-            if err.is_builder() {
-                panic!("The request can not be built: {}", err);
-            }
-
-            error!("There was an error making the request for the RSS: {}", err);
-            vec![]
+            panic!("Can not instantiate RSS client: {}", err)
         }
     }
 }
@@ -60,8 +71,8 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
-    use rss::{Category, ItemBuilder};
     use crate::rss_reader::{convert_config_categs, filter_incidents};
+    use rss::{Category, ItemBuilder};
 
     #[test]
     fn convert_config_categs_works() {
@@ -99,7 +110,8 @@ mod rss_reader_tests {
             .map(|x| Category {
                 domain: None,
                 name: x,
-            }).to_vec();
+            })
+            .to_vec();
 
         let incorrect_cats = vec![
             Category {

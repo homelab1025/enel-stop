@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "rt_lldb",
+            "type": "codelldb",
             "request": "launch",
             "name": "Debug executable 'crawler'",
             "cargo": {
@@ -26,7 +26,7 @@
 						"program": "${workspaceFolder}/target/debug/crawler"
         },
         {
-            "type": "rt_lldb",
+            "type": "codelldb",
             "request": "launch",
             "name": "Debug unit tests in executable 'enel_stop'",
             "cargo": {

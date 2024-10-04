@@ -33,7 +33,7 @@ spec:
           type: RuntimeDefault
       containers:
       - name: enel-web
-        image: image-registry:5000/enel/web:0.6.1
+        image: ghcr.io/fdiaconeasa/enel-stop-web:v0.9.0
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:

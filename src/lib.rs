@@ -14,8 +14,8 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: &redis
     info!("Using configuration: {}", config);
 
     let redis_connection = redis_client.get_connection();
-    let key_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
-    let key_extractor = Regex::new(key_extract_pattern).unwrap();
+    let location_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
+    let location_extractor = Regex::new(location_extract_pattern).unwrap();
 
     match redis_connection {
         Ok(mut conn) => {
@@ -37,14 +37,14 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: &redis
                             id.value()
                         );
 
-                        if let Some(captures) = key_extractor.captures(title) {
+                        if let Some(captures) = location_extractor.captures(title) {
                             let interval = captures.get(1).unwrap().as_str();
                             let judet = captures.get(2).unwrap().as_str();
                             let localitate = captures.get(3).unwrap().as_str();
 
-                            let key = String::from(judet).add("-").add(localitate);
-                            info!("Creating a key from {} and {}: {}", judet, localitate, key);
-                            let _: Result<String, RedisError> = conn.set(key, interval.trim());
+                            let location = String::from(judet).add("-").add(localitate);
+                            // info!("Creating a key from {} and {}: {}", judet, localitate, key);
+                            let _: Result<String, RedisError> = conn.set(location, interval.trim());
                         }
                     };
                 });

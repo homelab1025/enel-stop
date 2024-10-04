@@ -1,5 +1,5 @@
 [service]
-url = "https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml"
+url = "https://www.reteleelectrice.ro/content/dam/retele-electrice/outages/rss/enel_rss_muntenia.xml"
 refresh_ms = 5000
 redis_server = "127.0.0.1"
 
@@ -7,7 +7,7 @@ redis_server = "127.0.0.1"
 categories = ["Jud. ILFOV"]
 
 [storage]
-redis.server = "127.0.0.1:9090"
+redis.server = "redis-master.redis"
 redis.space = "enel"
 
 [notifs]

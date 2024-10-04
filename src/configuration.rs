@@ -68,6 +68,7 @@ mod configuration_tests {
             url: "http://google.com".to_string(),
             refresh_ms: 30,
             categories: vec!["first".to_string(), "second".to_string()],
+            redis_server: "localhost-redis".to_string(),
         };
 
         assert_eq!(service_config, expected_config);
