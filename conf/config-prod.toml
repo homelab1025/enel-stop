@@ -1,6 +1,7 @@
 [service]
 url = "https://www.reteleelectrice.ro/content/dam/retele-electrice/outages/rss/enel_rss_muntenia.xml"
 refresh_ms = 60000
+redis.server = "redis-master.redis"
 
 [filter]
 categories = ["Jud. ILFOV"]
@@ -9,6 +10,5 @@ categories = ["Jud. ILFOV"]
 auth_token = "aaaa"
 
 [storage]
-redis.server = "redis-master.redis"
 redis.space = "enel"
 

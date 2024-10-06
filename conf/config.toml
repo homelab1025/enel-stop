@@ -7,8 +7,6 @@ redis_server = "127.0.0.1"
 categories = []
 
 [storage]
-redis.server = "redis-master.redis"
-redis.space = "enel"
 
 [notifs]
 auth_token = "aaaa"

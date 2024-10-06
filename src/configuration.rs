@@ -48,7 +48,7 @@ impl Display for ServiceConfiguration {
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::CONFIG_REFRESH_MS;
+    use crate::configuration::{CONFIG_REDIS_SERVER, CONFIG_REFRESH_MS};
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -58,6 +58,7 @@ mod configuration_tests {
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
             .and_then(|x| x.set_default(CONFIG_REFRESH_MS, 30))
+            .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .unwrap()
             .build()
             .unwrap();
@@ -68,7 +69,7 @@ mod configuration_tests {
             url: "http://google.com".to_string(),
             refresh_ms: 30,
             categories: vec!["first".to_string(), "second".to_string()],
-            redis_server: "localhost-redis".to_string(),
+            redis_server: "redis".to_string(),
         };
 
         assert_eq!(service_config, expected_config);
@@ -80,6 +81,7 @@ mod configuration_tests {
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
             .and_then(|x| x.set_default(CONFIG_REFRESH_MS, -30))
+            .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .unwrap()
             .build()
             .unwrap();
