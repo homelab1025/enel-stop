@@ -1,7 +1,8 @@
+use std::io::Read;
+
 use log::{error, info};
 use reqwest::blocking::Client;
 use rss::{Category, Channel, Item};
-use std::io::Read;
 
 pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
@@ -10,7 +11,14 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
 
     match client {
         Ok(rss_client) => {
-            let channel_resp = rss_client.get(url).send();
+            let channel_resp = rss_client
+                .get(url)
+                // .header(ACCEPT, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+                // .header(ACCEPT_ENCODING, "gzip, deflate, br, zstd")
+                // .header(USER_AGENT, "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36")
+                .send();
+
+            // let channel_resp = request.send();
 
             match channel_resp {
                 Ok(mut resp) => {
@@ -23,6 +31,11 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
                         );
                         return vec![];
                     }
+
+                    // info!(
+                    //     "AAAAAAAAAAAA {}",
+                    //     String::from_utf8(buffer.to_vec()).unwrap()
+                    // );
 
                     let channel = match Channel::read_from(&buffer[..]) {
                         Ok(channel) => channel,

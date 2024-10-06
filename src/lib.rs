@@ -1,14 +1,24 @@
-use regex::Regex;
-use std::{ops::Add, thread, time::Duration};
+use std::{thread, time::Duration};
 
 use log::{debug, info};
 
 use redis::{Commands, RedisError};
+use regex::Regex;
 
 use crate::configuration::ServiceConfiguration;
+use serde::Serialize;
 
 pub mod configuration;
 mod rss_reader;
+
+#[derive(Debug, Serialize)]
+struct Record {
+    id: String,
+    judet: String,
+    localitate: String,
+    title: String,
+    description: String,
+}
 
 pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: &redis::Client) {
     info!("Using configuration: {}", config);
@@ -38,13 +48,22 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: &redis
                         );
 
                         if let Some(captures) = location_extractor.captures(title) {
-                            let interval = captures.get(1).unwrap().as_str();
+                            // let interval = captures.get(1).unwrap().as_str();
                             let judet = captures.get(2).unwrap().as_str();
                             let localitate = captures.get(3).unwrap().as_str();
 
-                            let location = String::from(judet).add("-").add(localitate);
+                            let r = Record {
+                                id: id.value.to_string(),
+                                judet: judet.to_string(),
+                                localitate: localitate.to_string(),
+                                title: title.to_string(),
+                                description: item.description.as_ref().unwrap().to_string(),
+                            };
+
                             // info!("Creating a key from {} and {}: {}", judet, localitate, key);
-                            let _: Result<String, RedisError> = conn.set(location, interval.trim());
+                            let ser = serde_json::to_string(&r).unwrap();
+                            info!("Adding record: {}", ser);
+                            let _: Result<String, RedisError> = conn.set(id.value(), ser);
                         }
                     };
                 });

@@ -4,7 +4,7 @@ refresh_ms = 5000
 redis_server = "127.0.0.1"
 
 [filter]
-categories = ["Jud. ILFOV"]
+categories = []
 
 [storage]
 redis.server = "redis-master.redis"
