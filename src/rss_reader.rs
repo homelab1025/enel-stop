@@ -1,13 +1,24 @@
 use std::io::Read;
 
 use log::{error, info};
-use reqwest::blocking::Client;
+use reqwest::{
+    blocking::Client,
+    header::{self, HeaderValue},
+};
 use rss::{Category, Channel, Item};
 
 pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
 
-    let client = Client::builder().cookie_store(true).build();
+    let headers = chrome_headers();
+
+    let client = Client::builder()
+        .cookie_store(true)
+        .tls_info(true)
+        .https_only(true)
+        // .connection_verbose(true)
+        .default_headers(headers)
+        .build();
 
     match client {
         Ok(rss_client) => {
@@ -61,6 +72,27 @@ pub fn parse_rss(url: &str, filter_categs: &Vec<String>) -> Vec<Item> {
             panic!("Can not instantiate RSS client: {}", err)
         }
     }
+}
+
+fn chrome_headers() -> header::HeaderMap {
+    let mut headers = header::HeaderMap::new();
+    headers.insert(header::USER_AGENT, HeaderValue::from_static( "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"));
+    headers.insert(header::ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
+    headers.insert(
+        header::ACCEPT_LANGUAGE,
+        HeaderValue::from_static("en-US,en;q=0.9,ro;q=0.8"),
+    );
+    headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
+    headers.insert(header::DNT, HeaderValue::from_static("1"));
+    headers.insert(header::PRAGMA, HeaderValue::from_static("no-cache"));
+    headers.insert("priority", HeaderValue::from_static("u=0, i"));
+    headers.insert(
+        "sec-ch-ua",
+        HeaderValue::from_static(
+            r#""Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129""#,
+        ),
+    );
+    headers
 }
 
 fn filter_incidents(all_incidents: &[Item], filtering_categs: &[Category]) -> Vec<Item> {
