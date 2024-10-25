@@ -7,6 +7,7 @@ const CONFIG_URL: &str = "service.url";
 const CONFIG_REFRESH_MS: &str = "service.refresh_ms";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
+const CONFIG_STORE_ENABLED: &str = "service.store_enabled";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
@@ -14,6 +15,7 @@ pub struct ServiceConfiguration {
     pub categories: Vec<String>,
     pub refresh_ms: u64,
     pub redis_server: String,
+    pub store_enabled: bool,
 }
 
 impl ServiceConfiguration {
@@ -28,6 +30,7 @@ impl ServiceConfiguration {
                 .collect(),
             refresh_ms: config.get_string(CONFIG_REFRESH_MS)?.parse::<u64>()?,
             redis_server: config.get_string(CONFIG_REDIS_SERVER)?,
+            store_enabled: config.get_bool(CONFIG_STORE_ENABLED)?,
         };
 
         Ok(service_configuration)
@@ -48,7 +51,7 @@ impl Display for ServiceConfiguration {
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::{CONFIG_REDIS_SERVER, CONFIG_REFRESH_MS};
+    use crate::configuration::{CONFIG_REDIS_SERVER, CONFIG_REFRESH_MS, CONFIG_STORE_ENABLED};
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -59,6 +62,7 @@ mod configuration_tests {
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
             .and_then(|x| x.set_default(CONFIG_REFRESH_MS, 30))
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
+            .and_then(|x| x.set_default(CONFIG_STORE_ENABLED, "true"))
             .unwrap()
             .build()
             .unwrap();
@@ -70,6 +74,7 @@ mod configuration_tests {
             refresh_ms: 30,
             categories: vec!["first".to_string(), "second".to_string()],
             redis_server: "redis".to_string(),
+            store_enabled: true,
         };
 
         assert_eq!(service_config, expected_config);

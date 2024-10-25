@@ -1,12 +1,11 @@
 extern crate core;
 
 use config::{Config, FileFormat};
-use enel_stop::start_crawler_service;
 use log::{debug, LevelFilter};
 use simple_logger::SimpleLogger;
 use std::{env, error::Error};
 
-use enel_stop::configuration::ServiceConfiguration;
+use enel_stop::{configuration::ServiceConfiguration, start_crawler_service};
 /**
 URL: https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml
  */
@@ -32,7 +31,7 @@ fn main() {
 
     let raw_config = Config::builder()
         .add_source(config::File::new(&file_path, FileFormat::Toml))
-        .add_source(config::Environment::default())
+        .add_source(config::Environment::default().separator("__"))
         .build()
         .unwrap();
 
@@ -49,9 +48,14 @@ fn main() {
             let mut redis_url = String::from("redis://");
             redis_url.push_str(&service_config.redis_server);
             redis_url.push('/');
-            let redis_client = redis::Client::open(redis_url).unwrap();
 
-            start_crawler_service(&service_config, &redis_client);
+            let redis_client = if service_config.store_enabled {
+                Some(redis::Client::open(redis_url).unwrap())
+            } else {
+                None
+            };
+
+            start_crawler_service(&service_config, redis_client.as_ref());
         }
         Err(err) => {
             panic!("There was an error when loading the configuration: {}", err);
