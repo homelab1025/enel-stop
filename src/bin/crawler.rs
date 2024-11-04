@@ -6,13 +6,11 @@ use simple_logger::SimpleLogger;
 use std::{env, error::Error};
 
 use enel_stop::{configuration::ServiceConfiguration, start_crawler_service};
-/**
-URL: https://www.e-distributie.com/content/dam/e-distributie/outages/rss/enel_rss_muntenia.xml
- */
+
 fn main() {
     SimpleLogger::new()
         .env()
-        .with_level(LevelFilter::Debug)
+        .with_level(LevelFilter::Info)
         .init()
         .unwrap();
 

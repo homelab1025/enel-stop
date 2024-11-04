@@ -1,6 +1,6 @@
 use std::{thread, time::Duration};
 
-use log::{debug, info};
+use log::{debug, error, info};
 
 use redis::{Commands, RedisError};
 use regex::Regex;
@@ -25,10 +25,13 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option
 
     let mut redis_conn = redis_client.map(|client| client.get_connection().unwrap());
 
+    if let Some(ref _conn) = redis_conn {
+        info!("Redis connection established.");
+    }
+
     let location_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
     let location_extractor = Regex::new(location_extract_pattern).unwrap();
 
-    info!("Redis connection established.");
     info!("Starting to query every {} seconds", config.refresh_ms);
 
     loop {
@@ -62,10 +65,13 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option
 
                     // info!("Creating a key from {} and {}: {}", judet, localitate, key);
                     let ser = serde_json::to_string(&r).unwrap();
-                    info!("Adding record: {}", ser);
+                    info!("Adding record: {} with key {}", ser, id.value());
 
                     if let Some(ref mut conn) = redis_conn.as_mut() {
-                        let _: Result<String, RedisError> = conn.set(id.value(), ser);
+                        let result: Result<String, RedisError> = conn.set(id.value(), ser);
+                        if result.is_err() {
+                            error!("Error saving {}", id.value());
+                        }
                     }
                 }
             };
