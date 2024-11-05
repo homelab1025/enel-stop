@@ -1,8 +1,9 @@
-FROM rust:latest AS builder
+FROM rust:1.82 AS builder
+WORKDIR /
 COPY ./ .
 RUN cargo build --release
 
-FROM --platform=$TARGETPLATFORM alpine:latest AS alpine_base
+FROM --platform=$TARGETPLATFORM alpine:3.20.3 AS alpine_base
 ARG TARGETARCH
 RUN apk update
 # RUN apk add libssl1.1

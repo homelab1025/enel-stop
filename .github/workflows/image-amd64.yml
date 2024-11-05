@@ -48,7 +48,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
 
-      - name: Build and push Docker image for crawler
+      - name: Build and push Docker image for web service 
         uses: docker/build-push-action@v4
         with:
           context: .
