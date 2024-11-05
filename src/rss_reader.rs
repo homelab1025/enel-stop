@@ -4,16 +4,12 @@ use log::{error, info};
 
 use reqwest::{
     blocking::Client,
-    cookie::Jar,
-    header::{self, HeaderValue},
     Url,
 };
 use rss::{Category, Channel, Item};
 
-pub fn parse_rss(url_string: &str, filter_categs: &Vec<String>) -> Vec<Item> {
+pub fn parse_rss(url_string: &str, filter_categs: &Vec<String>, rss_client: &Client) -> Vec<Item> {
     info!("Filtering for categs: {:?}", filter_categs);
-
-    let headers = chrome_headers();
 
     let url = match url_string.parse::<Url>() {
         Ok(url) => url,
@@ -22,77 +18,41 @@ pub fn parse_rss(url_string: &str, filter_categs: &Vec<String>) -> Vec<Item> {
         }
     };
 
-    let cookie_store = std::sync::Arc::new(Jar::default());
-    let client = Client::builder()
-        .cookie_provider(cookie_store)
-        .tls_info(true)
-        .use_rustls_tls()
-        .connection_verbose(true)
-        .default_headers(headers)
-        .build();
+    let channel_resp = rss_client.get(url).send();
 
-    match client {
-        Ok(rss_client) => {
-            let channel_resp = rss_client.get(url).send();
-
-            match channel_resp {
-                Ok(mut resp) => {
-                    let mut buffer = Vec::new();
-                    let read_result = resp.read_to_end(&mut buffer);
-                    if read_result.is_err() {
-                        error!(
+    match channel_resp {
+        Ok(mut resp) => {
+            let mut buffer = Vec::new();
+            let read_result = resp.read_to_end(&mut buffer);
+            if read_result.is_err() {
+                error!(
                             "There was an error reading the RSS into the buffer: {}",
                             read_result.unwrap_err()
                         );
-                        return vec![];
-                    }
-
-                    let channel = match Channel::read_from(&buffer[..]) {
-                        Ok(channel) => channel,
-                        Err(err) => {
-                            error!("There was an error parsing the RSS: {}", err);
-                            return vec![];
-                        }
-                    };
-
-                    filter_incidents(&channel.items, &convert_config_categs(filter_categs))
-                }
-                Err(err) => {
-                    if err.is_builder() {
-                        panic!("The request can not be built: {}", err);
-                    }
-
-                    error!("There was an error making the request for the RSS: {}", err);
-                    vec![]
-                }
+                return vec![];
             }
+
+            let channel = match Channel::read_from(&buffer[..]) {
+                Ok(channel) => channel,
+                Err(err) => {
+                    error!("There was an error parsing the RSS: {}", err);
+                    return vec![];
+                }
+            };
+
+            filter_incidents(&channel.items, &convert_config_categs(filter_categs))
         }
         Err(err) => {
-            panic!("Can not instantiate RSS client: {}", err)
+            if err.is_builder() {
+                panic!("The request can not be built: {}", err);
+            }
+
+            error!("There was an error making the request for the RSS: {}", err);
+            vec![]
         }
     }
 }
 
-fn chrome_headers() -> header::HeaderMap {
-    let mut headers = header::HeaderMap::new();
-    headers.insert(header::USER_AGENT, HeaderValue::from_static( "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"));
-    // headers.insert(header::ACCEPT, HeaderValue::from_static("text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"));
-    // headers.insert(
-    //     header::ACCEPT_LANGUAGE,
-    //     HeaderValue::from_static("en-US,en;q=0.9,ro;q=0.8"),
-    // );
-    // headers.insert(header::CACHE_CONTROL, HeaderValue::from_static("no-cache"));
-    // headers.insert(header::DNT, HeaderValue::from_static("1"));
-    // headers.insert(header::PRAGMA, HeaderValue::from_static("no-cache"));
-    // headers.insert("priority", HeaderValue::from_static("u=0, i"));
-    // headers.insert(
-    //     "sec-ch-ua",
-    //     HeaderValue::from_static(
-    //         r#""Google Chrome";v="129", "Not=A?Brand";v="8", "Chromium";v="129""#,
-    //     ),
-    // );
-    headers
-}
 
 fn filter_incidents(all_incidents: &[Item], filtering_categs: &[Category]) -> Vec<Item> {
     all_incidents
@@ -217,6 +177,6 @@ mod rss_reader_tests {
         let result = filter_incidents(&all_incidents, &filtering_categs);
 
         assert_eq!(1, result.len());
-        assert_eq!("correct", result.get(0).unwrap().title.as_ref().unwrap());
+        assert_eq!("correct", result.first().unwrap().title.as_ref().unwrap());
     }
 }
