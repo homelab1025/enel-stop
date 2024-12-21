@@ -1,0 +1,10 @@
+[package]
+name = "web_server"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { workspace = true }
+warp = { workspace = true }
+simple_logger = { workspace = true }
+log = { workspace = true }

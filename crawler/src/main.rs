@@ -1,26 +1,73 @@
-use std::{thread, time::Duration};
-
-use log::{debug, error, info};
-
+use config::{Config, FileFormat};
+use log::{debug, error, info, LevelFilter};
 use redis::{Commands, RedisError};
 use regex::Regex;
-use reqwest::blocking::Client;
-use reqwest::cookie::Jar;
-use reqwest::header;
-use reqwest::header::HeaderValue;
-use crate::configuration::ServiceConfiguration;
-use serde::Serialize;
+use reqwest::{
+    blocking::Client,
+    cookie::Jar,
+    header::{self, HeaderValue},
+};
+use simple_logger::SimpleLogger;
+use std::{env, error::Error, thread, time::Duration};
 
-pub mod configuration;
+// use enel_stop::{configuration::ServiceConfiguration, start_crawler_service};
+mod configuration;
+use configuration::ServiceConfiguration;
+
 mod rss_reader;
 
-#[derive(Debug, Serialize)]
-struct Record {
-    id: String,
-    judet: String,
-    localitate: String,
-    title: String,
-    description: String,
+fn main() {
+    SimpleLogger::new()
+        .env()
+        .with_level(LevelFilter::Info)
+        .init()
+        .unwrap();
+
+    let cli_arg = env::args().nth(1);
+    let file_path = match cli_arg {
+        Some(file_path) => {
+            let file_exists = std::path::Path::new(&file_path).exists();
+
+            if !file_exists {
+                panic!("Configuration file does not exist!")
+            }
+            file_path
+        }
+        None => panic!("Configuration file has not been provided."),
+    };
+
+    let raw_config = Config::builder()
+        .add_source(config::File::new(&file_path, FileFormat::Toml))
+        .add_source(config::Environment::default().separator("__"))
+        .build()
+        .unwrap();
+
+    debug!("---- Environment variables ----");
+    for env_var in std::env::vars() {
+        debug!("{} = {}", env_var.0, env_var.1)
+    }
+
+    let config_result: Result<ServiceConfiguration, Box<dyn Error>> =
+        ServiceConfiguration::new(&raw_config);
+
+    match config_result {
+        Ok(service_config) => {
+            let mut redis_url = String::from("redis://");
+            redis_url.push_str(&service_config.redis_server);
+            redis_url.push('/');
+
+            let redis_client = if service_config.store_enabled {
+                Some(redis::Client::open(redis_url).unwrap())
+            } else {
+                None
+            };
+
+            start_crawler_service(&service_config, redis_client.as_ref());
+        }
+        Err(err) => {
+            panic!("There was an error when loading the configuration: {}", err);
+        }
+    }
 }
 
 pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option<&redis::Client>) {
@@ -63,18 +110,18 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option
                         let id = item.guid.as_ref().unwrap();
 
                         debug!(
-                    "Found: {} published at {} with GUID {}",
-                    title,
-                    pub_date,
-                    id.value()
-                );
+                            "Found: {} published at {} with GUID {}",
+                            title,
+                            pub_date,
+                            id.value()
+                        );
 
                         if let Some(captures) = location_extractor.captures(title) {
                             // let interval = captures.get(1).unwrap().as_str();
                             let judet = captures.get(2).unwrap().as_str();
                             let localitate = captures.get(3).unwrap().as_str();
 
-                            let r = Record {
+                            let r = common::Record {
                                 id: id.value.to_string(),
                                 judet: judet.to_string(),
                                 localitate: localitate.to_string(),

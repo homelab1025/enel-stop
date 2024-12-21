@@ -1,0 +1,23 @@
+[package]
+name = "crawler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+common = { path = "../common" }
+
+rss = { workspace = true }
+config = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }
+#replace this with async version
+reqwest = { workspace = true }
+
+reqwest_cookie_store = { workspace = true }
+
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+redis = { workspace = true }
+regex = { workspace = true }
