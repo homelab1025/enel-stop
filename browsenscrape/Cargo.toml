@@ -1,0 +1,9 @@
+[package]
+name = "browsenscrape"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+headless_chrome = { workspace = true }
+log = { workspace = true }
+simple_logger = { workspace = true }

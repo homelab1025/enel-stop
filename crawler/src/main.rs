@@ -1,6 +1,6 @@
 use config::{Config, FileFormat};
 use log::{debug, error, info, LevelFilter};
-use redis::{Commands, RedisError};
+use redis::RedisError;
 use regex::Regex;
 use reqwest::{
     blocking::Client,
