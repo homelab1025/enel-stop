@@ -4,6 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+
+common = { path = "../common" }
 headless_chrome = { workspace = true }
 log = { workspace = true }
 simple_logger = { workspace = true }
+rss = { workspace = true }
+config = { workspace = true }

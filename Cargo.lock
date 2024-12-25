@@ -181,8 +181,11 @@ dependencies = [
 name = "browsenscrape"
 version = "0.1.0"
 dependencies = [
+ "common",
+ "config",
  "headless_chrome",
  "log",
+ "rss",
  "simple_logger",
 ]
 
