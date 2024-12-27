@@ -1,8 +1,8 @@
 use core::panic;
-use std::env;
+use std::{env, ffi::OsStr};
 
-use headless_chrome::Browser;
-use log::LevelFilter;
+use headless_chrome::{Browser, LaunchOptionsBuilder};
+use log::{info, LevelFilter};
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
 
@@ -34,14 +34,24 @@ fn main() {
     }
     let config = config.unwrap();
 
-    let browser_result = Browser::default();
+    let browser_result = Browser::new(
+        LaunchOptionsBuilder::default()
+            .enable_logging(true)
+            // .args(vec![OsStr::new("--single-process")])
+            .build()
+            .unwrap(),
+    );
+
+    info!("right after init");
     if browser_result.is_err() {
         panic!("Could not get browser.")
     }
     let browser_tab = browser_result.unwrap().new_tab();
 
+    info!("right after unwrap");
     match browser_tab {
         Ok(tab) => {
+            info!("right before navigation start");
             let navigation = navigate_to_rss(&tab);
             if navigation.is_err() {
                 let err_msg = navigation.unwrap_err();
