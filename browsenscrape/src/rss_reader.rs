@@ -68,14 +68,14 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
-    use crate::rss_reader::{check_categories, convert_config_categs, parse_rss};
-    use rss::{Category, ChannelBuilder, ItemBuilder};
+    use crate::rss_reader::{check_categories, convert_config_categs};
+    use rss::{Category, ItemBuilder};
 
     const FILTER_CATEG_1: &str = "one";
     const FILTER_CATEG_2: &str = "two";
 
     fn generate_categories() -> Vec<Category> {
-        vec![FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
+        [FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
             .iter()
             .clone()
             .map(|f| Category {
