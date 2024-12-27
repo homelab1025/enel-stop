@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
-use config::Config;
+use config::{Config, FileFormat};
+use log::debug;
 
 const CONFIG_URL: &str = "service.url";
 const CONFIG_REFRESH_MS: &str = "service.refresh_ms";
@@ -45,6 +46,30 @@ impl Display for ServiceConfiguration {
             self.url, self.categories, self.refresh_ms
         )
     }
+}
+
+pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &'static str> {
+    let file_exists = std::path::Path::new(config_cli_arg).exists();
+
+    if !file_exists {
+        return Result::Err("Configuration file does not exist!");
+    }
+
+    let raw_config = Config::builder()
+        .add_source(config::File::new(&config_cli_arg, FileFormat::Toml))
+        .add_source(config::Environment::default().separator("__"))
+        .build()
+        .map_err(|_err| "Could not parse configuration file.");
+
+    debug!("---- Environment variables ----");
+    for env_var in std::env::vars() {
+        debug!("{} = {}", env_var.0, env_var.1)
+    }
+
+    let config = raw_config.and_then(|c| {
+        ServiceConfiguration::new(&c).map_err(|_e| "Could not build service configuration struct.")
+    });
+    return config;
 }
 
 #[cfg(test)]

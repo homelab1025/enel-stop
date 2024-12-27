@@ -185,6 +185,7 @@ dependencies = [
  "config",
  "headless_chrome",
  "log",
+ "regex",
  "rss",
  "simple_logger",
 ]

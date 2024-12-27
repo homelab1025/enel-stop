@@ -1,7 +1,9 @@
+use common::Record;
 use log::{error, info};
-use rss::{Category, Channel, Item};
+use regex::Regex;
+use rss::{Category, Channel};
 
-pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Item> {
+pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> {
     info!("Filtering for categs: {:?}", filter_categs);
 
     let channel = match Channel::read_from(rss_content.as_bytes()) {
@@ -12,15 +14,38 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Item> {
         }
     };
 
-    filter_incidents(&channel.items, &convert_config_categs(filter_categs))
+    let location_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
+    let location_extractor = Regex::new(location_extract_pattern).unwrap();
+    let converted_filters = convert_config_categs(filter_categs);
+
+    channel
+        .items()
+        .iter()
+        .filter(|item| {
+            converted_filters
+                .iter()
+                .all(|needle| item.categories.contains(needle))
+        })
+        .filter_map(|item| convert_item(item, &location_extractor))
+        .collect()
 }
 
-fn filter_incidents(all_incidents: &[Item], filtering_categs: &[Category]) -> Vec<Item> {
-    all_incidents
-        .iter()
-        .filter(|item| filtering_categs.iter().all(|x| item.categories.contains(x)))
-        .cloned()
-        .collect()
+fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Record> {
+    let title = rss_item.title.as_ref()?;
+
+    location_extractor.captures(title).and_then(|capture| {
+        let judet = capture.get(2).unwrap().as_str();
+        let localitate = capture.get(3)?.as_str();
+        let id = rss_item.guid.as_ref()?;
+
+        Option::Some(Record {
+            id: id.value.to_string(),
+            judet: judet.to_string(),
+            localitate: localitate.to_string(),
+            title: rss_item.title.as_ref()?.to_string(),
+            description: rss_item.description.as_ref()?.to_string(),
+        })
+    })
 }
 
 /// Convert the categories from the configuration into RSS categories.
@@ -36,7 +61,7 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
-    use crate::rss_reader::{convert_config_categs, filter_incidents};
+    use crate::rss_reader::convert_config_categs;
     use rss::{Category, ItemBuilder};
 
     #[test]
