@@ -56,7 +56,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
     }
 
     let raw_config = Config::builder()
-        .add_source(config::File::new(&config_cli_arg, FileFormat::Toml))
+        .add_source(config::File::new(config_cli_arg, FileFormat::Toml))
         .add_source(config::Environment::default().separator("__"))
         .build()
         .map_err(|_err| "Could not parse configuration file.");
@@ -66,10 +66,9 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
         debug!("{} = {}", env_var.0, env_var.1)
     }
 
-    let config = raw_config.and_then(|c| {
+    raw_config.and_then(|c| {
         ServiceConfiguration::new(&c).map_err(|_e| "Could not build service configuration struct.")
-    });
-    return config;
+    })
 }
 
 #[cfg(test)]
