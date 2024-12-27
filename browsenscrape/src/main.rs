@@ -1,5 +1,5 @@
 use core::panic;
-use std::{env, ffi::OsStr};
+use std::env;
 
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{info, LevelFilter};
@@ -37,31 +37,30 @@ fn main() {
     let browser_result = Browser::new(
         LaunchOptionsBuilder::default()
             .enable_logging(true)
-            // .args(vec![OsStr::new("--single-process")])
             .build()
             .unwrap(),
-    );
+    )
+    .unwrap();
 
-    info!("right after init");
-    if browser_result.is_err() {
-        panic!("Could not get browser.")
-    }
-    let browser_tab = browser_result.unwrap().new_tab();
+    let browser_tab = browser_result.new_tab();
 
-    info!("right after unwrap");
     match browser_tab {
         Ok(tab) => {
-            info!("right before navigation start");
             let navigation = navigate_to_rss(&tab);
             if navigation.is_err() {
                 let err_msg = navigation.unwrap_err();
                 panic!("Failed navigation: {err_msg}")
             }
 
-            let _content = tab
+            navigation.unwrap();
+
+            let incidents = tab
                 .get_content()
                 .map_err(|_| "Could not get content")
-                .map(|c| parse_rss(&c, &config.categories));
+                .map(|c| parse_rss(&c, &config.categories))
+                .unwrap();
+
+            info!("Incidents: {:?}", incidents);
         }
         Err(_e) => panic!("Could not open browser tab."),
     }
