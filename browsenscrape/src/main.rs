@@ -1,10 +1,8 @@
 use core::panic;
 use std::env;
 
-use common::Record;
 use headless_chrome::Browser;
 use log::LevelFilter;
-use regex::Regex;
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
 
@@ -37,7 +35,10 @@ fn main() {
     let config = config.unwrap();
 
     let browser_result = Browser::default();
-    let browser_tab = browser_result.and_then(|b| b.new_tab());
+    if browser_result.is_err() {
+        panic!("Could not get browser.")
+    }
+    let browser_tab = browser_result.unwrap().new_tab();
 
     match browser_tab {
         Ok(tab) => {

@@ -5,6 +5,7 @@
 
 [workspace]
 members = ["crawler", "web_server", "common", "browsenscrape"]
+resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -29,7 +30,7 @@ reqwest_cookie_store = { version = "*" }
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 
-redis = "0.27.5"
+redis = "0.27.6"
 regex = "1.4.2"
 
 # headless browse

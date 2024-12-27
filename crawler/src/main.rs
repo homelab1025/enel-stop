@@ -1,6 +1,6 @@
 use config::{Config, FileFormat};
 use log::{debug, error, info, LevelFilter};
-use redis::RedisError;
+use redis::{Commands, RedisError};
 use regex::Regex;
 use reqwest::{
     blocking::Client,
@@ -133,8 +133,9 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option
                             let ser = serde_json::to_string(&r).unwrap();
                             info!("Adding record: {} with key {}", ser, id.value());
 
-                            if let Some(ref mut conn) = redis_conn.as_mut() {
+                            if let Some(conn) = redis_conn.as_mut() {
                                 let result: Result<String, RedisError> = conn.set(id.value(), ser);
+
                                 if result.is_err() {
                                     error!("Error saving {}", id.value());
                                 }

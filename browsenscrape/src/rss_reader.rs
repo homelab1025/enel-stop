@@ -21,13 +21,20 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> 
     channel
         .items()
         .iter()
-        .filter(|item| {
-            converted_filters
-                .iter()
-                .all(|needle| item.categories.contains(needle))
-        })
+        .filter(|item| check_categories(item, &converted_filters))
+        // .filter(|item| {
+        //     converted_filters
+        //         .iter()
+        //         .all(|needle| item.categories.contains(needle))
+        // })
         .filter_map(|item| convert_item(item, &location_extractor))
         .collect()
+}
+
+fn check_categories(item: &rss::Item, converted_filters: &[Category]) -> bool {
+    converted_filters
+        .iter()
+        .all(|needle| item.categories.contains(needle))
 }
 
 fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Record> {
@@ -61,8 +68,22 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
-    use crate::rss_reader::convert_config_categs;
-    use rss::{Category, ItemBuilder};
+    use crate::rss_reader::{check_categories, convert_config_categs, parse_rss};
+    use rss::{Category, ChannelBuilder, ItemBuilder};
+
+    const FILTER_CATEG_1: &str = "one";
+    const FILTER_CATEG_2: &str = "two";
+
+    fn generate_categories() -> Vec<Category> {
+        vec![FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
+            .iter()
+            .clone()
+            .map(|f| Category {
+                domain: None,
+                name: f.to_string(),
+            })
+            .collect()
+    }
 
     #[test]
     fn convert_config_categs_works() {
@@ -92,16 +113,8 @@ mod rss_reader_tests {
     }
 
     #[test]
-    fn filter_incidents_correctly() {
-        const FILTER_CATEG_1: &str = "one";
-        const FILTER_CATEG_2: &str = "two";
-
-        let filtering_categs = [FILTER_CATEG_1.to_string(), FILTER_CATEG_2.to_string()]
-            .map(|x| Category {
-                domain: None,
-                name: x,
-            })
-            .to_vec();
+    fn filter_incidents_no_correct_categ() {
+        let filtering_categs = generate_categories();
 
         let incorrect_cats = vec![
             Category {
@@ -114,6 +127,17 @@ mod rss_reader_tests {
             },
         ];
 
+        let result = check_categories(
+            &ItemBuilder::default().categories(incorrect_cats).build(),
+            &filtering_categs,
+        );
+        assert!(!result);
+    }
+
+    #[test]
+    fn filter_incidents_partial() {
+        let filtering_categs = generate_categories();
+
         let partial_correct_cats = vec![
             Category {
                 domain: None,
@@ -125,10 +149,34 @@ mod rss_reader_tests {
             },
         ];
 
+        let result = check_categories(
+            &ItemBuilder::default()
+                .categories(partial_correct_cats)
+                .build(),
+            &filtering_categs,
+        );
+        assert!(!result);
+    }
+
+    #[test]
+    fn filter_incidents_single_cat() {
+        let filtering_categs = generate_categories();
+
         let single_cats = vec![Category {
             domain: None,
             name: FILTER_CATEG_1.to_string(),
         }];
+
+        let result = check_categories(
+            &ItemBuilder::default().categories(single_cats).build(),
+            &filtering_categs,
+        );
+        assert!(!result);
+    }
+
+    #[test]
+    fn filter_incidents_correct() {
+        let filtering_categs = generate_categories();
 
         let correct_cats = vec![
             Category {
@@ -141,28 +189,10 @@ mod rss_reader_tests {
             },
         ];
 
-        let all_incidents = [
-            ItemBuilder::default()
-                .categories(incorrect_cats)
-                .title(Some("incorrect".to_string()))
-                .build(),
-            ItemBuilder::default()
-                .categories(partial_correct_cats)
-                .title(Some("partial_correct".to_string()))
-                .build(),
-            ItemBuilder::default()
-                .categories(single_cats)
-                .title(Some("single_category".to_string()))
-                .build(),
-            ItemBuilder::default()
-                .categories(correct_cats)
-                .title(Some(String::from("correct")))
-                .build(),
-        ];
-
-        let result = filter_incidents(&all_incidents, &filtering_categs);
-
-        assert_eq!(1, result.len());
-        assert_eq!("correct", result.first().unwrap().title.as_ref().unwrap());
+        let result = check_categories(
+            &ItemBuilder::default().categories(correct_cats).build(),
+            &filtering_categs,
+        );
+        assert!(result);
     }
 }
