@@ -87,39 +87,6 @@ fn navigate_to_rss(tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), Str
     Ok(())
 }
 
-// fn extract_items(rss_content: String, filter_categs: &Vec<String>) -> Vec<Record> {
-//     let all_items = rss_reader::parse_rss(&rss_content, filter_categs);
-//     // let filtered_items = filter_items(all_items, filter_categs);
-//     convert_items(all_items)
-// }
-
-// fn convert_items(all_items: Vec<rss::Item>) -> Vec<Record> {
-//     let location_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
-//     let location_extractor = Regex::new(location_extract_pattern).unwrap();
-//
-//     all_items
-//         .iter()
-//         // .filter(|item| true)
-//         .filter_map(|item| {
-//             let title = item.title.as_ref()?;
-//
-//             location_extractor.captures(title).and_then(|capture| {
-//                 let judet = capture.get(2).unwrap().as_str();
-//                 let localitate = capture.get(3)?.as_str();
-//                 let id = item.guid.as_ref()?;
-//
-//                 Option::Some(Record {
-//                     id: id.value.to_string(),
-//                     judet: judet.to_string(),
-//                     localitate: localitate.to_string(),
-//                     title: item.title.as_ref()?.to_string(),
-//                     description: item.description.as_ref()?.to_string(),
-//                 })
-//             })
-//         })
-//         .collect::<Vec<_>>()
-// }
-
 fn get_rss_href(extracted_element: headless_chrome::Element<'_>) -> Result<String, &'static str> {
     match extracted_element.get_attribute_value("href") {
         Ok(Some(href)) => Ok(href),
