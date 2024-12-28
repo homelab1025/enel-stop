@@ -52,13 +52,28 @@ fn main() {
                 panic!("Failed navigation: {err_msg}")
             }
 
-            navigation.unwrap();
+            // navigation.unwrap();
+            let _res = tab.wait_until_navigated();
 
-            let incidents = tab
-                .get_content()
-                .map_err(|_| "Could not get content")
-                .map(|c| parse_rss(&c, &config.categories))
-                .unwrap();
+            let rss_content = match tab.find_element("#webkit-xml-viewer-source-xml") {
+                Ok(real_rss_content) => real_rss_content
+                    .call_js_fn(
+                        r#"
+                            function getInnerHtml() {
+                                return this.innerHTML
+                            }
+                            "#,
+                        vec![],
+                        true,
+                    )
+                    .unwrap()
+                    .value
+                    .unwrap()
+                    .to_string(),
+                Err(_) => tab.get_content().unwrap(),
+            };
+
+            let incidents = parse_rss(&rss_content, &config.categories);
 
             info!("Incidents: {:?}", incidents);
         }
@@ -81,6 +96,8 @@ fn navigate_to_rss(tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), Str
     if rss_href.is_ok() {
         tab.navigate_to(rss_href?.as_str())
             .map_err(|_e| "Could not navigate to the RSS link")?;
+        // workaround to the rendering of the XML by chrome
+        // let _ = tab.reload(true, None).unwrap();
     } else {
         return Err("Could not extrat the rss href".to_string());
     }

@@ -1,10 +1,12 @@
 use common::Record;
-use log::{error, info};
+use log::{debug, error, info};
 use regex::Regex;
 use rss::{Category, Channel};
 
 pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> {
     info!("Filtering for categs: {:?}", filter_categs);
+
+    debug!("Content: {}", rss_content);
 
     let channel = match Channel::read_from(rss_content.as_bytes()) {
         Ok(channel) => channel,
@@ -22,11 +24,6 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> 
         .items()
         .iter()
         .filter(|item| check_categories(item, &converted_filters))
-        // .filter(|item| {
-        //     converted_filters
-        //         .iter()
-        //         .all(|needle| item.categories.contains(needle))
-        // })
         .filter_map(|item| convert_item(item, &location_extractor))
         .collect()
 }
