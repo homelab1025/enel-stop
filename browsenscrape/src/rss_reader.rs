@@ -1,3 +1,4 @@
+use chrono::NaiveDateTime;
 use common::Record;
 use log::{debug, error, info};
 use regex::Regex;
@@ -42,8 +43,19 @@ fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Reco
         let localitate = capture.get(3)?.as_str();
         let id = rss_item.guid.as_ref()?;
 
+        let title_parsing_result = NaiveDateTime::parse_and_remainder(title, "%d.%m.%Y %H:%M");
+
+        let incident_datetime = match title_parsing_result {
+            Ok((incident_datetime, _remaining)) => Some(incident_datetime),
+            Err(e) => {
+                error!("Error when parsing the date from the title: {}", e);
+                None
+            }
+        }?;
+
         Option::Some(Record {
             id: id.value.to_string(),
+            date: incident_datetime.to_string(),
             judet: judet.to_string(),
             localitate: localitate.to_string(),
             title: rss_item.title.as_ref()?.to_string(),

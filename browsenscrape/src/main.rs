@@ -24,7 +24,7 @@ fn main() {
     let config = cli_arg.map(|file_path| configuration::get_configuration(&file_path));
 
     if config.is_none() {
-        panic!("No configuration has been provided.")
+        panic!("No configuration has been provided.");
     }
 
     let config = config.unwrap();

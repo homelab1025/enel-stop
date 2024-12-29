@@ -123,6 +123,7 @@ pub fn start_crawler_service(config: &ServiceConfiguration, redis_client: Option
 
                             let r = common::Record {
                                 id: id.value.to_string(),
+                                date: "01.01.1970 09:00".to_string(),
                                 judet: judet.to_string(),
                                 localitate: localitate.to_string(),
                                 title: title.to_string(),
