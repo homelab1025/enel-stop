@@ -14,9 +14,10 @@ RUN apk update
 # RUN apk add libssl1.1
 RUN apk add libssl3
 
-COPY --from=builder ./target/release/crawler ./target/release/crawler
+WORKDIR /
+COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrape
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
-CMD /target/release/crawler /target/release/config.toml
+CMD /target/release/browsenscrape /target/release/config.toml
 
 FROM alpine_base AS web
 RUN apk add libgcc
