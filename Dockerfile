@@ -23,6 +23,6 @@ FROM alpine_base AS web
 RUN apk add libgcc
 RUN apk add gcompat
 
-COPY --from=builder ./target/release/server ./target/release/server
-RUN chmod +x ./target/release/server
-CMD /target/release/server 8080
+COPY --from=builder ./target/release/web_server ./target/release/web_server
+RUN chmod +x ./target/release/web_server
+CMD /target/release/web_server 8080
