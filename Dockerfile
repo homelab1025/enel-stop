@@ -14,7 +14,7 @@ RUN apk update
 # RUN apk add libssl1.1
 RUN apk add libssl3
 
-WORKDIR /
+# WORKDIR /
 COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrape
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 CMD /target/release/browsenscrape /target/release/config.toml
