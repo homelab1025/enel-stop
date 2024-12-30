@@ -2,6 +2,9 @@ FROM rust:1.82 AS builder
 WORKDIR /
 COPY ./ .
 RUN cargo build --release
+RUN pwd
+RUN ls -al /target
+RUN ls -al /target/release
 
 FROM --platform=$TARGETPLATFORM alpine:3.20.3 AS alpine_base
 ARG TARGETARCH
@@ -19,9 +22,8 @@ COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrap
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 RUN chmod +x ./target/release/browsenscrape
 RUN ls -al /
-RUN "echo '------------------------------------'"
 RUN ls -al /target
-RUN "echo '------------------------------------'"
+RUN ls -al /target/release
 
 ENTRYPOINT [ "/target/release/browsenscrape", "/target/release/config.toml"]
 
