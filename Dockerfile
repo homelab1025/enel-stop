@@ -19,10 +19,10 @@ COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrap
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 CMD /target/release/browsenscrape /target/release/config.toml
 
-FROM alpine_base AS web
-RUN apk add libgcc
-RUN apk add gcompat
-
-COPY --from=builder ./target/release/web_server ./target/release/web_server
-RUN chmod +x ./target/release/web_server
-CMD /target/release/web_server 8080
+# FROM alpine_base AS web
+# RUN apk add libgcc
+# RUN apk add gcompat
+#
+# COPY --from=builder ./target/release/web_server ./target/release/web_server
+# RUN chmod +x ./target/release/web_server
+# CMD /target/release/web_server 8080
