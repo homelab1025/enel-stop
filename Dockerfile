@@ -17,6 +17,7 @@ RUN apk add libssl3
 # WORKDIR /
 COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrape
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
+RUN chmod +x ./target/release/browsenscrape
 CMD /target/release/browsenscrape /target/release/config.toml
 
 # FROM alpine_base AS web
