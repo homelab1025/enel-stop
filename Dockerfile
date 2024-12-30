@@ -18,6 +18,11 @@ RUN apk add libssl3
 COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrape
 COPY --from=builder conf/config-prod.toml ./target/release/config.toml
 RUN chmod +x ./target/release/browsenscrape
+RUN ls -al /
+RUN "echo '------------------------------------'"
+RUN ls -al /target
+RUN "echo '------------------------------------'"
+
 ENTRYPOINT [ "/target/release/browsenscrape", "/target/release/config.toml"]
 
 # FROM alpine_base AS web
