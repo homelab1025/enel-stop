@@ -2,9 +2,6 @@ FROM rust:1.82 AS builder
 WORKDIR /
 COPY ./ .
 RUN cargo build --release
-RUN pwd
-RUN ls -al /target
-RUN ls -al /target/release
 
 FROM --platform=$TARGETPLATFORM alpine:3.20.3 AS alpine_base
 ARG TARGETARCH
@@ -13,18 +10,15 @@ RUN apk update
 RUN apk add libssl3
 
 FROM alpine_base AS crawler
-RUN apk update
+# RUN apk update
 # RUN apk add libssl1.1
-RUN apk add libssl3
+# RUN apk add libssl3
 
 # WORKDIR /
-COPY --from=builder ./target/release/browsenscrape ./target/release/browsenscrape
-COPY --from=builder conf/config-prod.toml ./target/release/config.toml
+COPY --from=builder /target/release/browsenscrape /target/release/browsenscrape
+COPY --from=builder /target/release/conf/config-prod.toml /target/release/config.toml
 RUN chmod +x ./target/release/browsenscrape
-RUN ls -al /
-RUN ls -al /target
-RUN ls -al /target/release
-
+RUN ls -al /target/release/browsenscrape
 ENTRYPOINT [ "/target/release/browsenscrape", "/target/release/config.toml"]
 
 # FROM alpine_base AS web
