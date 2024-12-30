@@ -14,6 +14,8 @@ FROM alpine_base AS crawler
 RUN apk update
 # RUN apk add libssl1.1
 RUN apk add libssl3
+RUN apk add libgcc
+RUN apk add gcompat
 WORKDIR /app
 COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
