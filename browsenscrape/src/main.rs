@@ -30,7 +30,7 @@ fn main() {
     let config = config.unwrap();
 
     if config.is_err() {
-        panic!("some other config issue");
+        panic!("some other config issue: {}", config.unwrap_err());
     }
     let config = config.unwrap();
 

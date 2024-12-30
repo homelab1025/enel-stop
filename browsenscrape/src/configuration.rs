@@ -2,7 +2,7 @@ use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
 
 use config::{Config, FileFormat};
-use log::debug;
+use log::{debug, error, info};
 
 const CONFIG_URL: &str = "service.url";
 const CONFIG_REFRESH_MS: &str = "service.refresh_ms";
@@ -67,7 +67,11 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
     }
 
     raw_config.and_then(|c| {
-        ServiceConfiguration::new(&c).map_err(|_e| "Could not build service configuration struct.")
+        ServiceConfiguration::new(&c).map_err(|e| {
+            // TODO: how to handle these errors?
+            error!("Configuration init error: {}", e);
+            "Could not build service configuration struct."
+        })
     })
 }
 

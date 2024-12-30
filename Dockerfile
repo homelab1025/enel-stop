@@ -2,20 +2,21 @@ FROM rust:1.82 AS builder
 WORKDIR /app
 COPY ./ .
 RUN cargo build --release
-RUN pwd
 
-FROM --platform=$TARGETPLATFORM alpine:3.20.3 AS alpine_base
+# FROM --platform=$TARGETPLATFORM alpine:3.20.3 AS alpine_base
+# ARG TARGETARCH
+# RUN apk update
+# # RUN apk add libssl1.1
+# RUN apk add libssl3
+
+FROM --platform=$TARGETPLATFORM gcr.io/distroless/cc-debian12 as debian_base
 ARG TARGETARCH
-RUN apk update
-# RUN apk add libssl1.1
-RUN apk add libssl3
 
-FROM alpine_base AS crawler
-RUN apk update
-# RUN apk add libssl1.1
-RUN apk add libssl3
-RUN apk add libgcc
-RUN apk add gcompat
+FROM debian_base AS crawler
+# RUN apt-get update
+# RUN apk add libssl3
+# RUN apt-get install libgcc
+# RUN apk add gcompat
 WORKDIR /app
 COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
@@ -23,7 +24,8 @@ COPY --from=builder /app/conf/config-prod.toml /app/config.toml
 # RUN ls -al /
 # RUN ls -al /app
 # RUN ls -al /app/crawler
-CMD /app/crawler /app/config.toml
+# CMD /app/crawler /app/config.toml
+ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
 
 # FROM alpine_base AS web
 # RUN apk add libgcc
