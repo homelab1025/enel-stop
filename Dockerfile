@@ -14,19 +14,11 @@ FROM --platform=$TARGETPLATFORM ghcr.io/linuxcontainers/debian-slim as debian_ba
 ARG TARGETARCH
 
 FROM debian_base AS crawler
-RUN apt update
-RUN apt -y install chromium-driver
-# RUN apk add libssl3
-# RUN apt-get install libgcc
-# RUN apk add gcompat
+RUN apt-get update
+RUN apt-get -y install chromium-driver
 WORKDIR /app
 COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
-# RUN chmod +x /app/crawler
-# RUN ls -al /
-# RUN ls -al /app
-# RUN ls -al /app/crawler
-# CMD /app/crawler /app/config.toml
 ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
 
 # FROM alpine_base AS web
