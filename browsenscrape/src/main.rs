@@ -1,7 +1,6 @@
 use core::panic;
 use std::{
     env,
-    fs::File,
     path::{Path, PathBuf},
 };
 
