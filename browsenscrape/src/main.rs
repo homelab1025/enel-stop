@@ -1,5 +1,9 @@
 use core::panic;
-use std::env;
+use std::{
+    env,
+    fs::File,
+    path::{Path, PathBuf},
+};
 
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{info, LevelFilter};
@@ -34,9 +38,17 @@ fn main() {
     }
     let config = config.unwrap();
 
+    // const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromedriver";
+    // let chromium_path = match Path::new(CHROMIUM_DRIVER_PATH).exists() {
+    //     true => Some(PathBuf::from(CHROMIUM_DRIVER_PATH)),
+    //     false => None,
+    // };
+
     let browser_result = Browser::new(
         LaunchOptionsBuilder::default()
             .enable_logging(true)
+            .sandbox(false)
+            // .path(chromium_path)
             .build()
             .unwrap(),
     )

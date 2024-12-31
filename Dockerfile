@@ -9,11 +9,13 @@ RUN cargo build --release
 # # RUN apk add libssl1.1
 # RUN apk add libssl3
 
-FROM --platform=$TARGETPLATFORM gcr.io/distroless/cc-debian12 as debian_base
+# FROM --platform=$TARGETPLATFORM gcr.io/distroless/cc-debian12 as debian_base
+FROM --platform=$TARGETPLATFORM ghcr.io/linuxcontainers/debian-slim as debian_base
 ARG TARGETARCH
 
 FROM debian_base AS crawler
-# RUN apt-get update
+RUN apt update
+RUN apt -y install chromium-driver
 # RUN apk add libssl3
 # RUN apt-get install libgcc
 # RUN apk add gcompat
