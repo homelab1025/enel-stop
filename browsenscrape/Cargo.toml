@@ -13,3 +13,4 @@ rss = { workspace = true }
 config = { workspace = true }
 regex = { workspace = true }
 chrono = { workspace = true }
+redis = { workspace = true }

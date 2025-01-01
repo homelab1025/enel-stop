@@ -1,8 +1,8 @@
 [service]
-url = "https://www.reteleelectrice.ro/content/dam/retele-electrice/outages/rss/enel_rss_muntenia.xml"
+url = "https://www.reteleelectrice.ro/intreruperi/programate/"
 refresh_ms = 5000
-redis_server = "127.0.0.1"
-store_enabled = false
+# redis_server = "127.0.0.1"
+# store_enabled = false
 
 [filter]
 categories = []

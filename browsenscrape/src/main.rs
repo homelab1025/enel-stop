@@ -12,9 +12,10 @@ use simple_logger::SimpleLogger;
 mod configuration;
 mod rss_reader;
 
-const URL: &str = "https://www.reteleelectrice.ro/intreruperi/programate/";
 const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 const XPATH: &str = "//*[@id='page-wrap']/div/div/div/div/a";
+
+const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromium";
 
 fn main() {
     SimpleLogger::new()
@@ -31,13 +32,24 @@ fn main() {
     }
 
     let config = config.unwrap();
-
     if config.is_err() {
         panic!("some other config issue: {}", config.unwrap_err());
     }
     let config = config.unwrap();
 
-    const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromium";
+    let redis_connection = match config.redis_server {
+        Some(conn_string) => {
+            let client = redis::Client::open(conn_string)
+                .expect("Redis client could not be created. Check connection string or remove it if you don't want to store results.");
+
+            Some(
+                client
+                    .get_connection()
+                    .expect("Could not create connection, even if redis client was created."),
+            )
+        }
+        None => None,
+    };
     let chromium_path = match Path::new(CHROMIUM_DRIVER_PATH).exists() {
         true => Some(PathBuf::from(CHROMIUM_DRIVER_PATH)),
         false => None,
@@ -57,7 +69,7 @@ fn main() {
 
     match browser_tab {
         Ok(tab) => {
-            let navigation = navigate_to_rss(&tab);
+            let navigation = navigate_to_rss(&config.url, &tab);
             if navigation.is_err() {
                 let err_msg = navigation.unwrap_err();
                 panic!("Failed navigation: {err_msg}")
@@ -87,16 +99,20 @@ fn main() {
             let incidents = parse_rss(&rss_content, &config.categories);
 
             info!("Incidents: {:?}", incidents);
+
+            redis_connection.inspect(|_conn| {
+                info!("REDIS CONNECTION DETECTED");
+            });
         }
         Err(_e) => panic!("Could not open browser tab."),
     }
 }
 
-fn navigate_to_rss(tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), String> {
+fn navigate_to_rss(url: &str, tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), String> {
     tab.set_user_agent(USER_AGENT, None, None)
         .map_err(|e| format!("Could not set user agent due to: {}", e))?;
 
-    tab.navigate_to(URL)
+    tab.navigate_to(url)
         .map_err(|_e| "Could not navigate to homepage.")?;
 
     let rss_href = tab
@@ -107,8 +123,6 @@ fn navigate_to_rss(tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), Str
     if rss_href.is_ok() {
         tab.navigate_to(rss_href?.as_str())
             .map_err(|_e| "Could not navigate to the RSS link")?;
-        // workaround to the rendering of the XML by chrome
-        // let _ = tab.reload(true, None).unwrap();
     } else {
         return Err("Could not extrat the rss href".to_string());
     }
