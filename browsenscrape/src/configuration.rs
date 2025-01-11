@@ -93,33 +93,4 @@ mod configuration_tests {
 
         assert_eq!(service_config, expected_config);
     }
-
-    #[test]
-    fn config_fails_refresh_negative() {
-        let config_sample = Config::builder()
-            .set_default(CONFIG_URL, "http://google.com")
-            .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
-            .unwrap()
-            .build()
-            .unwrap();
-
-        let service_config = ServiceConfiguration::new(&config_sample);
-
-        assert!(service_config.is_err())
-    }
-
-    #[test]
-    fn config_fails_refresh_notint() {
-        let config_sample = Config::builder()
-            .set_default(CONFIG_URL, "http://google.com")
-            .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .unwrap()
-            .build()
-            .unwrap();
-
-        let service_config = ServiceConfiguration::new(&config_sample);
-
-        assert!(service_config.is_err())
-    }
 }

@@ -4,7 +4,7 @@ redis_server = "redis://redis-master.redis/"
 store_enabled = false
 
 [filter]
-categories = ["Jud. ILFOV"]
+categories = []
 
 [notifs]
 auth_token = "aaaa"
