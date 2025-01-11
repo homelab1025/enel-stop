@@ -5,7 +5,6 @@ use config::{Config, FileFormat};
 use log::{debug, error};
 
 const CONFIG_URL: &str = "service.url";
-const CONFIG_REFRESH_MS: &str = "service.refresh_ms";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 
@@ -13,7 +12,6 @@ const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 pub struct ServiceConfiguration {
     pub url: String,
     pub categories: Vec<String>,
-    pub refresh_ms: u64,
     pub redis_server: Option<String>,
 }
 
@@ -27,7 +25,6 @@ impl ServiceConfiguration {
                 .into_iter()
                 .map(|x| x.into_string().unwrap())
                 .collect(),
-            refresh_ms: config.get_string(CONFIG_REFRESH_MS)?.parse::<u64>()?,
             redis_server: config.get_string(CONFIG_REDIS_SERVER).ok(),
         };
 
@@ -37,11 +34,7 @@ impl ServiceConfiguration {
 
 impl Display for ServiceConfiguration {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            formatter,
-            "\nurl: {}\ncategories: {:?}\nrefresh_ms: {}",
-            self.url, self.categories, self.refresh_ms
-        )
+        writeln!(formatter, "\nurl: {}\ncategories: {:?}", self.url, self.categories)
     }
 }
 
@@ -76,7 +69,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::{CONFIG_REDIS_SERVER, CONFIG_REFRESH_MS};
+    use crate::configuration::CONFIG_REDIS_SERVER;
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -85,7 +78,6 @@ mod configuration_tests {
         let config_sample = Config::builder()
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REFRESH_MS, 30))
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .unwrap()
             .build()
@@ -95,7 +87,6 @@ mod configuration_tests {
 
         let expected_config = ServiceConfiguration {
             url: "http://google.com".to_string(),
-            refresh_ms: 30,
             categories: vec!["first".to_string(), "second".to_string()],
             redis_server: Some("redis".to_string()),
         };
@@ -108,7 +99,6 @@ mod configuration_tests {
         let config_sample = Config::builder()
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REFRESH_MS, -30))
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .unwrap()
             .build()
@@ -124,7 +114,6 @@ mod configuration_tests {
         let config_sample = Config::builder()
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REFRESH_MS, 30.666))
             .unwrap()
             .build()
             .unwrap();

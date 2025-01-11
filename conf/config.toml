@@ -1,8 +1,6 @@
 [service]
 url = "https://www.reteleelectrice.ro/intreruperi/programate/"
-refresh_ms = 5000
-# redis_server = "127.0.0.1"
-# store_enabled = false
+redis_server = "redis://127.0.0.1/"
 
 [filter]
 categories = []

@@ -198,6 +198,7 @@ dependencies = [
  "redis",
  "regex",
  "rss",
+ "serde_json",
  "simple_logger",
 ]
 

@@ -5,24 +5,22 @@ use std::{
 };
 
 use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::{info, LevelFilter};
+use log::{debug, error, info, LevelFilter};
+use redis::{Commands, RedisError};
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
 
 mod configuration;
 mod rss_reader;
 
-const USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
+const USER_AGENT: &str =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 const XPATH: &str = "//*[@id='page-wrap']/div/div/div/div/a";
 
 const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromium";
 
 fn main() {
-    SimpleLogger::new()
-        .env()
-        .with_level(LevelFilter::Info)
-        .init()
-        .unwrap();
+    SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
 
     let cli_arg = env::args().nth(1);
     let config = cli_arg.map(|file_path| configuration::get_configuration(&file_path));
@@ -37,7 +35,7 @@ fn main() {
     }
     let config = config.unwrap();
 
-    let redis_connection = match config.redis_server {
+    let mut redis_connection = match config.redis_server {
         Some(conn_string) => {
             let client = redis::Client::open(conn_string)
                 .expect("Redis client could not be created. Check connection string or remove it if you don't want to store results.");
@@ -50,6 +48,7 @@ fn main() {
         }
         None => None,
     };
+
     let chromium_path = match Path::new(CHROMIUM_DRIVER_PATH).exists() {
         true => Some(PathBuf::from(CHROMIUM_DRIVER_PATH)),
         false => None,
@@ -75,7 +74,6 @@ fn main() {
                 panic!("Failed navigation: {err_msg}")
             }
 
-            // navigation.unwrap();
             let _res = tab.wait_until_navigated();
 
             let rss_content = match tab.find_element("#webkit-xml-viewer-source-xml") {
@@ -98,11 +96,36 @@ fn main() {
 
             let incidents = parse_rss(&rss_content, &config.categories);
 
-            info!("Incidents: {:?}", incidents);
+            debug!("Incidents: {:?}", incidents);
 
-            redis_connection.inspect(|_conn| {
-                info!("REDIS CONNECTION DETECTED");
-            });
+            if let Some(conn) = redis_connection.as_mut() {
+                let stored_incidents = incidents
+                    .iter()
+                    .map(|incident| {
+                        let ser_inc = match serde_json::to_string(&incident) {
+                            Err(e) => return Err(e.to_string()),
+                            Ok(ser_res) => ser_res,
+                        };
+
+                        let redis_result: Result<String, RedisError> = conn.set(&incident.id, ser_inc);
+
+                        match redis_result {
+                            Err(e) => {
+                                error!("Could not store incident: {}", e);
+                                Err(e.to_string())
+                            }
+                            Ok(rr) => Ok(rr),
+                        }
+                    })
+                    .filter(|incident_result| incident_result.is_ok())
+                    .count();
+
+                info!(
+                    "Stored {} incidents out of {} received.",
+                    stored_incidents,
+                    incidents.len()
+                );
+            }
         }
         Err(_e) => panic!("Could not open browser tab."),
     }
@@ -112,8 +135,7 @@ fn navigate_to_rss(url: &str, tab: &std::sync::Arc<headless_chrome::Tab>) -> Res
     tab.set_user_agent(USER_AGENT, None, None)
         .map_err(|e| format!("Could not set user agent due to: {}", e))?;
 
-    tab.navigate_to(url)
-        .map_err(|_e| "Could not navigate to homepage.")?;
+    tab.navigate_to(url).map_err(|_e| "Could not navigate to homepage.")?;
 
     let rss_href = tab
         .wait_for_xpath(XPATH)

@@ -1,7 +1,6 @@
 [service]
 url = "https://www.reteleelectrice.ro/content/dam/retele-electrice/outages/rss/enel_rss_muntenia.xml"
-refresh_ms = 60000
-redis_server = "redis-master.redis"
+redis_server = "redis://redis-master.redis/"
 store_enabled = false
 
 [filter]
