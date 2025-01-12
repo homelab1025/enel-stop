@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scraper
+  namespace: enel-stop
+spec:
+  schedule: "*/10 * * * *" # Run every 10 minutes
+  jobTemplate:
+    spec:
+      concurrencyPolicy: Replace
+      template:
+        spec:
+          containers:
+            - name: scraper
+              image: ghcr.io/fdiaconeasa/enel-stop-crawler:master
+              imagePullPolicy: Always

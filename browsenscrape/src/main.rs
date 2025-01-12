@@ -35,6 +35,8 @@ fn main() {
     }
     let config = config.unwrap();
 
+    info!("Configuration: {}", config);
+
     let mut redis_connection = match config.redis_server {
         Some(conn_string) => {
             let client = redis::Client::open(conn_string)

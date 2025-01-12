@@ -34,7 +34,11 @@ impl ServiceConfiguration {
 
 impl Display for ServiceConfiguration {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
-        writeln!(formatter, "\nurl: {}\ncategories: {:?}", self.url, self.categories)
+        writeln!(
+            formatter,
+            "\nurl: {}\ncategories: {:?}\nredis_server: {:?}",
+            self.url, self.categories, self.redis_server
+        )
     }
 }
 
@@ -47,7 +51,12 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
 
     let raw_config = Config::builder()
         .add_source(config::File::new(config_cli_arg, FileFormat::Toml))
-        .add_source(config::Environment::default().separator("__"))
+        .add_source(
+            config::Environment::default()
+                .prefix("ENEL")
+                .prefix_separator("_")
+                .separator("__"),
+        )
         .build()
         .map_err(|_err| "Could not parse configuration file.");
 
