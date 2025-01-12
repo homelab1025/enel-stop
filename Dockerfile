@@ -19,6 +19,11 @@ RUN apt-get -y install chromium-driver
 WORKDIR /app
 COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
+# RUN chmod +x /app/crawler
+# RUN ls -al /
+# RUN ls -al /app
+# RUN ls -al /app/crawler
+# CMD /app/crawler /app/config.toml
 ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
 
 # FROM alpine_base AS web
