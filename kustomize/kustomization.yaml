@@ -5,7 +5,6 @@ helmCharts:
     releaseName: enel-redis
     repo: oci://registry-1.docker.io/bitnamicharts
     namespace: enel
-    # valuesFile: redis-values.yaml
     valuesInline:
       architecture: standalone
       metrics:
@@ -16,3 +15,12 @@ helmCharts:
 resources:
   - namespace.yaml
   - cron_deployment.yaml
+
+configMapGenerator:
+  - name: scraper-config
+    options:
+      disableNameSuffixHash: true
+    namespace: enel
+    files:
+      # map the config-prod file to a different named file
+      - config.toml=../conf/config-prod.toml
