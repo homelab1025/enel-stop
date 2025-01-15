@@ -15,6 +15,10 @@ Example: ``exec env service.refresh_ms=1000 RUST_LOG=debug cargo run config.toml
 
 ## TODO
 
-- parse date from the title of the incident and store it as attribute of the record
-- store incidents in redis
-- enable persistence in redis
+- more test coverage
+
+## Learning topics
+
+- Smart pointers, like Arc
+- mocking of structs with impl, without traits
+- web application development
