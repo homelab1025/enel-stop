@@ -70,31 +70,7 @@ fn main() {
 
     match browser_tab {
         Ok(tab) => {
-            let navigation = navigate_to_rss(&config.url, &tab);
-            if navigation.is_err() {
-                let err_msg = navigation.unwrap_err();
-                panic!("Failed navigation: {err_msg}")
-            }
-
-            let _res = tab.wait_until_navigated();
-
-            let rss_content = match tab.find_element("#webkit-xml-viewer-source-xml") {
-                Ok(real_rss_content) => real_rss_content
-                    .call_js_fn(
-                        r#"
-                            function getInnerHtml() {
-                                return this.innerHTML
-                            }
-                            "#,
-                        vec![],
-                        true,
-                    )
-                    .unwrap()
-                    .value
-                    .unwrap()
-                    .to_string(),
-                Err(_) => tab.get_content().unwrap(),
-            };
+            let rss_content = get_rss_content(&config.url, tab);
 
             let incidents = parse_rss(&rss_content, &config.categories);
 
@@ -133,6 +109,36 @@ fn main() {
     }
 }
 
+fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>) -> String {
+    let navigation = navigate_to_rss(starting_url, &tab);
+    if navigation.is_err() {
+        let err_msg = navigation.unwrap_err();
+        panic!("Failed navigation: {err_msg}")
+    }
+
+    let _res = tab.wait_until_navigated();
+
+    let rss_content = match tab.find_element("#webkit-xml-viewer-source-xml") {
+        Ok(real_rss_content) => real_rss_content
+            .call_js_fn(
+                r#"
+                            function getInnerHtml() {
+                                return this.innerHTML
+                            }
+                            "#,
+                vec![],
+                true,
+            )
+            .unwrap()
+            .value
+            .unwrap()
+            .to_string(),
+        Err(_) => tab.get_content().unwrap(),
+    };
+    rss_content
+}
+
+// TODO: get rid of the Arc parameter? Should I though?
 fn navigate_to_rss(url: &str, tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), String> {
     tab.set_user_agent(USER_AGENT, None, None)
         .map_err(|e| format!("Could not set user agent due to: {}", e))?;
