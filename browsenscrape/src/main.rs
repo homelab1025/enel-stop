@@ -20,7 +20,12 @@ const XPATH: &str = "//*[@id='page-wrap']/div/div/div/div/a";
 const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromium";
 
 fn main() {
-    SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
+    SimpleLogger::new()
+        .env()
+        .with_level(LevelFilter::Info)
+        .with_colors(true)
+        .init()
+        .unwrap();
 
     let cli_arg = env::args().nth(1);
     let config = cli_arg.map(|file_path| configuration::get_configuration(&file_path));
