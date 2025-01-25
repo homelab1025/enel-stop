@@ -15,6 +15,9 @@ spec:
             - name: scraper
               image: ghcr.io/fdiaconeasa/enel-stop-crawler:master
               imagePullPolicy: Always
+              resources:
+                limits:
+                  memory: "512Mi"
               volumeMounts:
                 - name: scraper-config-file
                   mountPath: /app/config.toml
