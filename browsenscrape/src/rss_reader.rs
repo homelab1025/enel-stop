@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::NaiveDate;
 use common::Record;
 use log::{debug, error, info};
 use regex::Regex;
@@ -30,9 +30,7 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> 
 }
 
 fn check_categories(item: &rss::Item, converted_filters: &[Category]) -> bool {
-    converted_filters
-        .iter()
-        .all(|needle| item.categories.contains(needle))
+    converted_filters.iter().all(|needle| item.categories.contains(needle))
 }
 
 fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Record> {
@@ -43,12 +41,12 @@ fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Reco
         let localitate = capture.get(3)?.as_str();
         let id = rss_item.guid.as_ref()?;
 
-        let title_parsing_result = NaiveDateTime::parse_and_remainder(title, "%d.%m.%Y %H:%M");
+        let title_parsing_result = NaiveDate::parse_and_remainder(title, "%d.%m.%Y");
 
         let incident_datetime = match title_parsing_result {
             Ok((incident_datetime, _remaining)) => Some(incident_datetime),
             Err(e) => {
-                error!("Error when parsing the date from the title: {}", e);
+                error!("Error when parsing the date from the title({}): {}", title, e);
                 None
             }
         }?;
@@ -159,9 +157,7 @@ mod rss_reader_tests {
         ];
 
         let result = check_categories(
-            &ItemBuilder::default()
-                .categories(partial_correct_cats)
-                .build(),
+            &ItemBuilder::default().categories(partial_correct_cats).build(),
             &filtering_categs,
         );
         assert!(!result);
