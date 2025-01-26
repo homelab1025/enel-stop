@@ -4,6 +4,8 @@ use log::{debug, error, info};
 use regex::Regex;
 use rss::{Category, Channel};
 
+const LOCATION_PATTERN: &str = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
+
 pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> {
     info!("Filtering for categs: {:?}", filter_categs);
 
@@ -17,12 +19,15 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> 
         }
     };
 
-    let location_extract_pattern = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
-    let location_extractor = Regex::new(location_extract_pattern).unwrap();
     let converted_filters = convert_config_categs(filter_categs);
 
-    channel
-        .items()
+    filter_items(channel.items(), converted_filters)
+}
+
+fn filter_items(items: &[rss::Item], converted_filters: Vec<Category>) -> Vec<Record> {
+    let location_extractor = Regex::new(LOCATION_PATTERN).unwrap();
+
+    items
         .iter()
         .filter(|item| check_categories(item, &converted_filters))
         .filter_map(|item| convert_item(item, &location_extractor))
@@ -75,8 +80,13 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
+
     use crate::rss_reader::{check_categories, convert_config_categs};
-    use rss::{Category, ItemBuilder};
+    use common::Record;
+    use regex::Regex;
+    use rss::{Category, Guid, ItemBuilder};
+
+    use super::{convert_item, filter_items, LOCATION_PATTERN};
 
     const FILTER_CATEG_1: &str = "one";
     const FILTER_CATEG_2: &str = "two";
@@ -92,6 +102,119 @@ mod rss_reader_tests {
             .collect()
     }
 
+    #[test]
+    fn filter_success() {
+        let items = [
+            ItemBuilder::default()
+                .title("WRONG title".to_string())
+                .description("this should be skipped".to_string())
+                .guid(Guid {
+                    value: "123".to_string(),
+                    permalink: false,
+                })
+                .categories(generate_categories())
+                .build(),
+            ItemBuilder::default()
+                .title("02.03.2016 Judet: Bucuresti Localitate: Sector 5".to_string())
+                .description("one of a kind".to_string())
+                .guid(Guid {
+                    permalink: false,
+                    value: "62016".to_string(),
+                })
+                .categories(generate_categories())
+                .build(),
+        ];
+
+        let result = filter_items(&items, generate_categories());
+        assert_eq!(1, result.len());
+    }
+
+    #[test]
+    fn convert_item_correct() {
+        let description = "Something something good".to_string();
+        let title = "21.02.1985 06:00 - 08:00 Judet: X Localitate: Y".to_string();
+        println!("{}", title);
+        let id = "123 - my id".to_string();
+        let extractor = Regex::new(LOCATION_PATTERN).unwrap();
+
+        let rss_item = ItemBuilder::default()
+            .categories(vec![Category {
+                domain: None,
+                name: FILTER_CATEG_1.to_string(),
+            }])
+            .title(title.clone())
+            .description(description.clone())
+            .guid(Guid {
+                permalink: false,
+                value: id.clone(),
+            })
+            .build();
+
+        let result = convert_item(&rss_item, &extractor);
+
+        let expected_record = Record {
+            id,
+            date: "1985-02-21".to_string(),
+            judet: "X".to_string(),
+            localitate: "Y".to_string(),
+            description,
+            title,
+        };
+
+        assert_eq!(expected_record, result.unwrap());
+    }
+
+    #[test]
+    fn convert_item_fail_title_parse() {
+        let description = "Something something good".to_string();
+        let title = "21.02.1985 06:00 - 08:00 : X Localitate: Y".to_string();
+        println!("{}", title);
+        let id = "123 - my id".to_string();
+        let extractor = Regex::new(LOCATION_PATTERN).unwrap();
+
+        let rss_item = ItemBuilder::default()
+            .categories(vec![Category {
+                domain: None,
+                name: FILTER_CATEG_1.to_string(),
+            }])
+            .title(title.clone())
+            .description(description.clone())
+            .guid(Guid {
+                permalink: false,
+                value: id.clone(),
+            })
+            .build();
+
+        let result = convert_item(&rss_item, &extractor);
+
+        assert_eq!(None, result);
+    }
+
+    #[test]
+    fn convert_item_fail_date_parse() {
+        let description = "Something something good".to_string();
+        let title = "21198 Judet: X Localitate: Y".to_string();
+        println!("{}", title);
+        let id = "123 - my id".to_string();
+        let extractor = Regex::new(LOCATION_PATTERN).unwrap();
+
+        let rss_item = ItemBuilder::default()
+            .categories(vec![Category {
+                domain: None,
+                name: FILTER_CATEG_1.to_string(),
+            }])
+            .title(title.clone())
+            .description(description.clone())
+            .guid(Guid {
+                permalink: false,
+                value: id.clone(),
+            })
+            .build();
+
+        let result = convert_item(&rss_item, &extractor);
+
+        assert_eq!(None, result);
+    }
     #[test]
     fn convert_config_categs_works() {
         let config_categs = ["one".to_string(), "two".to_string()];
