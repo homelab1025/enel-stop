@@ -10,21 +10,12 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
-tokio = { version = "1.42.0", features = ["full"] }
-warp = "0.3.7"
+tokio = { version = "1.42.0", features = ["macros", "time", "rt-multi-thread"] }
 
 rss = "2.0.5"
 config = "0.15.4"
 log = "0.4.17"
 simple_logger = "5.0.0"
-#replace this with async version
-reqwest = { version = "0.12.9", features = [
-  "blocking",
-  "json",
-  "rustls-tls-native-roots",
-  "cookies",
-] }
-
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 
