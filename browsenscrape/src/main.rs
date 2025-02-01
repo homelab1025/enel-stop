@@ -2,10 +2,16 @@ use core::panic;
 use std::{
     env,
     path::{Path, PathBuf},
+    time::Instant,
 };
 
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{debug, error, info, LevelFilter};
+use prometheus_client::{
+    encoding::text::encode,
+    metrics::{counter::Counter, gauge::Gauge},
+    registry::Registry,
+};
 use redis::{Commands, RedisError};
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
@@ -16,16 +22,33 @@ mod rss_reader;
 const USER_AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36";
 const XPATH: &str = "//*[@id='page-wrap']/div/div/div/div/a";
-
 const CHROMIUM_DRIVER_PATH: &str = "/usr/bin/chromium";
 
 fn main() {
+    let start_time_program = Instant::now();
     SimpleLogger::new()
         .env()
         .with_level(LevelFilter::Info)
         .with_colors(true)
         .init()
         .unwrap();
+
+    let mut metrics_registry = Registry::default();
+    let gauge_full: Gauge = Gauge::default();
+    let gauge_browser: Gauge = Gauge::default();
+    let incidents_count: Counter = Counter::default();
+
+    metrics_registry.register(
+        "incidents_count",
+        "Number of stored incidents.",
+        incidents_count.clone(),
+    );
+    metrics_registry.register("full", "Time it takes to run the whole cron job.", gauge_full.clone());
+    metrics_registry.register(
+        "chrome",
+        "Time it takes to run the browser actions.",
+        gauge_browser.clone(),
+    );
 
     let cli_arg = env::args().nth(1);
     let config = cli_arg.map(|file_path| configuration::get_configuration(&file_path));
@@ -61,6 +84,7 @@ fn main() {
         false => None,
     };
 
+    let start_time_browser = Instant::now();
     let browser_result = Browser::new(
         LaunchOptionsBuilder::default()
             .enable_logging(true)
@@ -103,6 +127,8 @@ fn main() {
                     .filter(|incident_result| incident_result.is_ok())
                     .count();
 
+                incidents_count.inc_by(stored_incidents.try_into().unwrap());
+
                 info!(
                     "Stored {} incidents out of {} received.",
                     stored_incidents,
@@ -112,6 +138,13 @@ fn main() {
         }
         Err(_e) => panic!("Could not open browser tab."),
     }
+
+    gauge_browser.set(start_time_browser.elapsed().as_millis().try_into().unwrap());
+    gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
+
+    let mut buffer = String::new();
+    encode(&mut buffer, &metrics_registry).unwrap();
+    println!("Metrics: {}", buffer);
 }
 
 fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>) -> String {

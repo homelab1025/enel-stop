@@ -10,6 +10,8 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
+prometheus-client = "0.23.1"
+
 tokio = { version = "1.42.0", features = ["macros", "time", "rt-multi-thread"] }
 
 rss = "2.0.5"
@@ -18,6 +20,7 @@ log = "0.4.17"
 simple_logger = "5.0.0"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
+
 
 redis = "0.27.6"
 regex = "1.4.2"

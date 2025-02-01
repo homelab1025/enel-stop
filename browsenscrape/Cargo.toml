@@ -15,3 +15,4 @@ regex = { workspace = true }
 chrono = { workspace = true }
 redis = { workspace = true }
 serde_json = { workspace = true }
+prometheus-client = { workspace = true }
