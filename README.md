@@ -2,6 +2,20 @@
 
 Web crawler that whenever a new maintenance window is reported notifies users of the service using an SMS.
 
+## How to run test coverage
+
+```bash
+cargo llvm-cov --html
+```
+
+## How to vet dependencies
+
+```bash
+cargo vet check
+```
+
+The reports are generated in target/llvm-cov/html and you can serve them directly over http with `python3 -m http.server 8000`.
+
 ## Configuration
 
 The properties in the configuration file can be overwritten by setting environment variables in the shell the service is supposed to run in.
