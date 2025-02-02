@@ -7,10 +7,14 @@ helmCharts:
     namespace: enel
     valuesInline:
       architecture: standalone
-      metrics:
-        enabled: true
       auth:
         enabled: false
+      metrics:
+        enabled: true
+        podMonitor:
+          enabled: true
+        serviceMonitor:
+          enabled: true
 
 resources:
   - namespace.yaml
