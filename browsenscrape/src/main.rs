@@ -6,7 +6,7 @@ use std::{
 };
 
 use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::{debug, error, info, LevelFilter};
+use log::{debug, error, info, warn, LevelFilter};
 use prometheus_client::{
     encoding::text::encode,
     metrics::{counter::Counter, gauge::Gauge},
@@ -33,7 +33,7 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut metrics_registry = Registry::default();
+    let mut metrics_registry = Registry::with_labels([("app".into(), "browsenscrape".into())].into_iter());
     let gauge_full: Gauge = Gauge::default();
     let gauge_browser: Gauge = Gauge::default();
     let incidents_count: Counter = Counter::default();
@@ -142,9 +142,33 @@ fn main() {
     gauge_browser.set(start_time_browser.elapsed().as_millis().try_into().unwrap());
     gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
 
+    if let Some(pushgateway_server) = config.pushgateway_server {
+        let metrics_push = push_metrics(&metrics_registry, &pushgateway_server);
+
+        match metrics_push {
+            Ok(()) => info!("Pushed metrics to prometheus gateway."),
+            Err(err) => warn!("Could not push metrics to prometheus gateway: {}", err),
+        }
+    }
+}
+
+fn push_metrics(metrics_registry: &Registry, pushgateway: &str) -> Result<(), String> {
     let mut buffer = String::new();
-    encode(&mut buffer, &metrics_registry).unwrap();
-    println!("Metrics: {}", buffer);
+    encode(&mut buffer, metrics_registry).map_err(|e| e.to_string())?;
+
+    println!("Metrics: {}", &buffer);
+
+    let http_client = reqwest::blocking::ClientBuilder::new()
+        .build()
+        .map_err(|e| e.to_string())?;
+
+    http_client
+        .post(pushgateway)
+        .body(buffer)
+        .send()
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
 }
 
 fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>) -> String {

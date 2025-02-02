@@ -7,12 +7,14 @@ use log::{debug, error};
 const CONFIG_URL: &str = "service.url";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
+const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
     pub url: String,
     pub categories: Vec<String>,
     pub redis_server: Option<String>,
+    pub pushgateway_server: Option<String>,
 }
 
 impl ServiceConfiguration {
@@ -26,6 +28,7 @@ impl ServiceConfiguration {
                 .map(|x| x.into_string().unwrap())
                 .collect(),
             redis_server: config.get_string(CONFIG_REDIS_SERVER).ok(),
+            pushgateway_server: config.get_string(CONFIG_PUSHGATEWAY_SERVER).ok(),
         };
 
         Ok(service_configuration)
@@ -78,7 +81,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::CONFIG_REDIS_SERVER;
+    use crate::configuration::{CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER};
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -88,6 +91,7 @@ mod configuration_tests {
             .set_default(CONFIG_URL, "http://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
+            .and_then(|x| x.set_default(CONFIG_PUSHGATEWAY_SERVER, "pushgateway"))
             .unwrap()
             .build()
             .unwrap();
@@ -98,6 +102,7 @@ mod configuration_tests {
             url: "http://google.com".to_string(),
             categories: vec!["first".to_string(), "second".to_string()],
             redis_server: Some("redis".to_string()),
+            pushgateway_server: Some("pushgateway".to_string()),
         };
 
         assert_eq!(service_config, expected_config);
