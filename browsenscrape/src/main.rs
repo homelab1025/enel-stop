@@ -33,7 +33,8 @@ fn main() {
         .init()
         .unwrap();
 
-    let mut metrics_registry = Registry::with_labels([("app".into(), "browsenscrape".into())].into_iter());
+    let mut metrics_registry =
+        Registry::with_prefix_and_labels("enel_", [("app".into(), "browsenscrape".into())].into_iter());
     let gauge_full: Gauge = Gauge::default();
     let gauge_browser: Gauge = Gauge::default();
     let incidents_count: Counter = Counter::default();
