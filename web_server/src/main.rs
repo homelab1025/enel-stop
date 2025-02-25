@@ -27,10 +27,10 @@ async fn main() {
     let (tx, mut rx) = watch::channel(0u64);
     let path = Path::new("/tmp/test123");
 
-    let _watcher = tokio::spawn(watch_loadavg_file(tx, path));
+    tokio::spawn(watch_loadavg_file(tx, path));
     let receiver = tokio::spawn(load_receiver(rx, path));
 
-    receiver.await;
+    let _ = receiver.await;
 
     // run_fibonacci(core_count, fibonacci_count);
     // run_fibonacci(core_count / 2, fibonacci_count);
@@ -67,6 +67,7 @@ async fn watch_loadavg_file(tx: watch::Sender<u64>, path: &Path) {
         // This is needed as there is no other await in the method and so the other task will
         // simply not get to run because we are running an infinite loop in this task, hence it
         // never ends.
+        // With await we are telling the runtime that it's fine to take on another task.
         tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
     }
 }
