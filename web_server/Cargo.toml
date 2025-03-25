@@ -7,3 +7,4 @@ edition = "2021"
 tokio = { workspace = true }
 simple_logger = { workspace = true }
 log = { workspace = true }
+axum = { workspace = true }
