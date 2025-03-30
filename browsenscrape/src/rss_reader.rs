@@ -58,7 +58,7 @@ fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Reco
 
         Option::Some(Record {
             id: id.value.to_string(),
-            date: incident_datetime.to_string(),
+            date: incident_datetime,
             judet: judet.to_string(),
             localitate: localitate.to_string(),
             title: rss_item.title.as_ref()?.to_string(),
@@ -82,6 +82,7 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 mod rss_reader_tests {
 
     use crate::rss_reader::{check_categories, convert_config_categs};
+    use chrono::NaiveDate;
     use common::Record;
     use regex::Regex;
     use rss::{Category, Guid, ItemBuilder};
@@ -154,7 +155,8 @@ mod rss_reader_tests {
 
         let expected_record = Record {
             id,
-            date: "1985-02-21".to_string(),
+            // date: "1985-02-21".to_string(),
+            date: NaiveDate::parse_from_str("1985-02-21", "%Y-%m-%d").unwrap(),
             judet: "X".to_string(),
             localitate: "Y".to_string(),
             description,

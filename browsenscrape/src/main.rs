@@ -122,7 +122,20 @@ fn main() {
                                 error!("Could not store incident: {}", e);
                                 Err(e.to_string())
                             }
-                            Ok(rr) => Ok(rr),
+                            Ok(_rr) => {
+                                let timestamp: &i64 =
+                                    &incident.date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
+                                let new_elements: Result<i32, RedisError> =
+                                    conn.zadd("incidents:sorted", &incident.id, timestamp);
+
+                                match new_elements {
+                                    Err(e) => {
+                                        error!("Could not store the key in timestamp sorted set: {}", e);
+                                        Err(e.to_string())
+                                    }
+                                    Ok(res) => Ok(res),
+                                }
+                            }
                         }
                     })
                     .filter(|incident_result| incident_result.is_ok())
@@ -201,7 +214,6 @@ fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>
     rss_content
 }
 
-// TODO: get rid of the Arc parameter? Should I though?
 fn navigate_to_rss(url: &str, tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), String> {
     tab.set_user_agent(USER_AGENT, None, None)
         .map_err(|e| format!("Could not set user agent due to: {}", e))?;

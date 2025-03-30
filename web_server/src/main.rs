@@ -3,7 +3,11 @@ use std::{
     io::{BufRead, BufReader, Error},
 };
 
-use axum::{routing::get, Router};
+use axum::{
+    http::{self, StatusCode},
+    routing::get,
+    Router,
+};
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 use tokio::{net::TcpListener, runtime};
@@ -28,8 +32,8 @@ fn main() {
     });
 }
 
-async fn say_hello() -> &'static str {
-    "Heya!"
+async fn say_hello() -> (http::StatusCode, &'static str) {
+    (StatusCode::OK, "Heya!")
 }
 
 fn get_core_count() -> Result<u8, Error> {
