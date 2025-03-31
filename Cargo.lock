@@ -370,6 +370,8 @@ name = "common"
 version = "0.1.0"
 dependencies = [
  "chrono",
+ "config",
+ "log",
  "serde",
 ]
 
@@ -2697,7 +2699,10 @@ name = "web_server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "common",
  "log",
+ "redis",
+ "serde_json",
  "simple_logger",
  "tokio",
 ]

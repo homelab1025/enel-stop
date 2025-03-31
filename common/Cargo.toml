@@ -7,3 +7,5 @@ edition = "2021"
 
 serde = { workspace = true }
 chrono = { workspace = true }
+config = { workspace = true }
+log = { workspace = true }

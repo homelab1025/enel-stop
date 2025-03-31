@@ -1,7 +1,9 @@
-use chrono::NaiveDate;
-use serde::Serialize;
+pub mod configuration;
 
-#[derive(Debug, Serialize, PartialEq)]
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, PartialEq, Deserialize)]
 pub struct Record {
     pub id: String,
     pub date: NaiveDate,

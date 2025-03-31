@@ -5,6 +5,7 @@ use std::{
     time::Instant,
 };
 
+use common::configuration;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use log::{debug, error, info, warn, LevelFilter};
 use prometheus_client::{
@@ -16,7 +17,6 @@ use redis::{Commands, RedisError};
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
 
-mod configuration;
 mod rss_reader;
 
 const USER_AGENT: &str =
