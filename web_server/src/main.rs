@@ -2,7 +2,6 @@ use std::{
     env,
     fs::File,
     io::{BufRead, BufReader, Error},
-    str::FromStr,
 };
 
 use axum::{

@@ -5,15 +5,15 @@ use std::{
     time::Instant,
 };
 
+use browsenscrape::redis_store::store_record;
 use common::configuration;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::{debug, error, info, warn, LevelFilter};
+use log::{debug, info, warn, LevelFilter};
 use prometheus_client::{
     encoding::text::encode,
     metrics::{counter::Counter, gauge::Gauge},
     registry::Registry,
 };
-use redis::{Commands, RedisError};
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
 
@@ -109,35 +109,7 @@ fn main() {
             if let Some(conn) = redis_connection.as_mut() {
                 let stored_incidents = incidents
                     .iter()
-                    .map(|incident| {
-                        let ser_inc = match serde_json::to_string(&incident) {
-                            Err(e) => return Err(e.to_string()),
-                            Ok(ser_res) => ser_res,
-                        };
-
-                        let redis_result: Result<String, RedisError> = conn.set(&incident.id, ser_inc);
-
-                        match redis_result {
-                            Err(e) => {
-                                error!("Could not store incident: {}", e);
-                                Err(e.to_string())
-                            }
-                            Ok(_rr) => {
-                                let timestamp: &i64 =
-                                    &incident.date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
-                                let new_elements: Result<i32, RedisError> =
-                                    conn.zadd("incidents:sorted", &incident.id, timestamp);
-
-                                match new_elements {
-                                    Err(e) => {
-                                        error!("Could not store the key in timestamp sorted set: {}", e);
-                                        Err(e.to_string())
-                                    }
-                                    Ok(res) => Ok(res),
-                                }
-                            }
-                        }
-                    })
+                    .map(|incident| store_record(incident, conn))
                     .filter(|incident_result| incident_result.is_ok())
                     .count();
 
@@ -156,14 +128,14 @@ fn main() {
     gauge_browser.set(start_time_browser.elapsed().as_millis().try_into().unwrap());
     gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
 
-    if let Some(pushgateway_server) = config.pushgateway_server {
-        let metrics_push = push_metrics(&metrics_registry, &pushgateway_server);
+    config.pushgateway_server.map(|pushgw_server| {
+        let metrics_push = push_metrics(&metrics_registry, &pushgw_server);
 
         match metrics_push {
             Ok(()) => info!("Pushed metrics to prometheus gateway."),
             Err(err) => warn!("Could not push metrics to prometheus gateway: {}", err),
         }
-    }
+    });
 }
 
 fn push_metrics(metrics_registry: &Registry, pushgateway: &str) -> Result<(), String> {

@@ -15,6 +15,16 @@ Web crawler that whenever a new maintenance window is reported notifies users of
 cargo llvm-cov --html
 ```
 
+### Integration test
+
+The project is using testcontainers to run external dependencies. See the following link as podman needs to be installed and a system service for the user needs to be active: <https://stackoverflow.com/questions/71549856/testcontainers-with-podman-in-java-tests>
+
+Also an env variable might need to be set:
+
+```bash
+export DOCKER_HOST=unix://{$XDG_RUNTIME_DIR}/podman/podman.sock
+```
+
 ### How to vet dependencies
 
 ```bash
