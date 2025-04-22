@@ -24,7 +24,12 @@ fn main() {
     let config = load_configuration();
 
     let redis_strig = config.redis_server.expect("Redis server must be configured.");
-    migrate_records(&redis_strig);
+    let client = redis::Client::open(redis_string).expect(
+        "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
+    );
+
+    let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
+    migrate_records(&mut redis_conn);
 
     let core_count = get_core_count().expect("Could not detect number of cores");
 
@@ -63,17 +68,7 @@ fn load_configuration() -> ServiceConfiguration {
 }
 
 /// Blocking function for migrating the records stored in redis to another structure.
-fn migrate_records(redis_string: &str) {
-    let client = redis::Client::open(redis_string).expect(
-        "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
-    );
-
-    let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-
-    create_timestamp_sorted_set(&mut redis_conn);
-}
-
-fn create_timestamp_sorted_set(redis_conn: &mut redis::Connection) {
+fn migrate_records(redis_conn: &mut redis::Connection) {
     let mut cursor = String::from("0");
     loop {
         let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
@@ -86,16 +81,7 @@ fn create_timestamp_sorted_set(redis_conn: &mut redis::Connection) {
             .expect("Could not run SCAN command");
 
         keys.iter().for_each(|key| {
-            info!("KEY {}", key);
-            let record_json: String = cmd("GET").arg(key).query(redis_conn).expect("Could not get the value.");
-            let record: Record = serde_json::from_str(&record_json).expect("Could not deserialize.");
-
-            info!(
-                "Got key {} with time {} so timestamp is {}",
-                record.id,
-                record.date,
-                record.date.and_hms(0, 0, 0).and_utc().timestamp()
-            )
+            create_timestamp_sorted_set(&key);
         });
 
         if next_cursor == "0" {
@@ -104,6 +90,19 @@ fn create_timestamp_sorted_set(redis_conn: &mut redis::Connection) {
         }
         cursor = next_cursor.clone();
     }
+}
+
+fn create_timestamp_sorted_set(key: &String) {
+    info!("KEY {}", key);
+    let record_json: String = cmd("GET").arg(key).query(redis_conn).expect("Could not get the value.");
+    let record: Record = serde_json::from_str(&record_json).expect("Could not deserialize.");
+
+    info!(
+        "Got key {} with time {} so timestamp is {}",
+        record.id,
+        record.date,
+        record.date.and_hms(0, 0, 0).and_utc().timestamp()
+    )
 }
 
 async fn say_hello() -> (http::StatusCode, &'static str) {

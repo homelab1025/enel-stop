@@ -127,7 +127,6 @@ fn main() {
 
     gauge_browser.set(start_time_browser.elapsed().as_millis().try_into().unwrap());
     gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
-
     config.pushgateway_server.map(|pushgw_server| {
         let metrics_push = push_metrics(&metrics_registry, &pushgw_server);
 
