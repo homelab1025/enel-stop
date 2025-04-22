@@ -11,3 +11,5 @@ log = { workspace = true }
 axum = { workspace = true }
 redis = { workspace = true }
 serde_json = { workspace = true }
+testcontainers = { workspace = true }
+chrono = { workspace = true }

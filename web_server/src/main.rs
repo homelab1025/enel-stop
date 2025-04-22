@@ -23,7 +23,7 @@ fn main() {
 
     let config = load_configuration();
 
-    let redis_strig = config.redis_server.expect("Redis server must be configured.");
+    let redis_string = config.redis_server.expect("Redis server must be configured.");
     let client = redis::Client::open(redis_string).expect(
         "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
     );
@@ -81,7 +81,7 @@ fn migrate_records(redis_conn: &mut redis::Connection) {
             .expect("Could not run SCAN command");
 
         keys.iter().for_each(|key| {
-            create_timestamp_sorted_set(&key);
+            create_timestamp_sorted_set(&key, redis_conn);
         });
 
         if next_cursor == "0" {
@@ -92,7 +92,7 @@ fn migrate_records(redis_conn: &mut redis::Connection) {
     }
 }
 
-fn create_timestamp_sorted_set(key: &String) {
+fn create_timestamp_sorted_set(key: &String, redis_conn: &mut redis::Connection) {
     info!("KEY {}", key);
     let record_json: String = cmd("GET").arg(key).query(redis_conn).expect("Could not get the value.");
     let record: Record = serde_json::from_str(&record_json).expect("Could not deserialize.");
