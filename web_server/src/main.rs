@@ -29,11 +29,10 @@ fn main() {
     );
 
     let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-    let migrations: Vec<MigrationFunction> = vec![Box::new(create_timestamp_sorted_set)];
-    call_migration(migrations, &mut redis_conn);
+    let mut migrations: Vec<MigrationFunction> = vec![Box::new(create_timestamp_sorted_set)];
+    call_migration(&mut migrations, &mut redis_conn);
 
     let core_count = get_core_count().expect("Could not detect number of cores");
-
     info!("Detected {} cores.", core_count);
 
     let rt = runtime::Builder::new_multi_thread()

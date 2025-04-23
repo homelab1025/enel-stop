@@ -2,7 +2,6 @@ use common::Record;
 use testcontainers::core::WaitFor;
 use testcontainers::runners::SyncRunner;
 use testcontainers::GenericImage;
-use web_server::call_migration;
 
 const REDIS_TAG: &str = "7.4.2";
 
