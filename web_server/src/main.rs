@@ -9,14 +9,14 @@ use axum::{
     routing::get,
     Router,
 };
-use common::{
-    configuration::{self, ServiceConfiguration},
-    Record,
-};
+use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
-use redis::cmd;
 use simple_logger::SimpleLogger;
 use tokio::{net::TcpListener, runtime};
+use web_server::{call_migration, MigrationFunction};
+use crate::migration::sorted_set::create_timestamp_sorted_set;
+
+mod migration;
 
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
@@ -29,7 +29,8 @@ fn main() {
     );
 
     let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-    migrate_records(&mut redis_conn);
+    let migrations: Vec<MigrationFunction> = vec![Box::new(create_timestamp_sorted_set)];
+    call_migration(migrations, &mut redis_conn);
 
     let core_count = get_core_count().expect("Could not detect number of cores");
 
@@ -65,44 +66,6 @@ fn load_configuration() -> ServiceConfiguration {
     info!("Configuration: {}", config);
 
     config
-}
-
-/// Blocking function for migrating the records stored in redis to another structure.
-fn migrate_records(redis_conn: &mut redis::Connection) {
-    let mut cursor = String::from("0");
-    loop {
-        let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
-            .arg(cursor)
-            .arg("MATCH")
-            .arg("12*")
-            .arg("COUNT")
-            .arg("1000")
-            .query(redis_conn)
-            .expect("Could not run SCAN command");
-
-        keys.iter().for_each(|key| {
-            create_timestamp_sorted_set(&key, redis_conn);
-        });
-
-        if next_cursor == "0" {
-            info!("Wen thru all the keys.");
-            break;
-        }
-        cursor = next_cursor.clone();
-    }
-}
-
-fn create_timestamp_sorted_set(key: &String, redis_conn: &mut redis::Connection) {
-    info!("KEY {}", key);
-    let record_json: String = cmd("GET").arg(key).query(redis_conn).expect("Could not get the value.");
-    let record: Record = serde_json::from_str(&record_json).expect("Could not deserialize.");
-
-    info!(
-        "Got key {} with time {} so timestamp is {}",
-        record.id,
-        record.date,
-        record.date.and_hms(0, 0, 0).and_utc().timestamp()
-    )
 }
 
 async fn say_hello() -> (http::StatusCode, &'static str) {

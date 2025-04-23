@@ -1,13 +1,15 @@
-use redis::Commands;
-use testcontainers::core::WaitFor;
-use testcontainers::GenericImage;
-use testcontainers::runners::SyncRunner;
 use common::Record;
+use testcontainers::core::WaitFor;
+use testcontainers::runners::SyncRunner;
+use testcontainers::GenericImage;
+use web_server::call_migration;
+
+const REDIS_TAG: &str = "7.4.2";
 
 #[test]
-fn test_redis_storage() {
+fn test_redis_storage_migration() {
     let container_port = testcontainers::core::ContainerPort::Tcp(6379);
-    let redis_container = GenericImage::new("redis", "7.4.2")
+    let redis_container = GenericImage::new("redis", REDIS_TAG)
         .with_exposed_port(container_port)
         .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
         .with_wait_for(WaitFor::seconds(5))
@@ -26,6 +28,8 @@ fn test_redis_storage() {
         .expect("Could not connect to own container.")
         .get_connection()
         .expect("Could not create connection.");
+
+    // call_migration(&mut conn);
 
     let incident = Record {
         id: "test_id".to_string(),
