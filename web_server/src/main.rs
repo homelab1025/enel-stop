@@ -14,7 +14,8 @@ use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 use tokio::{net::TcpListener, runtime};
 use web_server::call_migration;
-use web_server::migration::sorted_set::{MigrationProcess, SortedSetMigration};
+use web_server::migration::sorted_set::SortedSetMigration;
+use web_server::migration::MigrationProcess;
 
 pub mod migration;
 fn main() {
@@ -29,7 +30,7 @@ fn main() {
 
     let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
 
-    let mut sorted_set_migration = SortedSetMigration {};
+    let mut sorted_set_migration = SortedSetMigration::default();
     let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
     call_migration(&mut migrations, &mut redis_conn);
 

@@ -1,4 +1,4 @@
-use crate::migration::sorted_set::MigrationProcess;
+use crate::migration::MigrationProcess;
 use log::info;
 use redis::{cmd, ConnectionLike};
 use std::ops::DerefMut;
@@ -26,7 +26,6 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
 
         keys.iter().for_each(|key| {
             migration.migrate(key, redis_conn);
-            // migration(key, redis_conn);
         });
 
         if next_cursor == "0" {
@@ -41,37 +40,27 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
 mod tests {
     use crate::{call_migration, MigrationProcess};
     use redis::Value::SimpleString;
-    use redis::{ConnectionLike, RedisResult, Value};
-
-    struct MockedConnection {}
-    impl ConnectionLike for MockedConnection {
-        fn req_packed_command(&mut self, _cmd: &[u8]) -> RedisResult<Value> {
-            Ok(Value::Array(vec![
-                SimpleString("0".to_string()),
-                Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
-            ]))
-        }
-
-        fn req_packed_commands(&mut self, _cmd: &[u8], _offset: usize, _count: usize) -> RedisResult<Vec<Value>> {
-            Ok(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())])
-        }
-
-        fn get_db(&self) -> i64 {
-            64
-        }
-
-        fn check_connection(&mut self) -> bool {
-            true
-        }
-
-        fn is_open(&self) -> bool {
-            true
-        }
-    }
+    use redis::{cmd, ConnectionLike, Value};
+    use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
     fn call_migration_all() {
-        let mut conn = MockedConnection {};
+        let mut conn = MockRedisConnection::new(vec![
+            MockCmd::new(
+                cmd("SCAN").arg("0").arg("MATCH").arg("12*").arg("COUNT").arg("1000"),
+                Ok(Value::Array(vec![
+                    SimpleString("0".to_string()),
+                    Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
+                ])),
+            ),
+            MockCmd::new(
+                cmd("SCAN").arg("0").arg("MATCH").arg("12*").arg("COUNT").arg("1000"),
+                Ok(Value::Array(vec![
+                    SimpleString("0".to_string()),
+                    Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
+                ])),
+            ),
+        ]);
 
         #[derive(Default)]
         struct MockMigration1 {
