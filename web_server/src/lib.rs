@@ -74,11 +74,11 @@ mod tests {
         let mut conn = MockedConnection {};
 
         #[derive(Default)]
-        struct M1 {
+        struct MockMigration1 {
             key1_counter: i32,
             key2_counter: i32,
         }
-        impl MigrationProcess for M1 {
+        impl MigrationProcess for MockMigration1 {
             fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
                 match key {
                     "key1" => {
@@ -93,7 +93,7 @@ mod tests {
                 }
             }
         }
-        impl M1 {
+        impl MockMigration1 {
             fn get_key1_counter(&self) -> i32 {
                 self.key1_counter
             }
@@ -102,8 +102,37 @@ mod tests {
             }
         }
 
-        let mut m1: M1 = Default::default();
-        let mut m2: M1 = Default::default();
+        #[derive(Default)]
+        struct MockMigration2 {
+            key1_counter: i32,
+            key2_counter: i32,
+        }
+        impl MigrationProcess for MockMigration2 {
+            fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
+                match key {
+                    "key1" => {
+                        println!("Key 1 hit.");
+                        self.key1_counter += 1;
+                    }
+                    "key2" => {
+                        println!("Key 2 hit.");
+                        self.key2_counter += 1;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        impl MockMigration2 {
+            fn get_key1_counter(&self) -> i32 {
+                self.key1_counter
+            }
+            fn get_key2_counter(&self) -> i32 {
+                self.key2_counter
+            }
+        }
+
+        let mut m1: MockMigration1 = Default::default();
+        let mut m2: MockMigration2 = Default::default();
         let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut m1, &mut m2];
 
         call_migration(&mut migrations, &mut conn);
