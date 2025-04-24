@@ -3,16 +3,20 @@ use redis::{cmd, ConnectionLike, RedisResult, Value};
 
 mod migration;
 
-pub type MigrationFunction = Box<dyn FnMut(&String, &mut dyn ConnectionLike)>;
+pub type MigrationFunction = dyn FnMut(&String, &mut dyn ConnectionLike) -> ();
 
-pub fn call_migration(migrations: &mut Vec<MigrationFunction>, redis_conn: &mut dyn ConnectionLike) {
+pub trait MigrationF {
+    fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike);
+}
+
+pub fn call_migration(migrations: &mut Vec<Box<dyn MigrationF>>, redis_conn: &mut dyn ConnectionLike) {
     migrations.iter_mut().for_each(|migration_function| {
         migrate_records(migration_function, redis_conn);
     })
 }
 
 /// Blocking function for migrating the records stored in redis to another structure.
-fn migrate_records(migration: &mut MigrationFunction, redis_conn: &mut dyn ConnectionLike) {
+fn migrate_records(migration: &mut Box<dyn MigrationF>, redis_conn: &mut dyn ConnectionLike) {
     let mut cursor = String::from("0");
     loop {
         let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
@@ -25,7 +29,8 @@ fn migrate_records(migration: &mut MigrationFunction, redis_conn: &mut dyn Conne
             .expect("Could not run SCAN command");
 
         keys.iter().for_each(|key| {
-            migration(key, redis_conn);
+            migration.migrate(key, redis_conn);
+            // migration(key, redis_conn);
         });
 
         if next_cursor == "0" {
@@ -38,20 +43,22 @@ fn migrate_records(migration: &mut MigrationFunction, redis_conn: &mut dyn Conne
 
 #[cfg(test)]
 mod tests {
-    use std::cell::RefCell;
-    use crate::{call_migration, MigrationFunction};
+    use crate::{call_migration, MigrationF};
     use redis::Value::SimpleString;
     use redis::{ConnectionLike, RedisResult, Value};
+    use std::cell::RefCell;
 
-    struct MockedConnection {
-    }
+    struct MockedConnection {}
     impl ConnectionLike for MockedConnection {
         fn req_packed_command(&mut self, cmd: &[u8]) -> RedisResult<Value> {
-            Ok(Value::Array(vec![SimpleString("0".to_string()),Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())])]))
+            Ok(Value::Array(vec![
+                SimpleString("0".to_string()),
+                Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
+            ]))
         }
 
         fn req_packed_commands(&mut self, cmd: &[u8], offset: usize, count: usize) -> RedisResult<Vec<Value>> {
-            Ok(vec![SimpleString("key1".to_string()),SimpleString("key2".to_string())])
+            Ok(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())])
         }
 
         fn get_db(&self) -> i64 {
@@ -66,22 +73,47 @@ mod tests {
             true
         }
     }
+
     #[test]
     fn call_migration_all() {
-        let mut conn = MockedConnection{};
-        let key1_counter=  RefCell::new(0);
+        let mut conn = MockedConnection {};
 
-        let migration1:MigrationFunction = Box::new(|key: &String, _conn: &mut dyn ConnectionLike| {
-            println!("Migrating #1 {}", key);
-            // *key1_counter.borrow_mut() = 123;
-        });
-        let migration2:MigrationFunction = Box::new(|key: &String, _conn: &mut dyn ConnectionLike| {
-            println!("Migrating #2 {}", key);
-            // *key1_counter.borrow_mut() = 5432;
-        });
+        #[derive(Default)]
+        struct M1 {
+            key1_counter: i32,
+            key2_counter: i32,
+        };
+        impl MigrationF for M1 {
+            fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
+                match key {
+                    "key1" => {
+                        println!("Key 1 hit.");
+                        self.key1_counter += 1;
+                    }
+                    "key2" => {
+                        println!("Key 2 hit.");
+                        self.key1_counter += 1;
+                    }
+                    _ => {}
+                }
+            }
+        }
+        impl M1 {
+            fn get_key1_counter(&self) -> i32 {
+                self.key1_counter
+            }
+            fn get_key2_counter(&self) -> i32 {
+                self.key2_counter
+            }
+        }
 
-        let mut migrations = vec![migration1, migration2];
+        let mut m1: M1 = Default::default();
+        let mut m2: M1 = Default::default();
+
+        let mut migrations: Vec<Box<dyn MigrationF>> = vec![Box::new(m1), Box::new(m2)];
+
         call_migration(&mut migrations, &mut conn);
-        println!("{}", key1_counter.borrow());
+
+        // println!("{}", m1.get_key1_counter());
     }
 }
