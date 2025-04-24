@@ -9,7 +9,8 @@ pub mod redis_store {
             Ok(ser_res) => ser_res,
         };
 
-        let redis_result: Result<String, RedisError> = conn.set(&incident.id, ser_inc);
+        let new_key = format!("incident:{}", &incident.id);
+        let redis_result: Result<String, RedisError> = conn.set(&new_key, ser_inc);
 
         match redis_result {
             Err(e) => {
@@ -18,7 +19,7 @@ pub mod redis_store {
             }
             Ok(_rr) => {
                 let timestamp: &i64 = &incident.date.and_hms_opt(0, 0, 0).unwrap().and_utc().timestamp();
-                let new_elements: Result<i32, RedisError> = conn.zadd("incidents:sorted", &incident.id, timestamp);
+                let new_elements: Result<i32, RedisError> = conn.zadd("incidents:sorted", &new_key, timestamp);
 
                 match new_elements {
                     Err(e) => {
