@@ -21,7 +21,7 @@ COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
 ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
 
-FROM alpine_base AS web
+FROM debian_base AS web
 WORKDIR /app
 COPY --from=builder /app/target/release/web_server /app/web_server
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
