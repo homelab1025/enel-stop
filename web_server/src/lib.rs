@@ -1,22 +1,18 @@
+use crate::migration::sorted_set::MigrationProcess;
 use log::info;
-use redis::{cmd, ConnectionLike, RedisResult, Value};
+use redis::{cmd, ConnectionLike};
+use std::ops::DerefMut;
 
-mod migration;
+pub mod migration;
 
-pub type MigrationFunction = dyn FnMut(&String, &mut dyn ConnectionLike) -> ();
-
-pub trait MigrationF {
-    fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike);
-}
-
-pub fn call_migration(migrations: &mut Vec<Box<dyn MigrationF>>, redis_conn: &mut dyn ConnectionLike) {
+pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_conn: &mut dyn ConnectionLike) {
     migrations.iter_mut().for_each(|migration_function| {
-        migrate_records(migration_function, redis_conn);
+        migrate_records(migration_function.deref_mut(), redis_conn);
     })
 }
 
 /// Blocking function for migrating the records stored in redis to another structure.
-fn migrate_records(migration: &mut Box<dyn MigrationF>, redis_conn: &mut dyn ConnectionLike) {
+fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn ConnectionLike) {
     let mut cursor = String::from("0");
     loop {
         let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
@@ -43,21 +39,20 @@ fn migrate_records(migration: &mut Box<dyn MigrationF>, redis_conn: &mut dyn Con
 
 #[cfg(test)]
 mod tests {
-    use crate::{call_migration, MigrationF};
+    use crate::{call_migration, MigrationProcess};
     use redis::Value::SimpleString;
     use redis::{ConnectionLike, RedisResult, Value};
-    use std::cell::RefCell;
 
     struct MockedConnection {}
     impl ConnectionLike for MockedConnection {
-        fn req_packed_command(&mut self, cmd: &[u8]) -> RedisResult<Value> {
+        fn req_packed_command(&mut self, _cmd: &[u8]) -> RedisResult<Value> {
             Ok(Value::Array(vec![
                 SimpleString("0".to_string()),
                 Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
             ]))
         }
 
-        fn req_packed_commands(&mut self, cmd: &[u8], offset: usize, count: usize) -> RedisResult<Vec<Value>> {
+        fn req_packed_commands(&mut self, _cmd: &[u8], _offset: usize, _count: usize) -> RedisResult<Vec<Value>> {
             Ok(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())])
         }
 
@@ -82,8 +77,8 @@ mod tests {
         struct M1 {
             key1_counter: i32,
             key2_counter: i32,
-        };
-        impl MigrationF for M1 {
+        }
+        impl MigrationProcess for M1 {
             fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
                 match key {
                     "key1" => {
@@ -92,7 +87,7 @@ mod tests {
                     }
                     "key2" => {
                         println!("Key 2 hit.");
-                        self.key1_counter += 1;
+                        self.key2_counter += 1;
                     }
                     _ => {}
                 }
@@ -109,11 +104,13 @@ mod tests {
 
         let mut m1: M1 = Default::default();
         let mut m2: M1 = Default::default();
-
-        let mut migrations: Vec<Box<dyn MigrationF>> = vec![Box::new(m1), Box::new(m2)];
+        let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut m1, &mut m2];
 
         call_migration(&mut migrations, &mut conn);
 
-        // println!("{}", m1.get_key1_counter());
+        assert_eq!(1, m1.get_key1_counter());
+        assert_eq!(1, m1.get_key2_counter());
+        assert_eq!(1, m2.get_key1_counter());
+        assert_eq!(1, m2.get_key2_counter());
     }
 }

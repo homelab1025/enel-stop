@@ -13,11 +13,10 @@ use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 use tokio::{net::TcpListener, runtime};
-use web_server::{call_migration, MigrationFunction};
-use crate::migration::sorted_set::create_timestamp_sorted_set;
+use web_server::call_migration;
+use web_server::migration::sorted_set::{MigrationProcess, SortedSetMigration};
 
-mod migration;
-
+pub mod migration;
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
 
@@ -29,7 +28,9 @@ fn main() {
     );
 
     let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-    let mut migrations: Vec<MigrationFunction> = vec![Box::new(create_timestamp_sorted_set)];
+
+    let mut sorted_set_migration = SortedSetMigration {};
+    let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
     call_migration(&mut migrations, &mut redis_conn);
 
     let core_count = get_core_count().expect("Could not detect number of cores");
