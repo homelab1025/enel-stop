@@ -1,6 +1,6 @@
 [service]
 url = "https://www.reteleelectrice.ro/intreruperi/programate/"
-redis_server = "redis://127.0.0.1/"
+redis_server = "redis://192.168.23.107/"
 # pushgateway_server = "https://prometheus-pushgateway-prometheus"
 
 [filter]

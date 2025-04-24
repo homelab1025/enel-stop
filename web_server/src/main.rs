@@ -32,10 +32,7 @@ fn main() {
 
     let mut sorted_set_migration = SortedSetMigration::default();
     let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
-    call_migration(&mut migrations, &mut redis_conn);
-
-    let core_count = get_core_count().expect("Could not detect number of cores");
-    info!("Detected {} cores.", core_count);
+    // call_migration(&mut migrations, &mut redis_conn);
 
     let rt = runtime::Builder::new_multi_thread()
         .enable_io()
@@ -43,7 +40,7 @@ fn main() {
         .expect("Runtime was expected to be created.");
 
     rt.block_on(async move {
-        let app = Router::new().route("/", get(say_hello));
+        let app = Router::new().route("/ping", get(say_hello));
         let listener = TcpListener::bind("0.0.0.0:9090").await.expect("Could not open port.");
 
         axum::serve(listener, app).await.unwrap();
@@ -70,20 +67,5 @@ fn load_configuration() -> ServiceConfiguration {
 }
 
 async fn say_hello() -> (http::StatusCode, &'static str) {
-    (StatusCode::OK, "Heya!")
-}
-
-fn get_core_count() -> Result<u8, Error> {
-    let cpuinfo_file = File::open("/proc/cpuinfo")?;
-
-    let mut count: u8 = 0;
-
-    let reader = BufReader::new(cpuinfo_file);
-    for line in reader.lines() {
-        if line?.starts_with("processor\t:") {
-            count += 1;
-        }
-    }
-
-    Ok(count)
+    (StatusCode::OK, "Heya, world!")
 }

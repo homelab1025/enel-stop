@@ -19,17 +19,12 @@ RUN apt-get -y install chromium-driver
 WORKDIR /app
 COPY --from=builder /app/target/release/browsenscrape /app/crawler
 COPY --from=builder /app/conf/config-prod.toml /app/config.toml
-# RUN chmod +x /app/crawler
-# RUN ls -al /
-# RUN ls -al /app
-# RUN ls -al /app/crawler
-# CMD /app/crawler /app/config.toml
 ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
 
-# FROM alpine_base AS web
-# RUN apk add libgcc
-# RUN apk add gcompat
-#
-# COPY --from=builder ./target/release/web_server ./target/release/web_server
-# RUN chmod +x ./target/release/web_server
+FROM alpine_base AS web
+WORKDIR /app
+COPY --from=builder /app/target/release/web_server /app/web_server
+COPY --from=builder /app/conf/config-prod.toml /app/config.toml
+RUN chmod +x /app/web_server
+ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 # CMD /target/release/web_server 8080

@@ -43,19 +43,19 @@ jobs:
           tags: ${{ steps.meta-crawler.outputs.tags }}
           labels: ${{ steps.meta-crawler.outputs.labels }}
       
-      # - name: Extract metadata (tags, labels) for Docker (web)
-      #   id: meta-web
-      #   uses: docker/metadata-action@v4
-      #   with:
-      #     images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
-      #
-      # - name: Build and push Docker image for web service 
-      #   uses: docker/build-push-action@v4
-      #   with:
-      #     context: .
-      #     platforms: linux/amd64
-      #     push: true
-      #     target: web
-      #     tags: ${{ steps.meta-web.outputs.tags }}
-      #     labels: ${{ steps.meta-web.outputs.labels }}
-    
+      - name: Extract metadata (tags, labels) for Docker (web)
+        id: meta-web
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+
+      - name: Build and push Docker image for web service
+        uses: docker/build-push-action@v4
+        with:
+         context: .
+         platforms: linux/amd64
+         push: true
+         target: web
+         tags: ${{ steps.meta-web.outputs.tags }}
+         labels: ${{ steps.meta-web.outputs.labels }}
+
