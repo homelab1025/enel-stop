@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
     time::Instant,
 };
-
+use std::sync::Arc;
 use browsenscrape::redis_store::store_record;
 use common::configuration;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
@@ -156,8 +156,8 @@ fn push_metrics(metrics_registry: &Registry, pushgateway: &str) -> Result<(), St
     Ok(())
 }
 
-fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>) -> String {
-    let navigation = navigate_to_rss(starting_url, &tab);
+fn get_rss_content(starting_url: &str, tab: Arc<headless_chrome::Tab>) -> String {
+    let navigation = navigate_to_rss(starting_url, tab.clone());
     if navigation.is_err() {
         let err_msg = navigation.unwrap_err();
         panic!("Failed navigation: {err_msg}")
@@ -185,7 +185,7 @@ fn get_rss_content(starting_url: &str, tab: std::sync::Arc<headless_chrome::Tab>
     rss_content
 }
 
-fn navigate_to_rss(url: &str, tab: &std::sync::Arc<headless_chrome::Tab>) -> Result<(), String> {
+fn navigate_to_rss(url: &str, tab: Arc<headless_chrome::Tab>) -> Result<(), String> {
     tab.set_user_agent(USER_AGENT, None, None)
         .map_err(|e| format!("Could not set user agent due to: {}", e))?;
 

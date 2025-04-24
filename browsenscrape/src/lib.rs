@@ -1,8 +1,9 @@
 pub mod redis_store {
+    use common::Record;
     use log::error;
     use redis::{Commands, RedisError};
 
-    pub fn store_record(incident: &common::Record, conn: &mut redis::Connection) -> Result<i32, String> {
+    pub fn store_record(incident: &Record, conn: &mut redis::Connection) -> Result<i32, String> {
         let ser_inc = match serde_json::to_string(&incident) {
             Err(e) => return Err(e.to_string()),
             Ok(ser_res) => ser_res,
