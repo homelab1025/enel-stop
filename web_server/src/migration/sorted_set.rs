@@ -9,6 +9,7 @@ use redis::{cmd, ConnectionLike, RedisError};
 #[derive(Default)]
 pub struct SortedSetMigration {
     failed_migrations: Vec<String>,
+    recycle_bin: Vec<String>,
 }
 
 impl MigrationProcess for SortedSetMigration {
@@ -55,8 +56,15 @@ impl MigrationProcess for SortedSetMigration {
             .arg(new_key)
             .query(redis_conn);
         if zadd_result.is_err() {
-            error!("Could NOT store new key in : {}", zadd_result.unwrap_err());
+            error!("Could NOT ZADD new key: {}", zadd_result.unwrap_err());
             self.failed_migrations.push(record_json);
+            return;
+        }
+        
+        let del_result: Result<u16, RedisError> = cmd("DEL").arg(record.id).query(redis_conn);
+        if del_result.is_err() {
+            error!("Could NOT delete key: {}", del_result.unwrap_err());
+            self.recycle_bin.push(record_json);
         }
     }
 }
@@ -98,6 +106,11 @@ mod tests {
                     .arg("incident:test-id"),
                 Ok(Value::Int(1)),
             ),
+            MockCmd::new(
+                cmd("DEL")
+                    .arg("test-id"),
+                Ok(Value::Int(1)),
+            ),
         ];
         let mut mocked_conn = MockRedisConnection::new(commands);
 
@@ -109,6 +122,13 @@ mod tests {
             0,
             migration.failed_migrations.len(),
             "There should be no failed migrations."
+        );
+
+        println!("Lingering records (migrated, but not removed): {:?}", migration.recycle_bin);
+        assert_eq!(
+            0,
+            migration.recycle_bin.len(),
+            "There should be no lingering records."
         );
     }
 }
