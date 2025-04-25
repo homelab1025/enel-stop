@@ -1,4 +1,4 @@
 /target
 .idea/
-kustomize/charts
-kustomize/output.yaml
+/k8s/base/charts/
+/k8s/output.yaml

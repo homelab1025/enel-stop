@@ -19,6 +19,7 @@ helmCharts:
 resources:
   - namespace.yaml
   - cron_deployment.yaml
+  - web-
 
 configMapGenerator:
   - name: scraper-config
@@ -27,4 +28,4 @@ configMapGenerator:
     namespace: enel
     files:
       # map the config-prod file to a different named file
-      - config.toml=../conf/config-prod.toml
+      - config.toml=../../conf/config-prod.toml

@@ -1,0 +1,7 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: scraper
+  namespace: enel
+spec:
+  schedule: "*/30 * * * *" # Run every 30 minutes

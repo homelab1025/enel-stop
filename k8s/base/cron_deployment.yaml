@@ -4,7 +4,7 @@ metadata:
   name: scraper
   namespace: enel
 spec:
-  schedule: "*/30 * * * *" # Run every 10 minutes
+  schedule: "*/1 * * * *" # Run every 1 minute
   jobTemplate:
     spec:
       # concurrencyPolicy: Replace
