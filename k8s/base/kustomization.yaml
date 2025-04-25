@@ -19,7 +19,7 @@ helmCharts:
 resources:
   - namespace.yaml
   - cron_deployment.yaml
-  - web-
+  - web-deployment.yaml
 
 configMapGenerator:
   - name: scraper-config
