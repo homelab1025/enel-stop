@@ -59,9 +59,3 @@ Example: ``exec env service.refresh_ms=1000 RUST_LOG=debug cargo run config.toml
 - checkout the repository
 - generate the kustomize script in the kustomize folder: ```kubectl kustomize --load-restrictor LoadRestrictionsNone --enable-helm . > output.yaml```
 - apply the output yaml file
-
-## The plan
-- be able to start a web server, deploy it to k8s and access it from outside the k8s cluster
-- expose number of keys in the redis server (NO migration yet)
-- run the migration and expose the incidents in a table 
-- provide pagination
