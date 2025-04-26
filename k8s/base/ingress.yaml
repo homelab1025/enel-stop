@@ -16,4 +16,4 @@ spec:
               service:
                 name: enel-web
                 port:
-                  number: 80
+                  number: 8080

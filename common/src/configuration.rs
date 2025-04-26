@@ -8,7 +8,7 @@ const CONFIG_URL: &str = "service.url";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
-const CONFIG_HTTP_PORT: &str = "http.port";
+const CONFIG_HTTP_PORT: &str = "http_port";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
