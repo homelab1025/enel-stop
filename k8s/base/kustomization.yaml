@@ -22,6 +22,8 @@ resources:
   - namespace.yaml
   - cron_deployment.yaml
   - web-deployment.yaml
+  - service.yaml
+  - ingress.yaml
 
 configMapGenerator:
   - name: scraper-config
