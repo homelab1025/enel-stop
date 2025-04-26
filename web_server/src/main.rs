@@ -41,7 +41,8 @@ fn main() {
 
     rt.block_on(async move {
         let app = Router::new().route("/ping", get(say_hello));
-        let listener = TcpListener::bind("0.0.0.0:9090").await.expect("Could not open port.");
+        let addr = format!("0.0.0.0:{}", config.http_port);
+        let listener = TcpListener::bind(addr).await.expect("Could not open port.");
 
         axum::serve(listener, app).await.unwrap();
     });

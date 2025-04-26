@@ -1,22 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: enel-web-container
+  name: enel-web
   labels:
-    app: enel-web-container
+    app: enel-web
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: enel-web-container
+      app: enel-web
   template:
     metadata:
-      name: enel-web-container
+      name: enel-web
       labels:
-        app: enel-web-container
+        app: enel-web
     spec:
       containers:
-        - name: enel-web-container
+        - name: enel-web
           image: ghcr.io/fdiaconeasa/enel-stop-web:master
           imagePullPolicy: Always
           ports:
