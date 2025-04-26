@@ -33,3 +33,10 @@ configMapGenerator:
     files:
       # map the config-prod file to a different named file
       - config.toml=../../conf/config-prod.toml
+  - name: web-config
+    options:
+      disableNameSuffixHash: true
+    namespace: enel
+    files:
+      # map the config-prod file to a different named file
+      - config.toml=../../conf/config-prod.toml

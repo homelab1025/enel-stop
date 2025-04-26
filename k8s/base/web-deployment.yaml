@@ -30,5 +30,5 @@ spec:
       volumes:
         - name: web-config-file
           configMap:
-            name: scraper-config
+            name: web-config
       
