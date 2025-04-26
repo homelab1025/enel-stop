@@ -8,7 +8,7 @@ const CONFIG_URL: &str = "service.url";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
-const CONFIG_HTTP_PORT: &str = "http_port";
+const CONFIG_HTTP_PORT: &str = "service.http_port";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
@@ -16,7 +16,7 @@ pub struct ServiceConfiguration {
     pub categories: Vec<String>,
     pub redis_server: Option<String>,
     pub pushgateway_server: Option<String>,
-    pub http_port: i64,
+    pub http_port: u32,
 }
 
 impl ServiceConfiguration {
@@ -31,7 +31,7 @@ impl ServiceConfiguration {
                 .collect(),
             redis_server: config.get_string(CONFIG_REDIS_SERVER).ok(),
             pushgateway_server: config.get_string(CONFIG_PUSHGATEWAY_SERVER).ok(),
-            http_port: config.get_int(CONFIG_HTTP_PORT)?,
+            http_port: config.get::<u32>(CONFIG_HTTP_PORT)?,
         };
 
         Ok(service_configuration)
@@ -95,7 +95,7 @@ mod configuration_tests {
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .and_then(|x| x.set_default(CONFIG_PUSHGATEWAY_SERVER, "pushgateway"))
-            .and_then(|x| x.set_default(CONFIG_HTTP_PORT, "8090"))
+            .and_then(|x| x.set_default(CONFIG_HTTP_PORT, 8090))
             .unwrap()
             .build()
             .unwrap();
