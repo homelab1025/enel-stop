@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: arc-runner-set
+    runs-on: github-runners
     permissions:
       contents: read
       packages: write
