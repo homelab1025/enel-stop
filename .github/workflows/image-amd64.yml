@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: homelab-runners
+    runs-on: enel-stop-runners
     permissions:
       contents: read
       packages: write
