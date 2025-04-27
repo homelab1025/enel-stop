@@ -11,7 +11,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: github-runners
+    runs-on: homelab-runners
     permissions:
       contents: read
       packages: write
