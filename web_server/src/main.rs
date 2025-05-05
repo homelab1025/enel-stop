@@ -6,10 +6,13 @@ use axum::{
 };
 use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
+use redis::aio::ConnectionLike;
+use redis::RedisError;
 use simple_logger::SimpleLogger;
 use std::env;
 use std::ops::Deref;
 use std::sync::Arc;
+use tokio::sync::Mutex;
 use tokio::{net::TcpListener, runtime};
 use web_server::migration::sorted_set::SortedSetMigration;
 use web_server::migration::MigrationProcess;
@@ -17,8 +20,12 @@ use web_server::migration::MigrationProcess;
 pub mod migration;
 
 #[derive(Clone)]
-struct AppState {
+struct AppState<T>
+where
+    T: ConnectionLike + Send + Sync,
+{
     ping_msg: String,
+    redis_conn: Arc<Mutex<T>>,
 }
 
 fn main() {
@@ -43,9 +50,15 @@ fn main() {
         .expect("Runtime was expected to be created.");
 
     tokio_runtime.block_on(async move {
-        let state = Arc::new(AppState {
+        let async_redis_conn = client
+            .get_multiplexed_async_connection()
+            .await
+            .expect("Could not ASYNC connect to Redis.");
+
+        let state = AppState {
             ping_msg: "The state of ping.".to_string(),
-        });
+            redis_conn: Arc::new(Mutex::new(async_redis_conn)),
+        };
 
         let app = Router::new()
             .route("/ping", get(say_hello))
@@ -57,6 +70,27 @@ fn main() {
 
         axum::serve(listener, app).await.unwrap();
     });
+}
+
+async fn count_incidents<T>(state: State<AppState<T>>) -> (StatusCode, String)
+where
+    T: ConnectionLike + Send + Sync,
+{
+    let mut conn_guard = state.redis_conn.lock().await;
+    let conn = &mut *conn_guard;
+    let counter: Result<u64, RedisError> = redis::cmd("DBSIZE").query_async(conn).await;
+    let response = format!("Incidents: {}", counter.unwrap());
+
+    (StatusCode::OK, response)
+}
+
+async fn say_hello<T>(state: State<AppState<T>>) -> (StatusCode, String)
+where
+    T: ConnectionLike + Send + Sync,
+{
+    let a = state.ping_msg.deref();
+    let response = format!("Hello {}!", a);
+    (StatusCode::OK, response)
 }
 
 fn load_configuration() -> ServiceConfiguration {
@@ -76,14 +110,4 @@ fn load_configuration() -> ServiceConfiguration {
     info!("Configuration: {}", config);
 
     config
-}
-
-async fn say_hello(State(state): State<Arc<AppState>>) -> (StatusCode, String) {
-    let a = state.as_ref().ping_msg.deref();
-    let response = format!("Hello {}!", a);
-    (StatusCode::OK, response)
-}
-
-async fn count_incidents(State(state): State<Arc<AppState>>) -> (StatusCode, String) {
-    (StatusCode::OK, "Incidents".to_string())
 }
