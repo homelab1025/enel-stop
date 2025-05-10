@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: enel-web
-          image: ghcr.io/fdiaconeasa/enel-stop-web:master
+          image: ghcr.io/homelab1025/enel-stop-web:master
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
