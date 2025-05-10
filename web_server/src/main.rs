@@ -63,9 +63,9 @@ fn main() {
         };
 
         let mut app = Router::new()
-            .route("/ping", get(ping))
-            .route("/incidents/count    ", get(count_incidents))
-            .nest_service("/", ServeDir::new("web_assets"))
+            .route("/api/ping", get(ping))
+            .route("/api/incidents/count    ", get(count_incidents))
+            .fallback_service(ServeDir::new("web_assets"))
             .with_state(state);
 
         if (config.cors_permissive) {
