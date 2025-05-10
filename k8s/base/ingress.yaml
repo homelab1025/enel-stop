@@ -10,10 +10,10 @@ spec:
     - host: enel.lab.wicked
       http:
         paths:
-          - path: /
+          - path: /web
             pathType: Prefix
             backend:
               service:
-                name: enel-web
+                name: enel-webapp
                 port:
                   number: 8080

@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: enel-webapp
+  labels:
+    app: enel-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: enel-webapp
+  template:
+    metadata:
+      name: enel-webapp
+      labels:
+        app: enel-webapp
+    spec:
+      containers:
+        - name: enel-webapp
+          image: ghcr.io/homelab1025/enel-stop-webapp:master
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              protocol: TCP
+      restartPolicy: Always

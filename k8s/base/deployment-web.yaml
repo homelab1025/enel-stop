@@ -26,12 +26,6 @@ spec:
             - mountPath: /app/config.toml
               name: web-config-file
               subPath: config.toml
-        - name: enel-webapp
-          image: ghcr.io/homelab1025/enel-stop-webapp:master
-          imagePullPolicy: Always
-          ports:
-            - containerPort: 80
-              protocol: TCP
       restartPolicy: Always
       volumes:
         - name: web-config-file

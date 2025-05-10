@@ -21,8 +21,10 @@ namespace: enel
 resources:
   - namespace.yaml
   - cron_deployment.yaml
-  - web-deployment.yaml
+  - deployment-web.yaml
+  - deployment-webapp.yaml
   - service.yaml
+  - service-webapp.yaml
   - ingress.yaml
 
 configMapGenerator:
