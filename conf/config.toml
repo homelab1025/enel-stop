@@ -3,6 +3,7 @@ url = "https://www.reteleelectrice.ro/intreruperi/programate/"
 redis_server = "redis://192.168.23.107/"
 # pushgateway_server = "https://prometheus-pushgateway-prometheus"
 http_port = 8080
+cors_permissive = true
 
 [filter]
 categories = []
