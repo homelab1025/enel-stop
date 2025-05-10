@@ -12,9 +12,6 @@ export default defineConfig({
         vueDevTools(),
         tailwindcss(),
     ],
-    build: {
-        outDir: '../web_assets'
-    },
     resolve: {
         alias: {
             '@': fileURLToPath(new URL('./src', import.meta.url))
