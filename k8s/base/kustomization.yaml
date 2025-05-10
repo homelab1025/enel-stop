@@ -25,7 +25,8 @@ resources:
   - deployment-webapp.yaml
   - service.yaml
   - service-webapp.yaml
-  - ingress.yaml
+  - ingress-web.yaml
+  - ingress-webapp.yaml
 
 configMapGenerator:
   - name: scraper-config
