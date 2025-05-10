@@ -3,6 +3,7 @@ url = "https://www.reteleelectrice.ro/intreruperi/programate/"
 redis_server = "redis://enel-redis-master/"
 pushgateway_server = "http://pushgateway-prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics/job/enel"
 http_port = 8080
+cors_permissive = true
 
 [filter]
 categories = []

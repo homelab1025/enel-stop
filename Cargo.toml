@@ -22,7 +22,7 @@ tokio = { version = "1.42.0", features = [
 ] }
 
 axum = { version = "0.8.1" }
-tower-http = {version = "0.6.2", features = ["fs"]}
+tower-http = {version = "0.6.2", features = ["fs", "cors"]}
 
 rss = "2.0.5"
 config = "0.15.11"

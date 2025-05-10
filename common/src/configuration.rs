@@ -9,6 +9,7 @@ const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
 const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
 const CONFIG_HTTP_PORT: &str = "service.http_port";
+const CONFIG_CORS_PERMISSIVE: &str = "service.cors_permissive";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
@@ -17,6 +18,7 @@ pub struct ServiceConfiguration {
     pub redis_server: Option<String>,
     pub pushgateway_server: Option<String>,
     pub http_port: u32,
+    pub cors_permissive: bool,
 }
 
 impl ServiceConfiguration {
@@ -32,6 +34,7 @@ impl ServiceConfiguration {
             redis_server: config.get_string(CONFIG_REDIS_SERVER).ok(),
             pushgateway_server: config.get_string(CONFIG_PUSHGATEWAY_SERVER).ok(),
             http_port: config.get::<u32>(CONFIG_HTTP_PORT)?,
+            cors_permissive: config.get::<bool>(CONFIG_CORS_PERMISSIVE)?,
         };
 
         Ok(service_configuration)
@@ -84,7 +87,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::{CONFIG_HTTP_PORT, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER};
+    use crate::configuration::{CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER};
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -96,6 +99,7 @@ mod configuration_tests {
             .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .and_then(|x| x.set_default(CONFIG_PUSHGATEWAY_SERVER, "pushgateway"))
             .and_then(|x| x.set_default(CONFIG_HTTP_PORT, 8090))
+            .and_then(|x| x.set_default(CONFIG_CORS_PERMISSIVE, "true"))
             .unwrap()
             .build()
             .unwrap();
@@ -108,6 +112,7 @@ mod configuration_tests {
             redis_server: Some("redis".to_string()),
             pushgateway_server: Some("pushgateway".to_string()),
             http_port: 8090,
+            cors_permissive: true,
         };
 
         assert_eq!(service_config, expected_config);

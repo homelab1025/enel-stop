@@ -14,6 +14,7 @@ use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::{net::TcpListener, runtime};
+use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 use web_server::migration::sorted_set::SortedSetMigration;
 use web_server::migration::MigrationProcess;
@@ -61,12 +62,15 @@ fn main() {
             redis_conn: Arc::new(Mutex::new(async_redis_conn)),
         };
 
-        let app = Router::new()
+        let mut app = Router::new()
             .route("/ping", get(ping))
             .route("/incidents/count    ", get(count_incidents))
-            .nest_service("/", ServeDir::new("web_assets"))
+            .fallback_service(ServeDir::new("web_assets"))
             .with_state(state);
 
+        if (config.cors_permissive) {
+            app = app.layer(CorsLayer::permissive());
+        }
         let addr = format!("0.0.0.0:{}", config.http_port);
         let listener = TcpListener::bind(addr).await.expect("Could not open port.");
 
