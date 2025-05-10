@@ -64,7 +64,7 @@ fn main() {
 
         let mut app = Router::new()
             .route("/api/ping", get(ping))
-            .route("/api/incidents/count    ", get(count_incidents))
+            .route("/api/incidents/count", get(count_incidents))
             .fallback_service(ServeDir::new("web_assets"))
             .with_state(state);
 
@@ -85,9 +85,8 @@ where
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
     let counter: Result<u64, RedisError> = redis::cmd("DBSIZE").query_async(conn).await;
-    let response = format!("Incidents: {}", counter.unwrap());
 
-    (StatusCode::OK, response)
+    (StatusCode::OK, counter.unwrap().to_string())
 }
 
 async fn ping<T>(state: State<AppState<T>>) -> (StatusCode, String)
