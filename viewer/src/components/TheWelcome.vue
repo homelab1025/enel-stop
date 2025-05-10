@@ -2,9 +2,12 @@
 import {ref, onMounted} from 'vue';
 
 const status_number = ref(null);
+const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
 onMounted(async() =>{
-  const response = await fetch("/aaa");
+  const apiUrl = `${apiBaseUrl}/ping`;
+  console.log(apiUrl);
+  const response = await fetch(apiUrl);
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
   }
