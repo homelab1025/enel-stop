@@ -45,8 +45,8 @@ impl Display for ServiceConfiguration {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(
             formatter,
-            "\nurl: {}\ncategories: {:?}\nredis_server: {:?}\n pushgateway: {:?}\nhttp_port: {:?}\n",
-            self.url, self.categories, self.redis_server, self.pushgateway_server, self.http_port
+            "\nurl: {}\ncategories: {:?}\nredis_server: {:?}\n pushgateway: {:?}\nhttp_port: {:?}\ncors_permissive: {:?}",
+            self.url, self.categories, self.redis_server, self.pushgateway_server, self.http_port, self.cors_permissive
         )
     }
 }
