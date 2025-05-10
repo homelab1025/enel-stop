@@ -12,7 +12,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: scraper
-              image: ghcr.io/fdiaconeasa/enel-stop-crawler:master
+              image: ghcr.io/homelab1025/enel-stop-crawler:master
               imagePullPolicy: Always
               resources:
                 limits:
