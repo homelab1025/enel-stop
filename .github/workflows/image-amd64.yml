@@ -59,3 +59,18 @@ jobs:
          tags: ${{ steps.meta-web.outputs.tags }}
          labels: ${{ steps.meta-web.outputs.labels }}
 
+      - name: Extract metadata (tags, labels) for Docker (webapp)
+        id: meta-webapp
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp
+
+      - name: Build and push Docker image for web app
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          target: webapp
+          tags: ${{ steps.meta-webapp.outputs.tags }}
+          labels: ${{ steps.meta-webapp.outputs.labels }}

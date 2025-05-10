@@ -28,3 +28,16 @@ COPY --from=builder /app/conf/config-prod.toml /app/config.toml
 RUN chmod +x /app/web_server
 ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 # CMD /target/release/web_server 8080
+
+FROM node:lts-alpine as webapp-build-stage
+WORKDIR /app
+COPY viewer/package*.json ./
+RUN npm install
+COPY viewer/. .
+RUN npm run build
+
+# production stage
+FROM nginx:stable-alpine as webapp
+COPY --from=webapp-build-stage /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
