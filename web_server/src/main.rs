@@ -63,8 +63,8 @@ fn main() {
         };
 
         let mut app = Router::new()
-            .route("/api/ping", get(ping))
-            .route("/api/incidents/count", get(count_incidents))
+            .route("/ping", get(ping))
+            .route("/incidents/count", get(count_incidents))
             .fallback_service(ServeDir::new("web_assets"))
             .with_state(state);
 
