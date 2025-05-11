@@ -40,10 +40,10 @@ fn main() {
         "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
     );
 
-    let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
+    // let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
 
-    let mut sorted_set_migration = SortedSetMigration::default();
-    let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
+    // let mut sorted_set_migration = SortedSetMigration::default();
+    // let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
     // call_migration(&mut migrations, &mut redis_conn);
 
     let tokio_runtime = runtime::Builder::new_multi_thread()
@@ -86,7 +86,10 @@ where
     let conn = &mut *conn_guard;
     let counter: Result<u64, RedisError> = redis::cmd("DBSIZE").query_async(conn).await;
 
-    (StatusCode::OK, counter.unwrap().to_string())
+    match counter {
+        Ok(key_count) => (StatusCode::OK, key_count.to_string()),
+        Err(err) => (StatusCode::INTERNAL_SERVER_ERROR, err.to_string()),
+    }
 }
 
 async fn ping<T>(state: State<AppState<T>>) -> (StatusCode, String)
