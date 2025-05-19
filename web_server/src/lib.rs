@@ -3,7 +3,8 @@ use log::info;
 use redis::{cmd, ConnectionLike};
 use std::ops::DerefMut;
 
-pub mod migration;
+pub mod api;
+mod migration;
 
 pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_conn: &mut dyn ConnectionLike) {
     migrations.iter_mut().for_each(|migration_function| {

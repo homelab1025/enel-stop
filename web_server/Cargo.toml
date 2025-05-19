@@ -9,6 +9,7 @@ common = { path = "../common" }
 simple_logger = { workspace = true }
 log = { workspace = true }
 axum = { workspace = true }
+utoipa = { workspace = true }
 tower-http = { workspace = true }
 redis = { workspace = true }
 redis-test = { workspace = true }

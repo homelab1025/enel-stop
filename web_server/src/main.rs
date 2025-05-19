@@ -1,7 +1,6 @@
 use axum::{routing::get, Router};
 use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
-use redis::aio::{ConnectionLike};
 use simple_logger::SimpleLogger;
 use std::env;
 use std::sync::Arc;
@@ -9,17 +8,8 @@ use tokio::sync::Mutex;
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-
-pub mod migration;
-
-#[derive(Clone)]
-struct AppState<T>
-where
-    T: ConnectionLike + Send + Sync,
-{
-    ping_msg: String,
-    redis_conn: Arc<Mutex<T>>,
-}
+use web_server::api;
+use web_server::api::AppState;
 
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
@@ -67,50 +57,6 @@ fn main() {
 
         axum::serve(listener, app).await.unwrap();
     });
-}
-
-mod api {
-    use crate::AppState;
-    use axum::extract::State;
-    use axum::http::StatusCode;
-    use axum::Json;
-    use redis::aio::ConnectionLike;
-    use redis::RedisError;
-    use serde::Serialize;
-    use std::ops::Deref;
-
-    #[derive(Debug, Serialize, Clone)]
-    pub struct RecordCount {
-        count: u64,
-    }
-
-    #[derive(Debug, Serialize, Clone)]
-    pub struct Ping {
-        ping: String,
-    }
-
-    pub async fn count_incidents<T>(state: State<AppState<T>>) -> Result<Json<RecordCount>, (StatusCode, String)>
-    where
-        T: ConnectionLike + Send + Sync,
-    {
-        let mut conn_guard = state.redis_conn.lock().await;
-        let conn = &mut *conn_guard;
-        let counter: Result<u64, RedisError> = redis::cmd("DBSIZE").query_async(conn).await;
-
-        match counter {
-            Ok(key_count) => Ok(Json(RecordCount { count: key_count })),
-            Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
-        }
-    }
-
-    pub async fn ping<T>(state: State<AppState<T>>) -> Result<Json<Ping>, (StatusCode, String)>
-    where
-        T: ConnectionLike + Send + Sync,
-    {
-        let a = state.ping_msg.deref();
-        let response = format!("Hello {}!", a);
-        Ok(Json(Ping { ping: response }))
-    }
 }
 
 fn load_configuration() -> ServiceConfiguration {
