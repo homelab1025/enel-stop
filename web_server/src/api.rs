@@ -20,11 +20,9 @@ where
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(
-        ping, count_incidents
-    ),
+    paths(ping, count_incidents),
     components(schemas(RecordCount, Ping)),
-    info(title = "Test API")
+    info(title = "Test API", license(name = "hey", identifier = "CC-BY-ND-4.0"))
 )]
 pub struct ApiDoc;
 
@@ -42,7 +40,7 @@ pub struct Ping {
         get,
         path = "/incidents/count",
         responses(
-            (status=200, description = "Count the number of records in the DB."),
+            (status=200, description = "Count the number of records in the DB.", body=[RecordCount]),
             (status=500, description = "Error counting the number of records in the DB."),
         )
     )]
@@ -64,7 +62,7 @@ where
     get,
     path = "/ping",
     responses(
-            (status=200, description = "Respond with a pong."),
+            (status=200, description = "Respond with a pong.", body=[Ping]),
             (status=500, description = "Server is not ready to serve."),
     )
 )]
