@@ -71,5 +71,5 @@ Example: ``exec env service.refresh_ms=1000 RUST_LOG=debug cargo run config.toml
 Generate the openapi spec using the api_get app.
 
 ```bash
-openapi-generator generate -g typescript-axios -i openapi.yml -o viewer-ts/src/lib/server/
+openapi-generator generate -g typescript-axios -i openapi.yml -o webapp/src/lib/server/
 ```
