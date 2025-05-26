@@ -22,6 +22,9 @@ where
 #[openapi(
     paths(ping, count_incidents),
     components(schemas(RecordCount, Ping)),
+    servers(
+        (url="https://enel.lab.wicked:8443/api", description="homelab")
+    ),
     info(title = "Test API", license(name = "hey", identifier = "CC-BY-ND-4.0"))
 )]
 pub struct ApiDoc;
