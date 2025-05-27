@@ -11,7 +11,7 @@ let server_api = new DefaultApi(configuration);
 
 onMounted(async () => {
   let {status, data} = await server_api.ping();
-  response.value = data as string;
+  response.value = String(data);
   console.log(status);
 })
 

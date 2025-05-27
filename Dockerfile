@@ -31,9 +31,9 @@ ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 
 FROM node:lts-alpine as webapp-build-stage
 WORKDIR /app
-COPY viewer/package*.json ./
+COPY webapp/package*.json ./
 RUN npm install
-COPY viewer/. .
+COPY webapp/. .
 RUN npm run build
 
 # production stage
