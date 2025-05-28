@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test
     - name: Build
       run: cargo build --release
     - name: Build API spec
@@ -26,6 +26,9 @@ jobs:
   build-and-push-image-crawler:
     runs-on: self-hosted
     needs: build
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Log in to the Container registry
         uses: docker/login-action@v2
