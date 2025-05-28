@@ -76,6 +76,8 @@ jobs:
       contents: read
       packages: write
     steps:
+      - name: Generate TS sources
+        run: openapi-generator generate -g typescript-axios -i openapi.yml -o webapp/src/lib/server/
       - name: Install dependencies
         working-directory: ./webapp
         run: npm install

@@ -9,6 +9,12 @@ Web crawler that whenever a new maintenance window is reported notifies users of
 
 ## Development Tools
 
+### Dependencies
+- npm
+- cargo
+- docker (rootless or runnable by non-root)
+- openapi-generator
+
 ### How to run test coverage
 
 ```bash
