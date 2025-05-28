@@ -15,7 +15,7 @@ RUN chmod +x /app/web_server
 ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 
 FROM nginx:stable-alpine as webapp
-COPY dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY webapp/dist /usr/share/nginx/html
+COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
