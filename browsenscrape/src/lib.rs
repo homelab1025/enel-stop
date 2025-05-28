@@ -9,7 +9,7 @@ pub mod redis_store {
             Ok(ser_res) => ser_res,
         };
 
-        let new_key = format!("incident:{}", &incident.id);
+        let new_key = generate_redis_key(&incident.id);
         let redis_result: Result<String, RedisError> = conn.set(&new_key, ser_inc);
 
         match redis_result {
@@ -30,5 +30,9 @@ pub mod redis_store {
                 }
             }
         }
+    }
+
+    pub fn generate_redis_key(incident_id: &str) -> String {
+        format!("incident:{}", incident_id)
     }
 }

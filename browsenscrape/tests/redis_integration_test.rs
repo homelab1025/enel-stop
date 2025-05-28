@@ -1,4 +1,4 @@
-use browsenscrape::redis_store::store_record;
+use browsenscrape::redis_store::{generate_redis_key, store_record};
 use common::Record;
 use redis::Commands;
 use testcontainers::{core::WaitFor, runners::SyncRunner, GenericImage};
@@ -39,8 +39,9 @@ fn test_redis_storage() {
 
     let _res = store_record(&incident, &mut conn);
 
+    let redis_key = generate_redis_key("test_id");
     assert_eq!(
-        conn.get::<String, String>("test_id".to_string()).unwrap(),
+        conn.get::<String, String>(redis_key.to_string()).unwrap(),
         "{\"id\":\"test_id\",\"date\":\"2023-10-01\",\"judet\":\"test_judet\",\"localitate\":\"test_localitate\",\"title\":\"test_title\",\"description\":\"test_description\"}"
     );
 }
