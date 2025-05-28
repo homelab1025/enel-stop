@@ -23,7 +23,7 @@ jobs:
     - name: Build API spec
       run: cargo run -p api_gen
 
-  build-and-push-image-crawler:
+  build-and-push-image-server:
     runs-on: self-hosted
     needs: build
     permissions:
@@ -69,3 +69,39 @@ jobs:
           tags: ${{ steps.meta-web.outputs.tags }}
           labels: ${{ steps.meta-web.outputs.labels }}
 
+  build-and-push-webapp:
+    runs-on: self-hosted
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Install dependencies
+        working-directory: ./webapp
+        run: npm install
+      - name: Build Webapp
+        working-directory: ./webapp
+        run: npm run build
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker (webapp)
+        id: meta-webapp
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp
+
+      - name: Build and push Docker image for web app
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          target: webapp
+          tags: ${{ steps.meta-webapp.outputs.tags }}
+          labels: ${{ steps.meta-webapp.outputs.labels }}
