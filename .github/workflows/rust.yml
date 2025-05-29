@@ -44,7 +44,7 @@ jobs:
         key:  target-${{ github.run_id }}-${{ github.run_attempt }}
         path: ${{env.CACHED_PATHS}}
 
-  build-and-push-image-server:
+  build-and-push-image-crawler:
     runs-on: self-hosted
     needs: build
     permissions:
@@ -81,6 +81,27 @@ jobs:
           tags: ${{ steps.meta-crawler.outputs.tags }}
           labels: ${{ steps.meta-crawler.outputs.labels }}
 
+  build-and-push-image-webservice:
+    runs-on: self-hosted
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cache target
+        uses: actions/cache@v4
+        with:
+          key: target-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{env.CACHED_PATHS}}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Extract metadata (tags, labels) for Docker (web)
         id: meta-web
         uses: docker/metadata-action@v4
@@ -96,6 +117,27 @@ jobs:
           target: web
           tags: ${{ steps.meta-web.outputs.tags }}
           labels: ${{ steps.meta-web.outputs.labels }}
+
+  build-and-push-image-migration:
+    runs-on: self-hosted
+    needs: build
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Cache target
+        uses: actions/cache@v4
+        with:
+          key: target-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{env.CACHED_PATHS}}
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract metadata (tags, labels) for Docker (migration)
         id: meta-migration

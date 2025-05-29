@@ -1,5 +1,4 @@
 use redis::ConnectionLike;
-use std::cmp::Ordering;
 
 pub mod sorted_set;
 
