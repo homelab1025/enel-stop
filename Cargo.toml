@@ -32,7 +32,7 @@ redis-test = { version = "0.10.0", features = ["bytes"] }
 
 regex = "1.4.2"
 
-chrono = { version = "0.4.39", features = ["serde"] }
+chrono = { version = "0.4.41", features = ["serde"] }
 
 # headless browse
 headless_chrome = { git = "https://github.com/rust-headless-chrome/rust-headless-chrome", features = [
