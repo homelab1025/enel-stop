@@ -1,7 +1,7 @@
-use log::info;
-use redis::{ConnectionLike, cmd};
-use std::ops::DerefMut;
 use crate::migrations::MigrationProcess;
+use log::{error, info};
+use redis::{ConnectionLike, RedisError, cmd};
+use std::ops::DerefMut;
 
 pub mod migrations;
 
@@ -33,6 +33,16 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
             break;
         }
         cursor = next_cursor.clone();
+    }
+
+    let version_result: Result<u16, RedisError> = cmd("INCR").arg("db_version").query(redis_conn);
+    match version_result {
+        Ok(version) => {
+            info!("New version: {}", version)
+        }
+        Err(err) => {
+            error!("Could not increment version, but ran the migration function: {}", err)
+        }
     }
 }
 
