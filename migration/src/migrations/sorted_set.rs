@@ -1,7 +1,7 @@
-use crate::migration::MigrationProcess;
 use common::Record;
 use log::{debug, error};
 use redis::{cmd, ConnectionLike, RedisError};
+use crate::migrations::MigrationProcess;
 
 /// CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.
 /// NEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.
@@ -71,11 +71,11 @@ impl MigrationProcess for SortedSetMigration {
 
 #[cfg(test)]
 mod tests {
-    use crate::migration::sorted_set::SortedSetMigration;
-    use crate::migration::MigrationProcess;
     use common::Record;
     use redis::{cmd, Value};
     use redis_test::{MockCmd, MockRedisConnection};
+    use crate::migrations::MigrationProcess;
+    use crate::migrations::sorted_set::SortedSetMigration;
 
     #[test]
     fn test_migrate_happy_path() {

@@ -21,12 +21,6 @@ fn main() {
         "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
     );
 
-    // let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-
-    // let mut sorted_set_migration = SortedSetMigration::default();
-    // let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
-    // call_migration(&mut migrations, &mut redis_conn);
-
     let tokio_runtime = runtime::Builder::new_multi_thread()
         .enable_io()
         .build()
