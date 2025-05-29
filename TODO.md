@@ -1,13 +1,13 @@
 # The plan
 
 ## TODO
-- use openapi for generating the structures
 - move the migration to another workspace so to run it independently
 - show keys and json values (no pagination)
 - run the migration and expose the incidents in a table
 - provide pagination
 
 ## DONE
+- use openapi for generating the structures
 - build container for SPA and serve static files with nginx
 - basic SPA
 - expose number of keys in the redis server (NO migration yet)
