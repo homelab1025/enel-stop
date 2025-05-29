@@ -13,7 +13,7 @@ env:
     target/release/browsenscrape
     target/release/migration
     target/release/web_server
-    ${{env.OPENAPI_SPEC_PATH}}
+    target/release/openapi.yaml
 
 jobs:
   build:
