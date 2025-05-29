@@ -12,8 +12,8 @@ env:
   CACHED_PATHS: |
     target/release/browsenscrape
     target/release/migration
-    target/release/
-    ${{OPENAPI_SPEC_PATH}}
+    target/release/web_server
+    target/release/openapi.yaml
 
 jobs:
   build:
