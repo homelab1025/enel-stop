@@ -97,21 +97,21 @@ jobs:
           tags: ${{ steps.meta-web.outputs.tags }}
           labels: ${{ steps.meta-web.outputs.labels }}
 
-      - name: Extract metadata (tags, labels) for Docker (migrator)
-        id: meta-migrator
+      - name: Extract metadata (tags, labels) for Docker (migration)
+        id: meta-migration
         uses: docker/metadata-action@v4
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration
 
-      - name: Build and push Docker image for migrator
+      - name: Build and push Docker image for migration
         uses: docker/build-push-action@v4
         with:
           context: .
           platforms: linux/amd64
           push: true
-          target: migrator
-          tags: ${{ steps.meta-migrator.outputs.tags }}
-          labels: ${{ steps.meta-migrator.outputs.labels }}
+          target: migration
+          tags: ${{ steps.meta-migration.outputs.tags }}
+          labels: ${{ steps.meta-migration.outputs.labels }}
 
   build-and-push-webapp:
     runs-on: self-hosted

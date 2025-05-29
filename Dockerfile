@@ -14,11 +14,11 @@ COPY conf/config-prod.toml /app/config.toml
 RUN chmod +x /app/web_server
 ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 
-FROM debian_base AS migrator
-COPY target/release/migrator /app/migrator
+FROM debian_base AS migration
+COPY target/release/migration /app/migration
 COPY conf/config-prod.toml /app/config.toml
-RUN chmod +x /app/migrator
-ENTRYPOINT [ "/app/migrator", "/app/config.toml" ]
+RUN chmod +x /app/migration
+ENTRYPOINT [ "/app/migration", "/app/config.toml" ]
 
 FROM nginx:stable-alpine as webapp
 COPY webapp/dist /usr/share/nginx/html
