@@ -98,7 +98,7 @@ jobs:
           labels: ${{ steps.meta-web.outputs.labels }}
 
       - name: Extract metadata (tags, labels) for Docker (migrator)
-        id: meta-web
+        id: meta-migrator
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migrator
@@ -110,8 +110,8 @@ jobs:
           platforms: linux/amd64
           push: true
           target: migrator
-          tags: ${{ steps.meta-web.outputs.tags }}
-          labels: ${{ steps.meta-web.outputs.labels }}
+          tags: ${{ steps.meta-migrator.outputs.tags }}
+          labels: ${{ steps.meta-migrator.outputs.labels }}
 
   build-and-push-webapp:
     runs-on: self-hosted
