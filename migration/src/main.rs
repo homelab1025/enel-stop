@@ -22,6 +22,7 @@ fn main() {
 
     let mut sorted_set_migration = SortedSetMigration::default();
     let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
+    migrations.sort_by_key(|f| f.get_start_version());
     call_migration(&mut migrations, &mut redis_conn);
 }
 

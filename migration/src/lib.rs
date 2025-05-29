@@ -1,14 +1,26 @@
 use crate::migrations::MigrationProcess;
 use log::{error, info};
-use redis::{ConnectionLike, RedisError, cmd};
+use redis::{cmd, ConnectionLike, RedisError};
 use std::ops::DerefMut;
 
 pub mod migrations;
 
+const DB_VERSION_KEY: &str = "db_version";
+
 pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_conn: &mut dyn ConnectionLike) {
-    migrations.iter_mut().for_each(|migration_function| {
-        migrate_records(migration_function.deref_mut(), redis_conn);
-    })
+    let current_version: Result<u64, RedisError> = cmd("GET").arg(DB_VERSION_KEY).query(redis_conn);
+
+    let current_version = match current_version {
+        Ok(db_version) => db_version,
+        Err(err) => panic!("{}", err),
+    };
+
+    migrations
+        .iter_mut()
+        .filter(|migration_function| migration_function.get_start_version() >= current_version)
+        .for_each(|migration_function| {
+            migrate_records(migration_function.deref_mut(), redis_conn);
+        })
 }
 
 /// Blocking function for migrating the records stored in redis to another structure.
@@ -35,7 +47,8 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
         cursor = next_cursor.clone();
     }
 
-    let version_result: Result<u16, RedisError> = cmd("INCR").arg("db_version").query(redis_conn);
+    // TODO: actually test the version incr
+    let version_result: Result<u16, RedisError> = cmd("INCR").arg(DB_VERSION_KEY).query(redis_conn);
     match version_result {
         Ok(version) => {
             info!("New version: {}", version)
@@ -48,14 +61,15 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
 
 #[cfg(test)]
 mod tests {
-    use crate::{MigrationProcess, call_migration};
+    use crate::{call_migration, MigrationProcess, DB_VERSION_KEY};
     use redis::Value::SimpleString;
-    use redis::{ConnectionLike, Value, cmd};
+    use redis::{cmd, ConnectionLike, Value};
     use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
     fn call_migration_all() {
         let mut conn = MockRedisConnection::new(vec![
+            MockCmd::new(cmd("GET").arg(DB_VERSION_KEY), Ok(Value::Int(0))),
             MockCmd::new(
                 cmd("SCAN").arg("0").arg("MATCH").arg("12*").arg("COUNT").arg("1000"),
                 Ok(Value::Array(vec![
@@ -63,6 +77,7 @@ mod tests {
                     Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
                 ])),
             ),
+            MockCmd::new(cmd("INCR").arg(DB_VERSION_KEY), Ok(Value::Int(1))),
             MockCmd::new(
                 cmd("SCAN").arg("0").arg("MATCH").arg("12*").arg("COUNT").arg("1000"),
                 Ok(Value::Array(vec![
@@ -70,6 +85,7 @@ mod tests {
                     Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
                 ])),
             ),
+            MockCmd::new(cmd("INCR").arg(DB_VERSION_KEY), Ok(Value::Int(2))),
         ]);
 
         #[derive(Default)]
@@ -77,6 +93,7 @@ mod tests {
             key1_counter: i32,
             key2_counter: i32,
         }
+
         impl MigrationProcess for MockMigration1 {
             fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
                 match key {
@@ -90,6 +107,10 @@ mod tests {
                     }
                     _ => {}
                 }
+            }
+
+            fn get_start_version(&self) -> u64 {
+                0
             }
         }
         impl MockMigration1 {
@@ -119,6 +140,9 @@ mod tests {
                     }
                     _ => {}
                 }
+            }
+            fn get_start_version(&self) -> u64 {
+                1
             }
         }
         impl MockMigration2 {

@@ -67,6 +67,10 @@ impl MigrationProcess for SortedSetMigration {
             self.recycle_bin.push(record_json);
         }
     }
+fn get_start_version(&self) -> u64 {
+    0
+}
+
 }
 
 #[cfg(test)]
