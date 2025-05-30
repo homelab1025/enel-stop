@@ -18,7 +18,7 @@ FROM debian_base AS migration
 COPY target/release/migration /app/migration
 COPY conf/config-prod.toml /app/config.toml
 RUN chmod +x /app/migration
-ENTRYPOINT [ "/app/migration", "/app/config.toml" ]
+CMD [ "/app/migration", "/app/config.toml" ]
 
 FROM nginx:stable-alpine as webapp
 COPY webapp/dist /usr/share/nginx/html
