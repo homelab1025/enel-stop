@@ -1,10 +1,11 @@
 use common::configuration;
 use log::LevelFilter;
+use migration::call_migration;
+use migration::migrations::rename_prefix::RenamePrefixMigration;
+use migration::migrations::sorted_set::SortedSetMigration;
+use migration::migrations::MigrationProcess;
 use simple_logger::SimpleLogger;
 use std::env;
-use migration::call_migration;
-use migration::migrations::MigrationProcess;
-use migration::migrations::sorted_set::SortedSetMigration;
 
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
@@ -21,8 +22,8 @@ fn main() {
     let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
 
     let mut sorted_set_migration = SortedSetMigration::default();
-    let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration];
+    let mut rename_migration = RenamePrefixMigration::default();
+    let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration, &mut rename_migration];
     migrations.sort_by_key(|f| f.get_start_version());
     call_migration(&mut migrations, &mut redis_conn);
 }
-

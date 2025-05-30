@@ -21,7 +21,7 @@ Web crawler that whenever a new maintenance window is reported notifies users of
 cargo llvm-cov --html
 ```
 
-### Integration test
+### Integration test using podman
 
 The project is using testcontainers to run external dependencies. See the following link as podman needs to be installed
 and a system service for the user needs to be
@@ -42,7 +42,7 @@ cargo vet check
 The reports are generated in target/llvm-cov/html and you can serve them directly over http with
 `python3 -m http.server 8000`.
 
-## Profiling
+### Profiling
 
 You can profile the executable using valgrind tools. This should reflect the requirements of the executable, but not the
 whole container.
@@ -78,4 +78,9 @@ Generate the openapi spec using the api_get app.
 
 ```bash
 openapi-generator generate -g typescript-axios -i openapi.yml -o webapp/src/lib/server/
+```
+
+## Backup redis DB
+
+```bash
 ```
