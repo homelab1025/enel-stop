@@ -48,6 +48,7 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
     }
 
     // TODO: actually test the version incr
+    // TODO: check that the migration has worked out fine and ONLY then increment the DB version
     let version_result: Result<u16, RedisError> = cmd("INCR").arg(DB_VERSION_KEY).query(redis_conn);
     match version_result {
         Ok(version) => {
