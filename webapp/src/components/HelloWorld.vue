@@ -1,13 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import {onMounted, ref} from 'vue'
+import {Configuration, DefaultApi} from "../lib/server";
 
-defineProps<{ msg: string }>()
+let response = ref("")
+const configuration = new Configuration();
+let server_api = new DefaultApi(configuration);
 
-const count = ref(0)
+
+onMounted(async () => {
+  let {status, data} = await server_api.ping();
+  response.value = String(data.ping);
+})
+
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">HOME: {{ msg }} - {{ count }}</h1>
+  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">HOME: {{ response }}</h1>
 </template>
 
 <style scoped>

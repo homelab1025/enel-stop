@@ -10,15 +10,14 @@ let server_api = new DefaultApi(configuration);
 
 
 onMounted(async () => {
-  let {status, data} = await server_api.ping();
-  response.value = String(data.ping);
-  console.log(status, data);
+  let {status, data} = await server_api.countIncidents();
+  response.value = String(data.count);
 })
 
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">HOME: {{ response }}</h1>
+  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Number of records: {{ response }}</h1>
 </template>
 
 <style scoped>
