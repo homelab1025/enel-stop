@@ -1,8 +1,6 @@
 use crate::migrations::MigrationProcess;
-use common::Record;
-use log::{debug, error, info};
-use redis::{ConnectionLike, RedisError, cmd};
-use std::path::Component::ParentDir;
+use log::{error, info};
+use redis::{cmd, ConnectionLike, RedisError};
 
 /// CURRENT: The key is of the form: "incident:<rss_key>"
 /// NEXT: The key is of the form: "incidents:<rss_key>"
@@ -42,9 +40,9 @@ impl MigrationProcess for RenamePrefixMigration {
 
 #[cfg(test)]
 mod tests {
-    use crate::migrations::MigrationProcess;
     use crate::migrations::rename_prefix::RenamePrefixMigration;
-    use redis::{Value, cmd};
+    use crate::migrations::MigrationProcess;
+    use redis::{cmd, Value};
     use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
