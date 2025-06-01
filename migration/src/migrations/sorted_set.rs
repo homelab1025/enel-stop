@@ -1,5 +1,5 @@
 use common::Record;
-use log::{debug, error};
+use log::{debug, error, info};
 use redis::{cmd, ConnectionLike, RedisError};
 use crate::migrations::MigrationProcess;
 
@@ -73,6 +73,11 @@ fn get_start_version(&self) -> u64 {
 
     fn get_description(&self) -> String {
         String::from("CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.\nNEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.")
+    }
+
+    fn print_results(&mut self) {
+        info!("Printing results for {}", self.get_start_version());
+        info!("Failed migration {:?}", self.failed_migrations);
     }
 }
 

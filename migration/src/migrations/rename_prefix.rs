@@ -38,7 +38,13 @@ impl MigrationProcess for RenamePrefixMigration {
     }
 
     fn get_description(&self) -> String {
-        String::from("CURRENT: The key is of the form: incident:<rss_key>\nNEXT: The key is of the form: incidents:<rss_key>")
+        String::from("Rename prefix from incident to incidents")
+    }
+
+    fn print_results(&mut self) {
+        info!("FINISHED RENAME FOR {}", self.get_start_version());
+        info!("Skipped RENAME FOR {:?}", self.skipped);
+        info!("Failed RENAME FOR {:?}", self.failed_migrations);
     }
 }
 

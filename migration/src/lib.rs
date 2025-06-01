@@ -20,6 +20,7 @@ pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_con
         .filter(|migration_function| migration_function.get_start_version() >= current_version)
         .for_each(|migration_function| {
             migrate_records(migration_function.deref_mut(), redis_conn);
+            migration_function.print_results()
         })
 }
 
@@ -29,8 +30,6 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
     loop {
         let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
             .arg(cursor)
-            .arg("MATCH")
-            .arg("12*")
             .arg("COUNT")
             .arg("1000")
             .query(redis_conn)
@@ -117,6 +116,8 @@ mod tests {
             fn get_description(&self) -> String {
                 "MockMigration1".to_string()
             }
+
+            fn print_results(&mut self) {}
         }
         impl MockMigration1 {
             fn get_key1_counter(&self) -> i32 {
@@ -153,6 +154,8 @@ mod tests {
             fn get_description(&self) -> String {
                 "MockMigration2".to_string()
             }
+
+            fn print_results(&mut self) {}
         }
         impl MockMigration2 {
             fn get_key1_counter(&self) -> i32 {
