@@ -21,13 +21,13 @@ fn main() {
     });
 
     if let Some(config) = config {
+        info!("Using redis server: {:?}", &config.redis_server.clone());
         let redis_string = config.redis_server.expect("Redis server must be configured.");
         let client = redis::Client::open(redis_string).expect(
             "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
         );
 
         let mut redis_conn = client.get_connection().expect("Could not connect to redis.");
-
         let mut sorted_set_migration = SortedSetMigration::default();
         let mut rename_migration = RenamePrefixMigration::default();
         let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut sorted_set_migration, &mut rename_migration];

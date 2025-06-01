@@ -33,6 +33,6 @@ pub mod redis_store {
     }
 
     pub fn generate_redis_key(incident_id: &str) -> String {
-        format!("incident:{}", incident_id)
+        format!("incidents:{}", incident_id)
     }
 }
