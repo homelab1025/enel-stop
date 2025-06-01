@@ -21,7 +21,7 @@ fn main() {
     });
 
     if let Some(config) = config {
-        info!("Using redis server: {:?}", &config.redis_server.clone());
+        error!("Using redis server: {:?}", &config.redis_server.clone());
         let redis_string = config.redis_server.expect("Redis server must be configured.");
         let client = redis::Client::open(redis_string);
         match client {
