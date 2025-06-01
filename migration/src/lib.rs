@@ -1,6 +1,6 @@
 use crate::migrations::MigrationProcess;
 use log::{error, info};
-use redis::{cmd, ConnectionLike, RedisError};
+use redis::{ConnectionLike, RedisError, cmd};
 use std::ops::DerefMut;
 
 pub mod migrations;
@@ -19,8 +19,10 @@ pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_con
         .iter_mut()
         .filter(|migration_function| migration_function.get_start_version() >= current_version)
         .for_each(|migration_function| {
+            migration_function.migrate(redis_conn);
             migrate_records(migration_function.deref_mut(), redis_conn);
-            migration_function.print_results()
+            migration_function.print_results();
+            next_version(redis_conn);
         })
 }
 
@@ -36,7 +38,7 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
             .expect("Could not run SCAN command");
 
         keys.iter().for_each(|key| {
-            migration.migrate(key, redis_conn);
+            migration.migrate_key(key, redis_conn);
         });
 
         if next_cursor == "0" {
@@ -45,7 +47,9 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
         }
         cursor = next_cursor.clone();
     }
+}
 
+fn next_version(redis_conn: &mut dyn ConnectionLike) {
     // TODO: actually test the version incr
     // TODO: check that the migration has worked out fine and ONLY then increment the DB version
     let version_result: Result<u16, RedisError> = cmd("INCR").arg(DB_VERSION_KEY).query(redis_conn);
@@ -61,9 +65,9 @@ fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn Co
 
 #[cfg(test)]
 mod tests {
-    use crate::{call_migration, MigrationProcess, DB_VERSION_KEY};
+    use crate::{DB_VERSION_KEY, MigrationProcess, call_migration};
     use redis::Value::SimpleString;
-    use redis::{cmd, ConnectionLike, Value};
+    use redis::{ConnectionLike, Value, cmd};
     use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
@@ -95,7 +99,7 @@ mod tests {
         }
 
         impl MigrationProcess for MockMigration1 {
-            fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
+            fn migrate_key(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
                 match key {
                     "key1" => {
                         println!("Key 1 hit.");
@@ -134,7 +138,7 @@ mod tests {
             key2_counter: i32,
         }
         impl MigrationProcess for MockMigration2 {
-            fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
+            fn migrate_key(&mut self, key: &str, _conn: &mut dyn ConnectionLike) {
                 match key {
                     "key1" => {
                         println!("Key 1 hit.");

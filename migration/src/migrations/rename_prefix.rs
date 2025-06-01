@@ -11,7 +11,7 @@ pub struct RenamePrefixMigration {
 }
 
 impl MigrationProcess for RenamePrefixMigration {
-    fn migrate(&mut self, key: &str, redis_conn: &mut dyn ConnectionLike) {
+    fn migrate_key(&mut self, key: &str, redis_conn: &mut dyn ConnectionLike) {
         info!("KEY {}", key);
 
         let key_components: Vec<&str> = key.split(':').collect();
@@ -64,7 +64,7 @@ mod tests {
         let mut mocked_conn = MockRedisConnection::new(commands);
 
         let mut migration = RenamePrefixMigration::default();
-        migration.migrate("incident:123", &mut mocked_conn);
+        migration.migrate_key("incident:123", &mut mocked_conn);
 
         assert_eq!(0, migration.skipped.len());
     }

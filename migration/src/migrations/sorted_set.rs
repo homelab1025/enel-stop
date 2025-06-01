@@ -13,7 +13,7 @@ pub struct SortedSetMigration {
 }
 
 impl MigrationProcess for SortedSetMigration {
-    fn migrate(&mut self, key: &str, redis_conn: &mut dyn ConnectionLike) {
+    fn migrate_key(&mut self, key: &str, redis_conn: &mut dyn ConnectionLike) {
         debug!("KEY {}", key);
 
         let record_json: String = cmd("GET").arg(key).query(redis_conn).expect("Could not get the value.");
@@ -127,7 +127,7 @@ mod tests {
         let mut mocked_conn = MockRedisConnection::new(commands);
 
         let mut migration = SortedSetMigration::default();
-        migration.migrate("test-id", &mut mocked_conn);
+        migration.migrate_key("test-id", &mut mocked_conn);
 
         println!("Failed migrations: {:?}", migration.failed_migrations);
         assert_eq!(

@@ -1,11 +1,21 @@
-use std::fmt::{Debug, Formatter};
 use redis::ConnectionLike;
+use std::fmt::{Debug, Formatter};
 
-pub mod sorted_set;
+pub mod recreate_sorted_set;
 pub mod rename_prefix;
+pub mod sorted_set;
 
 pub trait MigrationProcess {
-    fn migrate(&mut self, key: &str, _conn: &mut dyn ConnectionLike);
+    /// Run migration action before looping thru the key.
+    /// 
+    /// # Arguments 
+    /// 
+    /// * `conn`: Redis connection.
+    /// 
+    /// returns: () 
+    /// 
+    fn migrate(&mut self, conn: &mut dyn ConnectionLike) {}
+    fn migrate_key(&mut self, key: &str, conn: &mut dyn ConnectionLike);
     fn get_start_version(&self) -> u64;
     fn get_description(&self) -> String;
     fn print_results(&mut self);
