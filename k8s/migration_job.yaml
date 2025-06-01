@@ -9,5 +9,6 @@ spec:
       containers:
         - name: migration
           image: ghcr.io/homelab1025/enel-stop-migration:master
+          imagePullPolicy: Always
       restartPolicy: Never
   backoffLimit: 4
