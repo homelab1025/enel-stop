@@ -71,7 +71,7 @@ mod tests {
         let mut conn = MockRedisConnection::new(vec![
             MockCmd::new(cmd("GET").arg(DB_VERSION_KEY), Ok(Value::Int(0))),
             MockCmd::new(
-                cmd("SCAN").arg("0").arg("MATCH").arg("12*").arg("COUNT").arg("1000"),
+                cmd("SCAN").arg("0").arg("COUNT").arg("1000"),
                 Ok(Value::Array(vec![
                     SimpleString("0".to_string()),
                     Value::Array(vec![SimpleString("key1".to_string()), SimpleString("key2".to_string())]),
