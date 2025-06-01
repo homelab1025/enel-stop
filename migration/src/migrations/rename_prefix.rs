@@ -4,7 +4,7 @@ use redis::{cmd, ConnectionLike, RedisError};
 
 /// CURRENT: The key is of the form: "incident:<rss_key>"
 /// NEXT: The key is of the form: "incidents:<rss_key>"
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct RenamePrefixMigration {
     failed_migrations: Vec<String>,
     skipped: Vec<String>,
@@ -35,6 +35,10 @@ impl MigrationProcess for RenamePrefixMigration {
 
     fn get_start_version(&self) -> u64 {
         1
+    }
+
+    fn get_description(&self) -> String {
+        String::from("CURRENT: The key is of the form: incident:<rss_key>\nNEXT: The key is of the form: incidents:<rss_key>")
     }
 }
 

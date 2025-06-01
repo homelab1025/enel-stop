@@ -6,7 +6,7 @@ use crate::migrations::MigrationProcess;
 /// CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.
 /// NEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.
 /// The new entry should have a prefix "incident:".
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct SortedSetMigration {
     failed_migrations: Vec<String>,
     recycle_bin: Vec<String>,
@@ -71,6 +71,9 @@ fn get_start_version(&self) -> u64 {
     0
 }
 
+    fn get_description(&self) -> String {
+        String::from("CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.\nNEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.")
+    }
 }
 
 #[cfg(test)]

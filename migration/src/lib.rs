@@ -113,6 +113,10 @@ mod tests {
             fn get_start_version(&self) -> u64 {
                 0
             }
+
+            fn get_description(&self) -> String {
+                "MockMigration1".to_string()
+            }
         }
         impl MockMigration1 {
             fn get_key1_counter(&self) -> i32 {
@@ -144,6 +148,10 @@ mod tests {
             }
             fn get_start_version(&self) -> u64 {
                 1
+            }
+
+            fn get_description(&self) -> String {
+                "MockMigration2".to_string()
             }
         }
         impl MockMigration2 {

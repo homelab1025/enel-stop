@@ -21,7 +21,7 @@ fn main() {
     });
 
     if let Some(config) = config {
-        error!("Using redis server: {:?}", &config.redis_server.clone());
+        info!("Using redis server: {:?}", &config.redis_server.clone());
         let redis_string = config.redis_server.expect("Redis server must be configured.");
         let client = redis::Client::open(redis_string);
         match client {
@@ -32,6 +32,7 @@ fn main() {
                     let mut migrations: Vec<&mut dyn MigrationProcess> =
                         vec![&mut sorted_set_migration, &mut rename_migration];
                     migrations.sort_by_key(|f| f.get_start_version());
+                    info!("Migrations: {:?}",migrations.iter().map(|m| m.get_description()).collect::<Vec<_>>());
                     call_migration(&mut migrations, &mut redis_conn);
                 }
                 Err(err) => {
