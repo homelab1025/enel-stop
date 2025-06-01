@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migration
+  namespace: enel
+spec:
+  template:
+    spec:
+      containers:
+        - name: migration
+          image: ghcr.io/homelab1025/enel-stop-migration:master
+      restartPolicy: Never
+  backoffLimit: 4

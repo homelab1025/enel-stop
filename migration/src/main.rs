@@ -1,9 +1,10 @@
 use common::configuration;
-use log::{error, info, LevelFilter};
+use log::{LevelFilter, error, info};
 use migration::call_migration;
+use migration::migrations::MigrationProcess;
+use migration::migrations::recreate_sorted_set::RecreateSortedSet;
 use migration::migrations::rename_prefix::RenamePrefixMigration;
 use migration::migrations::sorted_set::SortedSetMigration;
-use migration::migrations::MigrationProcess;
 use simple_logger::SimpleLogger;
 use std::env;
 
@@ -29,10 +30,18 @@ fn main() {
                 Ok(mut redis_conn) => {
                     let mut sorted_set_migration = SortedSetMigration::default();
                     let mut rename_migration = RenamePrefixMigration::default();
-                    let mut migrations: Vec<&mut dyn MigrationProcess> =
-                        vec![&mut sorted_set_migration, &mut rename_migration];
+                    let mut recreate_migration = RecreateSortedSet::default();
+
+                    let mut migrations: Vec<&mut dyn MigrationProcess> = vec![
+                        &mut sorted_set_migration,
+                        &mut rename_migration,
+                        &mut recreate_migration,
+                    ];
                     migrations.sort_by_key(|f| f.get_start_version());
-                    info!("Migrations: {:?}",migrations.iter().map(|m| m.get_description()).collect::<Vec<_>>());
+                    info!(
+                        "Migrations: {:?}",
+                        migrations.iter().map(|m| m.get_description()).collect::<Vec<_>>()
+                    );
                     call_migration(&mut migrations, &mut redis_conn);
                 }
                 Err(err) => {
