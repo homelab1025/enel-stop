@@ -1,9 +1,11 @@
 # The plan
 
 ## TODO
-- show keys and json values (no pagination)
-- run the migration and expose the incidents in a table
-- provide pagination
+- show keys and json values in a sorted table (no pagination)
+- provide pagination for the table
+- show incidents on a map
+- write integration tests for migration utility
+
 
 ## DONE
 - move the migration to another workspace so to run it independently

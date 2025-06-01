@@ -43,7 +43,7 @@ pub struct Ping {
         get,
         path = "/incidents/count",
         responses(
-            (status=200, description = "Count the number of records in the DB.", body=[RecordCount]),
+            (status=200, description = "Count the number of records in the DB.", body=RecordCount),
             (status=500, description = "Error counting the number of records in the DB."),
         )
     )]
@@ -65,7 +65,7 @@ where
     get,
     path = "/ping",
     responses(
-            (status=200, description = "Respond with a pong.", body=[Ping]),
+            (status=200, description = "Respond with a pong.", body=Ping),
             (status=500, description = "Server is not ready to serve."),
     )
 )]
