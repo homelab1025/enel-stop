@@ -1,11 +1,11 @@
 <script setup lang="ts">
 
-import {DefaultApi, Configuration} from "../lib/server";
+import {DefaultApi, Configuration, type Incident} from "../lib/server";
 import {onMounted} from "vue";
 import {ref} from "vue";
 
 let response = ref("")
-let incidents = ref([]);
+let incidents = ref(<Incident[]>[]);
 
 const configuration = new Configuration();
 let server_api = new DefaultApi(configuration);
