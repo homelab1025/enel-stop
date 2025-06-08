@@ -3,6 +3,7 @@ use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
 use simple_logger::SimpleLogger;
 use std::env;
+use std::str::FromStr;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tokio::{net::TcpListener, runtime};
@@ -12,9 +13,11 @@ use web_server::api;
 use web_server::api::AppState;
 
 fn main() {
-    SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
-
     let config = load_configuration();
+
+    SimpleLogger::new().env().with_level(LevelFilter::from_str(&config.log_level).unwrap()).init().unwrap();
+
+    info!("Using configuration: {:?}", config);
 
     let redis_string = config.redis_server.expect("Redis server must be configured.");
     let client = redis::Client::open(redis_string).expect(
@@ -40,6 +43,7 @@ fn main() {
         let mut app = Router::new()
             .route("/api/ping", get(api::ping))
             .route("/api/incidents/count", get(api::count_incidents))
+            .route("/api/incidents/all", get(api::get_all_incidents))
             .fallback_service(ServeDir::new("web_assets"))
             .with_state(state);
 

@@ -56,7 +56,7 @@ fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Reco
             }
         }?;
 
-        Option::Some(Record {
+        Some(Record {
             id: id.value.to_string(),
             date: incident_datetime,
             judet: judet.to_string(),

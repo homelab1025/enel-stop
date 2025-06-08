@@ -10,6 +10,7 @@ const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
 const CONFIG_HTTP_PORT: &str = "service.http_port";
 const CONFIG_CORS_PERMISSIVE: &str = "service.cors_permissive";
+const CONFIG_LOG_LEVEL: &str = "log_level";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {
@@ -19,6 +20,7 @@ pub struct ServiceConfiguration {
     pub pushgateway_server: Option<String>,
     pub http_port: u32,
     pub cors_permissive: bool,
+    pub log_level: String
 }
 
 impl ServiceConfiguration {
@@ -35,6 +37,7 @@ impl ServiceConfiguration {
             pushgateway_server: config.get_string(CONFIG_PUSHGATEWAY_SERVER).ok(),
             http_port: config.get::<u32>(CONFIG_HTTP_PORT)?,
             cors_permissive: config.get::<bool>(CONFIG_CORS_PERMISSIVE)?,
+            log_level: config.get_string(CONFIG_LOG_LEVEL)?
         };
 
         Ok(service_configuration)
@@ -87,7 +90,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, &
 mod configuration_tests {
     use config::Config;
 
-    use crate::configuration::{CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER};
+    use crate::configuration::{CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT, CONFIG_LOG_LEVEL, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER};
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
 
@@ -100,6 +103,7 @@ mod configuration_tests {
             .and_then(|x| x.set_default(CONFIG_PUSHGATEWAY_SERVER, "pushgateway"))
             .and_then(|x| x.set_default(CONFIG_HTTP_PORT, 8090))
             .and_then(|x| x.set_default(CONFIG_CORS_PERMISSIVE, "true"))
+            .and_then(|x| x.set_default(CONFIG_LOG_LEVEL, "debug"))
             .unwrap()
             .build()
             .unwrap();
@@ -113,6 +117,7 @@ mod configuration_tests {
             pushgateway_server: Some("pushgateway".to_string()),
             http_port: 8090,
             cors_permissive: true,
+            log_level: "debug".to_string()
         };
 
         assert_eq!(service_config, expected_config);

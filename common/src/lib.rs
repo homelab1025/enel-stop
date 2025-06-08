@@ -1,4 +1,5 @@
 pub mod configuration;
+pub mod persistence;
 
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};

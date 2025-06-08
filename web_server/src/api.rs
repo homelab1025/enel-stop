@@ -1,12 +1,15 @@
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
+use common::Record;
+use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::RedisError;
+use redis::{RedisError, RedisResult, cmd};
 use serde::Serialize;
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::Mutex;
+use utoipa::r#gen::serde_json;
 use utoipa::{OpenApi, ToSchema};
 
 #[derive(Clone)]
@@ -20,10 +23,11 @@ where
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(ping, count_incidents),
-    components(schemas(RecordCount, Ping)),
+    paths(ping, count_incidents, get_all_incidents),
+    components(schemas(RecordCount, Ping, Incident)),
     servers(
-        (url="https://enel.lab.wicked:8443/api", description="homelab")
+        (url="https://enel.lab.wicked:8443/api", description="homelab"),
+        (url="http://localhost:8080/api", description="localhost")
     ),
     info(title = "Test API", license(name = "hey", identifier = "CC-BY-ND-4.0"))
 )]
@@ -39,14 +43,22 @@ pub struct Ping {
     ping: String,
 }
 
+#[derive(Debug, Serialize, Clone, ToSchema)]
+pub struct Incident {
+    id: String,
+    county: String,
+    location: String,
+    datetime: String,
+}
+
 #[utoipa::path(
-        get,
-        path = "/incidents/count",
-        responses(
+    get,
+    path = "/incidents/count",
+    responses(
             (status=200, description = "Count the number of records in the DB.", body=RecordCount),
             (status=500, description = "Error counting the number of records in the DB."),
-        )
-    )]
+    )
+)]
 pub async fn count_incidents<T>(state: State<AppState<T>>) -> Result<Json<RecordCount>, (StatusCode, String)>
 where
     T: ConnectionLike + Send + Sync,
@@ -57,6 +69,61 @@ where
 
     match counter {
         Ok(key_count) => Ok(Json(RecordCount { count: key_count })),
+        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
+    }
+}
+
+#[utoipa::path(
+    get,
+    path = "/incidents/all",
+    responses(
+        (status=200, description = "All incidents.", body=Vec<Incident>),
+        (status=500, description = "Error getting all incidents.")
+    )
+)]
+pub async fn get_all_incidents<T>(state: State<AppState<T>>) -> Result<Json<Vec<Incident>>, (StatusCode, String)>
+where
+    T: ConnectionLike + Send + Sync,
+{
+    let mut conn_guard = state.redis_conn.lock().await;
+    let conn = &mut *conn_guard;
+    let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
+        .arg("incidents:sorted")
+        .arg("0")
+        .arg("-1")
+        .query_async(conn)
+        .await;
+
+    match ordered_incidents {
+        Ok(incidents_keys) => {
+            debug!("Found {} incidents", incidents_keys.len());
+
+            let mut all_incidents: Vec<Incident> = vec![];
+
+            for incident_key in incidents_keys {
+                match cmd("GET").arg(incident_key).query_async::<String>(conn).await {
+                    Ok(result) => {
+                        let record_des_result = serde_json::from_str::<Record>(&result);
+                        match record_des_result {
+                            Ok(record) => all_incidents.push(Incident {
+                                id: record.id,
+                                county: record.judet,
+                                location: record.localitate,
+                                datetime: record.date.to_string(),
+                            }),
+                            Err(error) => {
+                                error!("Could not deserialize record: {:?}", error);
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        error!("{}", err);
+                    }
+                }
+            }
+
+            Ok(Json(all_incidents))
+        }
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
     }
 }
