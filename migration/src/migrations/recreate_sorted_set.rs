@@ -2,6 +2,7 @@ use crate::migrations::MigrationProcess;
 use common::Record;
 use log::{error, info};
 use redis::{cmd, ConnectionLike, RedisError};
+use common::persistence::SORTED_INCIDENTS_KEY;
 
 // Search for keys "incidents:incident" and "incidents:sorted" and remove them.
 // Also recreate the sorted set containing all the keys
@@ -48,7 +49,7 @@ impl MigrationProcess for RecreateSortedSet {
             .timestamp();
 
         let zadd_result: Result<u16, RedisError> = cmd("ZADD")
-            .arg("incidents:sorted")
+            .arg(SORTED_INCIDENTS_KEY)
             .arg(record_timestamp)
             .arg(key)
             .query(redis_conn);

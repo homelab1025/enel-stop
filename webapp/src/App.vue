@@ -12,7 +12,7 @@ import {RouterLink, RouterView} from 'vue-router'
         <RouterLink to="/list">Lister</RouterLink>
       </li>
     </ul>
-    <div class="flex-1 bg-blue-100 p-4">
+    <div class="flex-1 bg-blue-100 p-4 overflow-auto">
       <RouterView/>
     </div>
   </div>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import Counter from '../components/Counter.vue'
+import IncidentsList from '../components/IncidentsList.vue'
 </script>
 
 <template>
   <main>
-    <Counter/>
+    <IncidentsList/>
   </main>
 </template>

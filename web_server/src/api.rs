@@ -1,10 +1,11 @@
-use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
+use axum::Json;
+use common::persistence::SORTED_INCIDENTS_KEY;
 use common::Record;
 use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::{RedisError, RedisResult, cmd};
+use redis::{cmd, RedisError, RedisResult};
 use serde::Serialize;
 use std::ops::Deref;
 use std::sync::Arc;
@@ -65,7 +66,7 @@ where
 {
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
-    let counter: Result<u64, RedisError> = redis::cmd("DBSIZE").query_async(conn).await;
+    let counter: Result<u64, RedisError> = redis::cmd("ZCARD").arg(SORTED_INCIDENTS_KEY).query_async(conn).await;
 
     match counter {
         Ok(key_count) => Ok(Json(RecordCount { count: key_count })),
@@ -87,14 +88,9 @@ where
 {
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
-    let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
-        .arg("incidents:sorted")
-        .arg("0")
-        .arg("-1")
-        .query_async(conn)
-        .await;
+    let rev_ordered_incidents = get_rev_ordered_incidents(conn).await;
 
-    match ordered_incidents {
+    match rev_ordered_incidents {
         Ok(incidents_keys) => {
             debug!("Found {} incidents", incidents_keys.len());
 
@@ -126,6 +122,21 @@ where
         }
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
     }
+}
+
+async fn get_rev_ordered_incidents<T>(conn: &mut T) -> RedisResult<Vec<String>>
+where
+    T: ConnectionLike + Send + Sync,
+{
+    let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
+        .arg(SORTED_INCIDENTS_KEY)
+        .arg("0")
+        .arg("-1")
+        .arg("REV")
+        .query_async(conn)
+        .await;
+
+    ordered_incidents
 }
 
 #[utoipa::path(

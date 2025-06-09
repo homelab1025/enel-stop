@@ -22,8 +22,8 @@ onMounted(async () => {
 
 <template>
   <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Number of records: {{ response }}</h1>
-  <div class="overflow-x-auto">
-    <table class="table table-xs">
+  <div>
+    <table class="table table-fixed table-pin-rows">
       <thead>
       <tr>
         <th>Id</th>
