@@ -19,9 +19,23 @@ jobs:
 
   build:
     runs-on: self-hosted
+    outputs:
+      release_version: ${{ steps.set_version.outputs.version }}
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Set Release Version
+      id: set_version
+      run: |
+        # Generate a version string. You can customize this.
+        # Examples:
+        #  - Short SHA: version=$(git rev-parse --short HEAD)
+        #  - Run number and short SHA: version="${{ github.run_number }}-${{ github.sha }}"
+        # For a release on each commit, using a timestamp or run number + short SHA is good.
+        VERSION=$(date +'%Y%m%d%H%M%S')-${{ github.sha }}
+        echo "Generated Release Version: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+      shell: bash
     - name: Cache rust dependencies
       uses: actions/cache@v4
       with:
@@ -65,11 +79,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker (crawler)
-        id: meta-crawler
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-crawler
+      - name: Set Image Tag
+        id: set_image_tag
+        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-crawler:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Build and push Docker image for crawler
         uses: docker/build-push-action@v4
@@ -78,8 +91,7 @@ jobs:
           platforms: linux/amd64
           push: true
           target: crawler
-          tags: ${{ steps.meta-crawler.outputs.tags }}
-          labels: ${{ steps.meta-crawler.outputs.labels }}
+          tags: ${{ steps.set_image_tag.outputs.image_tag }}
 
   build-and-push-image-webservice:
     runs-on: self-hosted
@@ -102,11 +114,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker (web)
-        id: meta-web
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web
+      - name: Set Image Tag
+        id: set_image_tag
+        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Build and push Docker image for web service
         uses: docker/build-push-action@v4
@@ -115,8 +126,7 @@ jobs:
           platforms: linux/amd64
           push: true
           target: web
-          tags: ${{ steps.meta-web.outputs.tags }}
-          labels: ${{ steps.meta-web.outputs.labels }}
+          tags: ${{ steps.set_image_tag.outputs.image_tag }}
 
   build-and-push-image-migration:
     runs-on: self-hosted
@@ -139,11 +149,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker (migration)
-        id: meta-migration
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration
+      - name: Set Image Tag
+        id: set_image_tag
+        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Build and push Docker image for migration
         uses: docker/build-push-action@v4
@@ -152,8 +161,7 @@ jobs:
           platforms: linux/amd64
           push: true
           target: migration
-          tags: ${{ steps.meta-migration.outputs.tags }}
-          labels: ${{ steps.meta-migration.outputs.labels }}
+          tags: ${{ steps.set_image_tag.outputs.image_tag }}
 
   build-and-push-webapp:
     runs-on: self-hosted
@@ -185,11 +193,10 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels) for Docker (webapp)
-        id: meta-webapp
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp
+      - name: Set Image Tag
+        id: set_image_tag
+        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
+        shell: bash
 
       - name: Build and push Docker image for web app
         uses: docker/build-push-action@v4
@@ -198,5 +205,4 @@ jobs:
           platforms: linux/amd64
           push: true
           target: webapp
-          tags: ${{ steps.meta-webapp.outputs.tags }}
-          labels: ${{ steps.meta-webapp.outputs.labels }}
+          tags: ${{ steps.set_image_tag.outputs.image_tag }}
