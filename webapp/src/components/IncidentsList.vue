@@ -21,7 +21,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Number of records: {{ response }}</h1>
+  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Number of records in the DB: {{ response }}</h1>
   <div>
     <table class="table table-fixed table-pin-rows">
       <thead>
