@@ -79,11 +79,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Image Tag
-        id: set_image_tag
-        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-crawler:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Build and push Docker image for crawler
         uses: docker/build-push-action@v4
         with:
@@ -91,7 +86,9 @@ jobs:
           platforms: linux/amd64
           push: true
           target: crawler
-          tags: ${{ steps.set_image_tag.outputs.image_tag }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-crawler:v${{ needs.build.outputs.release_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-crawler:latest
 
   build-and-push-image-webservice:
     runs-on: self-hosted
@@ -114,11 +111,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Image Tag
-        id: set_image_tag
-        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Build and push Docker image for web service
         uses: docker/build-push-action@v4
         with:
@@ -126,7 +118,9 @@ jobs:
           platforms: linux/amd64
           push: true
           target: web
-          tags: ${{ steps.set_image_tag.outputs.image_tag }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:v${{ needs.build.outputs.release_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-web:latest
 
   build-and-push-image-migration:
     runs-on: self-hosted
@@ -149,11 +143,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Image Tag
-        id: set_image_tag
-        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Build and push Docker image for migration
         uses: docker/build-push-action@v4
         with:
@@ -161,7 +150,9 @@ jobs:
           platforms: linux/amd64
           push: true
           target: migration
-          tags: ${{ steps.set_image_tag.outputs.image_tag }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration:v${{ needs.build.outputs.release_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-migration:latest
 
   build-and-push-webapp:
     runs-on: self-hosted
@@ -193,11 +184,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set Image Tag
-        id: set_image_tag
-        run: echo "image_tag=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:v${{ needs.build.outputs.release_version }}" >> $GITHUB_OUTPUT
-        shell: bash
-
       - name: Build and push Docker image for web app
         uses: docker/build-push-action@v4
         with:
@@ -205,4 +191,6 @@ jobs:
           platforms: linux/amd64
           push: true
           target: webapp
-          tags: ${{ steps.set_image_tag.outputs.image_tag }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:v${{ needs.build.outputs.release_version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-webapp:latest
