@@ -1,17 +1,17 @@
-use axum::extract::State;
-use axum::http::StatusCode;
 use axum::Json;
-use common::persistence::SORTED_INCIDENTS_KEY;
+use axum::extract::{Query, State};
+use axum::http::StatusCode;
 use common::Record;
+use common::persistence::SORTED_INCIDENTS_KEY;
 use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::{cmd, RedisError, RedisResult};
-use serde::Serialize;
+use redis::{RedisError, RedisResult, cmd};
+use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use utoipa::r#gen::serde_json;
-use utoipa::{OpenApi, ToSchema};
+use utoipa::{IntoParams, OpenApi, ToSchema};
 
 #[derive(Clone)]
 pub struct AppState<T>
@@ -74,15 +74,27 @@ where
     }
 }
 
+#[derive(Deserialize, IntoParams)]
+pub struct IncidentsFiltering {
+    county: Option<String>,
+    datetime: Option<String>,
+}
+
 #[utoipa::path(
     get,
     path = "/incidents/all",
+    params(
+        IncidentsFiltering
+    ),
     responses(
         (status=200, description = "All incidents.", body=Vec<Incident>),
         (status=500, description = "Error getting all incidents.")
     )
 )]
-pub async fn get_all_incidents<T>(state: State<AppState<T>>) -> Result<Json<Vec<Incident>>, (StatusCode, String)>
+pub async fn get_all_incidents<T>(
+    state: State<AppState<T>>,
+    filtering: Query<IncidentsFiltering>,
+) -> Result<Json<Vec<Incident>>, (StatusCode, String)>
 where
     T: ConnectionLike + Send + Sync,
 {
@@ -101,12 +113,21 @@ where
                     Ok(result) => {
                         let record_des_result = serde_json::from_str::<Record>(&result);
                         match record_des_result {
-                            Ok(record) => all_incidents.push(Incident {
-                                id: record.id,
-                                county: record.judet,
-                                location: record.localitate,
-                                datetime: record.date.to_string(),
-                            }),
+                            Ok(record) => {
+                                let show = filtering
+                                    .county
+                                    .clone()
+                                    .map_or_else(|| true, |county| county == record.judet);
+
+                                if show {
+                                    all_incidents.push(Incident {
+                                        id: record.id,
+                                        county: record.judet,
+                                        location: record.localitate,
+                                        datetime: record.date.to_string(),
+                                    })
+                                }
+                            }
                             Err(error) => {
                                 error!("Could not deserialize record: {:?}", error);
                             }

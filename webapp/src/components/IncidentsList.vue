@@ -6,6 +6,9 @@ import {ref} from "vue";
 
 let response = ref("")
 let incidents = ref(<Incident[]>[]);
+let searchCounty = ref("");
+let isLoading = ref(false);
+let error = ref<string | null>(null);
 
 const configuration = new Configuration();
 let server_api = new DefaultApi(configuration);
@@ -18,11 +21,37 @@ onMounted(async () => {
   incidents.value = all_incidents.data;
 })
 
+const handleCountySearch = () => {
+  // Clear any previous error message
+  error.value = null;
+
+  // Check if the search county input is not empty after trimming whitespace
+  if (searchCounty.value.trim()) {
+    searchIncidentsByCounty(searchCounty.value.trim());
+  } else {
+    // If input is empty, show all incidents again
+    error.value = "County name cannot be empty. Displaying all incidents.";
+    searchIncidentsByCounty();
+  }
+}
+
+const searchIncidentsByCounty = async (countyName?: string) => {
+  const incidentsByCounty = await server_api.getAllIncidents(countyName);
+  incidents.value = incidentsByCounty.data;
+  response.value = String(incidentsByCounty.data.length); // Update total count for filtered results
+};
+
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Number of records in the DB: {{ response }}</h1>
-  <div>
+  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Total number of incidents: {{ response }}</h1>
+  <div class="card grid h-10">
+    <label class="input">
+      Judet
+      <input type="text" class="grow" placeholder="" v-model="searchCounty" @keyup.enter="handleCountySearch"/>
+    </label></div>
+  <div class="divider"></div>
+  <div class="card">
     <table class="table table-fixed table-pin-rows">
       <thead>
       <tr>
