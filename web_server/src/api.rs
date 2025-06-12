@@ -27,7 +27,7 @@ where
     paths(ping, count_incidents, get_all_incidents),
     components(schemas(RecordCount, Ping, Incident)),
     servers(
-        (url="https://enel.lab.wicked:8443/api", description="homelab"),
+        (url="https://enel.lab.wicked/api", description="homelab"),
         (url="http://localhost:8080/api", description="localhost")
     ),
     info(title = "Test API", license(name = "hey", identifier = "CC-BY-ND-4.0"))
@@ -77,7 +77,7 @@ where
 #[derive(Deserialize, IntoParams)]
 pub struct IncidentsFiltering {
     county: Option<String>,
-    datetime: Option<String>,
+    // datetime: Option<String>,
 }
 
 #[utoipa::path(

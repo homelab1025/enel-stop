@@ -7,7 +7,6 @@ import {ref} from "vue";
 let response = ref("")
 let incidents = ref(<Incident[]>[]);
 let searchCounty = ref("");
-let isLoading = ref(false);
 let error = ref<string | null>(null);
 
 const configuration = new Configuration();
