@@ -50,6 +50,7 @@ pub struct Incident {
     county: String,
     location: String,
     datetime: String,
+    description: String,
 }
 
 #[utoipa::path(
@@ -125,6 +126,7 @@ where
                                         county: record.judet,
                                         location: record.localitate,
                                         datetime: record.date.to_string(),
+                                        description: record.description,
                                     })
                                 }
                             }

@@ -58,6 +58,7 @@ const searchIncidentsByCounty = async (countyName?: string) => {
         <th>Judet</th>
         <th>Localitate</th>
         <th>Data</th>
+        <th>Descriere</th>
       </tr>
       </thead>
       <tbody>
@@ -66,6 +67,7 @@ const searchIncidentsByCounty = async (countyName?: string) => {
         <td>{{ item.county }}</td>
         <td>{{ item.location }}</td>
         <td>{{ item.datetime }}</td>
+        <td>{{ item.description }}</td>
       </tr>
       </tbody>
     </table>
