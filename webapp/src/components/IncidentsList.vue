@@ -50,6 +50,10 @@ const searchIncidentsByCounty = async (countyName?: string) => {
       <input type="text" class="grow" placeholder="" v-model="searchCounty" @keyup.enter="handleCountySearch"/>
     </label></div>
   <div class="divider"></div>
+  <div class="join grid grid-cols-2">
+    <button class="join-item btn btn-outline">Previous page</button>
+    <button class="join-item btn btn-outline">Next</button>
+  </div>
   <div class="card">
     <table class="table table-fixed table-pin-rows">
       <thead>
@@ -63,7 +67,7 @@ const searchIncidentsByCounty = async (countyName?: string) => {
       </thead>
       <tbody>
       <tr v-for="item in incidents">
-        <th>{{ item.id }}</th>
+        <td>{{ item.id }}</td>
         <td>{{ item.county }}</td>
         <td>{{ item.location }}</td>
         <td>{{ item.datetime }}</td>
