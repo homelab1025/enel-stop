@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-
 common = { path = "../common" }
 headless_chrome = { workspace = true }
 log = { workspace = true }
@@ -17,4 +16,6 @@ redis = { workspace = true }
 serde_json = { workspace = true }
 prometheus-client = { workspace = true }
 reqwest = { workspace = true }
+
+[dev-dependencies]
 testcontainers = { workspace = true }
