@@ -3,9 +3,9 @@ pub mod redis_store {
     use common::persistence::SORTED_INCIDENTS_KEY;
     use common::Record;
     use log::error;
-    use redis::{cmd, RedisError};
+    use redis::{cmd, ConnectionLike, RedisError};
 
-    pub fn store_record(incident: &Record, conn: &mut dyn redis::ConnectionLike) -> Result<i32, String> {
+    pub fn store_record(incident: &Record, conn: &mut dyn ConnectionLike) -> Result<i32, String> {
         let ser_inc = match serde_json::to_string(&incident) {
             Err(e) => return Err(e.to_string()),
             Ok(ser_res) => ser_res,
@@ -25,8 +25,8 @@ pub mod redis_store {
 
                 let new_elements: Result<i32, RedisError> = cmd("ZADD")
                     .arg(SORTED_INCIDENTS_KEY)
-                    .arg(&new_key)
                     .arg(timestamp)
+                    .arg(&new_key)
                     .query(conn);
 
                 match new_elements {
