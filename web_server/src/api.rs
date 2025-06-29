@@ -36,7 +36,7 @@ pub struct ApiDoc;
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct RecordCount {
-    count: u64,
+    pub total_count: u64,
 }
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
@@ -70,7 +70,7 @@ where
     let counter: Result<u64, RedisError> = redis::cmd("ZCARD").arg(SORTED_INCIDENTS_KEY).query_async(conn).await;
 
     match counter {
-        Ok(key_count) => Ok(Json(RecordCount { count: key_count })),
+        Ok(key_count) => Ok(Json(RecordCount { total_count: key_count })),
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
     }
 }
@@ -78,7 +78,20 @@ where
 #[derive(Deserialize, IntoParams)]
 pub struct IncidentsFiltering {
     county: Option<String>,
+    offset: Option<Offset>,
     // datetime: Option<String>,
+}
+
+#[derive(Deserialize, ToSchema, Copy, Clone)]
+pub struct Offset {
+    offset: u64,
+    count: u64,
+}
+
+#[derive(Serialize, ToSchema)]
+pub struct GetIncidentsResponse {
+    pub incidents: Vec<Incident>,
+    pub total_count: u64,
 }
 
 #[utoipa::path(
@@ -88,7 +101,7 @@ pub struct IncidentsFiltering {
         IncidentsFiltering
     ),
     responses(
-        (status=200, description = "All incidents.", body=Vec<Incident>),
+        (status=200, description = "All incidents.", body=GetIncidentsResponse),
         (status=500, description = "Error getting all incidents.")
     )
 )]
@@ -99,9 +112,12 @@ pub async fn get_all_incidents<T>(
 where
     T: ConnectionLike + Send + Sync,
 {
+    let offset_info = filtering.offset.unwrap_or(Offset { offset: 0, count: 0 });
+
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
-    let rev_ordered_incidents = get_rev_ordered_incidents(conn).await;
+    let rev_ordered_incidents =
+        get_rev_ordered_incidents(conn, offset_info.offset, offset_info.offset + offset_info.count).await;
 
     match rev_ordered_incidents {
         Ok(incidents_keys) => {
@@ -147,14 +163,19 @@ where
     }
 }
 
-async fn get_rev_ordered_incidents<T>(conn: &mut T) -> RedisResult<Vec<String>>
+async fn get_rev_ordered_incidents<T>(conn: &mut T, from: u64, to: u64) -> RedisResult<Vec<String>>
 where
     T: ConnectionLike + Send + Sync,
 {
+    let final_to: i64 = match to {
+        0 => -1,
+        to => to as i64,
+    };
+
     let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
         .arg(SORTED_INCIDENTS_KEY)
-        .arg("0")
-        .arg("-1")
+        .arg(from)
+        .arg(final_to)
         .arg("REV")
         .query_async(conn)
         .await;
