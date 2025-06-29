@@ -3261,11 +3261,15 @@ name = "web_server"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "browsenscrape",
+ "chrono",
  "common",
+ "lazy_static",
  "log",
  "redis",
  "serde",
  "simple_logger",
+ "testcontainers",
  "tokio",
  "tower-http",
  "utoipa",
