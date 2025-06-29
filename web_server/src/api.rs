@@ -75,11 +75,11 @@ where
     }
 }
 
-#[derive(Deserialize, IntoParams)]
+#[derive(Deserialize, IntoParams, Default)]
 pub struct IncidentsFiltering {
-    county: Option<String>,
-    offset: Option<u64>,
-    count: Option<u64>,
+    pub county: Option<String>,
+    pub offset: Option<u64>,
+    pub count: Option<u64>,
     // datetime: Option<String>,
 }
 
@@ -112,8 +112,7 @@ where
 
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
-    let rev_ordered_incidents =
-        get_rev_ordered_incidents(conn, offset, offset + count).await;
+    let rev_ordered_incidents = get_rev_ordered_incidents(conn, offset, offset + count).await;
 
     match rev_ordered_incidents {
         Ok(incidents_keys) => {

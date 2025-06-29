@@ -1,13 +1,14 @@
 # The plan
 
 ## TODO
-- show keys and json values in a sorted table (no pagination)
+- integration tests for web api
 - provide pagination for the table
 - show incidents on a map
 - write integration tests for migration utility
 
 
 ## DONE
+- show keys and json values in a sorted table (no pagination)
 - move the migration to another workspace so to run it independently
 - use openapi for generating the structures
 - build container for SPA and serve static files with nginx

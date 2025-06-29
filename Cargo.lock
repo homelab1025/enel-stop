@@ -3264,7 +3264,6 @@ dependencies = [
  "browsenscrape",
  "chrono",
  "common",
- "lazy_static",
  "log",
  "redis",
  "serde",
