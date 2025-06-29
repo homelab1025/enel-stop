@@ -1,11 +1,11 @@
-use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use common::Record;
+use axum::Json;
 use common::persistence::SORTED_INCIDENTS_KEY;
+use common::Record;
 use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::{RedisError, RedisResult, cmd};
+use redis::{cmd, RedisError, RedisResult};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use std::sync::Arc;
@@ -78,14 +78,9 @@ where
 #[derive(Deserialize, IntoParams)]
 pub struct IncidentsFiltering {
     county: Option<String>,
-    offset: Option<Offset>,
+    offset: Option<u64>,
+    count: Option<u64>,
     // datetime: Option<String>,
-}
-
-#[derive(Deserialize, ToSchema, Copy, Clone)]
-pub struct Offset {
-    offset: u64,
-    count: u64,
 }
 
 #[derive(Serialize, ToSchema)]
@@ -112,12 +107,13 @@ pub async fn get_all_incidents<T>(
 where
     T: ConnectionLike + Send + Sync,
 {
-    let offset_info = filtering.offset.unwrap_or(Offset { offset: 0, count: 0 });
+    let offset = filtering.offset.unwrap_or(0);
+    let count = filtering.count.unwrap_or(0);
 
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
     let rev_ordered_incidents =
-        get_rev_ordered_incidents(conn, offset_info.offset, offset_info.offset + offset_info.count).await;
+        get_rev_ordered_incidents(conn, offset, offset + count).await;
 
     match rev_ordered_incidents {
         Ok(incidents_keys) => {
