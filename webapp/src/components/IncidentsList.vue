@@ -14,10 +14,10 @@ let server_api = new DefaultApi(configuration);
 
 onMounted(async () => {
   let db_size = await server_api.countIncidents();
-  response.value = String(db_size.data.count);
+  response.value = String(db_size.data.total_count);
 
   let all_incidents = await server_api.getAllIncidents();
-  incidents.value = all_incidents.data;
+  incidents.value = all_incidents.data.incidents;
 })
 
 const handleCountySearch = () => {
@@ -36,8 +36,8 @@ const handleCountySearch = () => {
 
 const searchIncidentsByCounty = async (countyName?: string) => {
   const incidentsByCounty = await server_api.getAllIncidents(countyName);
-  incidents.value = incidentsByCounty.data;
-  response.value = String(incidentsByCounty.data.length); // Update total count for filtered results
+  incidents.value = incidentsByCounty.data.incidents;
+  response.value = String(incidentsByCounty.data.total_count); // Update total count for filtered results
 };
 
 </script>
@@ -50,10 +50,19 @@ const searchIncidentsByCounty = async (countyName?: string) => {
       <input type="text" class="grow" placeholder="" v-model="searchCounty" @keyup.enter="handleCountySearch"/>
     </label></div>
   <div class="divider"></div>
-  <div class="join grid grid-cols-2">
-    <button class="join-item btn btn-outline">Previous page</button>
-    <button class="join-item btn btn-outline">Next</button>
+
+  <div class="join">
+    <input
+        class="join-item btn btn-square"
+        type="radio"
+        name="options"
+        aria-label="1"
+        checked="checked" />
+    <input class="join-item btn btn-square" type="radio" name="options" aria-label="2" />
+    <input class="join-item btn btn-square" type="radio" name="options" aria-label="3" />
+    <input class="join-item btn btn-square" type="radio" name="options" aria-label="4" />
   </div>
+
   <div class="card">
     <table class="table table-fixed table-pin-rows">
       <thead>
