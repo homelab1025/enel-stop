@@ -103,7 +103,7 @@ pub struct GetIncidentsResponse {
 pub async fn get_all_incidents<T>(
     state: State<AppState<T>>,
     filtering: Query<IncidentsFiltering>,
-) -> Result<Json<Vec<Incident>>, (StatusCode, String)>
+) -> Result<Json<GetIncidentsResponse>, (StatusCode, String)>
 where
     T: ConnectionLike + Send + Sync,
 {
@@ -152,7 +152,10 @@ where
                 }
             }
 
-            Ok(Json(all_incidents))
+            Ok(Json(GetIncidentsResponse{
+                incidents: all_incidents,
+                total_count: 0,
+            }))
         }
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
     }
