@@ -1,10 +1,13 @@
 use browsenscrape::redis_store::store_record;
 use common::Record;
+use redis::aio::MultiplexedConnection;
 use redis::Client;
+use std::sync::Arc;
 use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, GenericImage};
-use tokio::sync::OnceCell;
+use tokio::sync::{Mutex, OnceCell};
+use web_server::api::AppState;
 
 pub const REDIS_TAG: &str = "7.4.2";
 pub const FILTERING_COUNTY: &str = "test_judet";
@@ -79,7 +82,6 @@ pub async fn setup_redis() -> &'static (Client, ContainerAsync<GenericImage>) {
             localitate: "test_localitate2".to_string(),
         };
 
-
         let _res = store_record(&incident1_county1, &mut conn);
         let _res = store_record(&incident2_county1, &mut conn);
         let _res = store_record(&incident3_county2, &mut conn);
@@ -87,5 +89,21 @@ pub async fn setup_redis() -> &'static (Client, ContainerAsync<GenericImage>) {
         let _res = store_record(&incident5_county2, &mut conn);
 
         (redis_client, redis_container)
-    }).await
+    })
+    .await
+}
+
+pub async fn setup_app_state() -> AppState<MultiplexedConnection> {
+    let (redis_client, _redis_container) = setup_redis().await;
+
+    let async_redis_conn = redis_client
+        .get_multiplexed_tokio_connection()
+        .await
+        .expect("Async connection to Redis");
+
+    let state = AppState {
+        ping_msg: "The state of ping.".to_string(),
+        redis_conn: Arc::new(Mutex::new(async_redis_conn)),
+    };
+    state
 }

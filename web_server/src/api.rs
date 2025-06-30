@@ -46,11 +46,11 @@ pub struct Ping {
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct Incident {
-    id: String,
-    county: String,
-    location: String,
-    datetime: String,
-    description: String,
+    pub id: String,
+    pub county: String,
+    pub location: String,
+    pub datetime: String,
+    pub description: String,
 }
 
 #[utoipa::path(
@@ -112,7 +112,7 @@ where
 
     let mut conn_guard = state.redis_conn.lock().await;
     let conn = &mut *conn_guard;
-    let rev_ordered_incidents = get_rev_ordered_incidents(conn, offset, offset + count).await;
+    let rev_ordered_incidents = get_rev_ordered_incidents(conn, offset, count).await;
 
     match rev_ordered_incidents {
         Ok(incidents_keys) => {
@@ -164,7 +164,7 @@ where
 {
     let final_to: i64 = match to {
         0 => -1,
-        to => to as i64,
+        to => (to + from - 1) as i64,
     };
 
     let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
