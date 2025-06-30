@@ -51,17 +51,17 @@ const searchIncidentsByCounty = async (countyName?: string) => {
     </label></div>
   <div class="divider"></div>
 
-  <div class="join">
-    <input
-        class="join-item btn btn-square"
-        type="radio"
-        name="options"
-        aria-label="1"
-    />
-    <input class="join-item btn btn-square" type="radio" name="options" aria-label="2" />
-    <input class="join-item btn btn-square" type="radio" name="options" aria-label="3" />
-    <input class="join-item btn btn-square" type="radio" name="options" aria-label="4" />
-  </div>
+<!--  <div class="join">-->
+<!--    <input-->
+<!--        class="join-item btn btn-square"-->
+<!--        type="radio"-->
+<!--        name="options"-->
+<!--        aria-label="1"-->
+<!--    />-->
+<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="2" />-->
+<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="3" />-->
+<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="4" />-->
+<!--  </div>-->
 
   <div class="card">
     <table class="table table-fixed table-pin-rows">
