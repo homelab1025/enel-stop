@@ -2,7 +2,7 @@ use browsenscrape::redis_store::store_record;
 use common::configuration;
 use core::panic;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::{debug, info, warn, LevelFilter};
+use log::{LevelFilter, debug, error, info, warn};
 use prometheus_client::{
     encoding::text::encode,
     metrics::{counter::Counter, gauge::Gauge},
@@ -77,27 +77,35 @@ fn main() {
     };
 
     let rss_content = get_rss_content(&config.url);
-    let incidents = parse_rss(&rss_content, &config.categories);
-    if incidents.is_empty() {
-        failures_count.inc();
-    }
+    match rss_content {
+        Ok(content) => {
+            let incidents = parse_rss(&content, &config.categories);
+            if incidents.is_empty() {
+                failures_count.inc();
+            }
 
-    debug!("Incidents: {:?}", incidents);
+            debug!("Incidents: {:?}", incidents);
 
-    if let Some(conn) = redis_connection.as_mut() {
-        let stored_incidents = incidents
-            .iter()
-            .map(|incident| store_record(incident, conn))
-            .filter(|incident_result| incident_result.is_ok())
-            .count();
+            if let Some(conn) = redis_connection.as_mut() {
+                let stored_incidents = incidents
+                    .iter()
+                    .map(|incident| store_record(incident, conn))
+                    .filter(|incident_result| incident_result.is_ok())
+                    .count();
 
-        incidents_count.inc_by(stored_incidents.try_into().unwrap());
+                incidents_count.inc_by(stored_incidents.try_into().unwrap());
 
-        info!(
-            "Stored {} incidents out of {} received.",
-            stored_incidents,
-            incidents.len()
-        );
+                info!(
+                    "Stored {} incidents out of {} received.",
+                    stored_incidents,
+                    incidents.len()
+                );
+            }
+        }
+        Err(err) => {
+            error!("{}", err);
+            failures_count.inc();
+        }
     }
 
     gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
@@ -135,7 +143,7 @@ const USER_AGENT_HEADER_VALUE: &str =
 const REFERER_HEADER_VALUE: &str = "https://www.reteleelectrice.ro/intreruperi/programate/";
 const ACCEPT_HEADER_VALUE: &str = "application/rss+xml, application/xml, text/xml, */*";
 
-fn get_rss_content(starting_url: &str) -> String {
+fn get_rss_content(starting_url: &str) -> Result<String, String> {
     let client = reqwest::blocking::Client::new();
     let response = client
         .get(starting_url)
@@ -143,7 +151,10 @@ fn get_rss_content(starting_url: &str) -> String {
         .header("Referer", REFERER_HEADER_VALUE)
         .header("Accept", ACCEPT_HEADER_VALUE)
         .send()
-        .expect("Failed to send request");
+        .map_err(|e| e.to_string())?;
 
-    response.text().expect("Failed to get response text")
+    match response.text() {
+        Ok(content) => Ok(content),
+        Err(err) => Err(err.to_string()),
+    }
 }
