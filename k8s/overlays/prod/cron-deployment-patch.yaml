@@ -4,4 +4,4 @@ metadata:
   name: scraper
   namespace: enel
 spec:
-  schedule: "*/120 * * * *" # Run every 120 minutes
+  schedule: "*/90 * * * *" # Run every 90 minutes
