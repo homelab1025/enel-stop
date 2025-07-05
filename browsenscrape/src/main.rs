@@ -1,7 +1,7 @@
 use browsenscrape::redis_store::store_record;
 use common::configuration;
 use core::panic;
-use log::{debug, error, info, warn, LevelFilter};
+use log::{LevelFilter, debug, error, info, warn};
 use prometheus_client::{
     encoding::text::encode,
     metrics::{counter::Counter, gauge::Gauge},
@@ -74,26 +74,30 @@ fn main() {
     match rss_content {
         Ok(content) => {
             let incidents = parse_rss(&content, &config.categories);
-            if incidents.is_empty() {
-                failures_count.inc();
-            }
+            match incidents {
+                Ok(incidents) => {
+                    debug!("Incidents: {:?}", incidents);
 
-            debug!("Incidents: {:?}", incidents);
+                    if let Some(conn) = redis_connection.as_mut() {
+                        let stored_incidents = incidents
+                            .iter()
+                            .map(|incident| store_record(incident, conn))
+                            .filter(|incident_result| incident_result.is_ok())
+                            .count();
 
-            if let Some(conn) = redis_connection.as_mut() {
-                let stored_incidents = incidents
-                    .iter()
-                    .map(|incident| store_record(incident, conn))
-                    .filter(|incident_result| incident_result.is_ok())
-                    .count();
+                        incidents_count.inc_by(stored_incidents.try_into().unwrap());
 
-                incidents_count.inc_by(stored_incidents.try_into().unwrap());
-
-                info!(
-                    "Stored {} incidents out of {} received.",
-                    stored_incidents,
-                    incidents.len()
-                );
+                        info!(
+                            "Stored {} incidents out of {} received.",
+                            stored_incidents,
+                            incidents.len()
+                        );
+                    }
+                }
+                Err(err) => {
+                    failures_count.inc();
+                    error!("{}", err);
+                }
             }
         }
         Err(err) => {

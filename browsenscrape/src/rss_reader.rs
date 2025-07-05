@@ -6,7 +6,7 @@ use rss::{Category, Channel};
 
 const LOCATION_PATTERN: &str = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
 
-pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> {
+pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Result<Vec<Record>, String> {
     info!("Filtering for categs: {:?}", filter_categs);
 
     debug!("Content: {}", rss_content);
@@ -14,14 +14,13 @@ pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Vec<Record> 
     let channel = match Channel::read_from(rss_content.as_bytes()) {
         Ok(channel) => channel,
         Err(err) => {
-            error!("There was an error parsing the RSS: {}", err);
-            return vec![];
+            return Err(format!("There was an error parsing the RSS: {}", err));
         }
     };
 
     let converted_filters = convert_config_categs(filter_categs);
 
-    filter_items(channel.items(), converted_filters)
+    Ok(filter_items(channel.items(), converted_filters))
 }
 
 fn filter_items(items: &[rss::Item], converted_filters: Vec<Category>) -> Vec<Record> {
@@ -87,7 +86,7 @@ mod rss_reader_tests {
     use regex::Regex;
     use rss::{Category, Guid, ItemBuilder};
 
-    use super::{convert_item, filter_items, LOCATION_PATTERN};
+    use super::{LOCATION_PATTERN, convert_item, filter_items};
 
     const FILTER_CATEG_1: &str = "one";
     const FILTER_CATEG_2: &str = "two";
