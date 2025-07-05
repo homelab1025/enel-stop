@@ -4,6 +4,9 @@ kind: Kustomization
 namespace: selenium
 
 resources:
-  - namespace.yaml
-  - deployment.yaml
-  - service.yaml
+- selenium-deployment.yaml
+- selenium-service.yaml
+
+commonLabels:
+  app.kubernetes.io/name: selenium-chrome
+  app.kubernetes.io/part-of: selenium-grid
