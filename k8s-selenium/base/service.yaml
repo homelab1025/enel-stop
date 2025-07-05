@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seleniumbase
+spec:
+  selector:
+    app: seleniumbase
+  ports:
+    - name: selenium
+      protocol: TCP
+      port: 4444
+      targetPort: 4444
+    - name: vnc
+      protocol: TCP
+      port: 7900
+      targetPort: 7900
+  type: ClusterIP

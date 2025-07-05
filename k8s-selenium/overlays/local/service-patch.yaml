@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: seleniumbase
+spec:
+  type: NodePort
+  ports:
+    - name: selenium
+      port: 4444
+      targetPort: 4444
+      nodePort: 30444
+    - name: vnc
+      port: 7900
+      targetPort: 7900
+      nodePort: 30900
