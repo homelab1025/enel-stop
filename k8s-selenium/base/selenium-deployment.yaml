@@ -1,34 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: selenium-chrome
+  name: selenium-chrome-node
   labels:
-    app: selenium-chrome
+    app: selenium-chrome-node
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: selenium-chrome
+      app: selenium-chrome-node
   template:
     metadata:
       labels:
-        app: selenium-chrome
+        app: selenium-chrome-node
     spec:
       containers:
-      - name: selenium-chrome
-        image: selenium/standalone-chrome:latest
+      - name: selenium-chrome-node
+        image: selenium/node-chrome:latest
         ports:
-        - containerPort: 4444
-          name: webdriver
+        - containerPort: 5555
+          name: node
         - containerPort: 7900
           name: vnc
         env:
+        - name: SE_EVENT_BUS_HOST
+          value: "selenium-hub"
+        - name: SE_EVENT_BUS_PUBLISH_PORT
+          value: "4442"
+        - name: SE_EVENT_BUS_SUBSCRIBE_PORT
+          value: "4443"
         - name: SE_NODE_MAX_SESSIONS
           value: "4"
         - name: SE_NODE_OVERRIDE_MAX_SESSIONS
           value: "true"
-        - name: SE_OPTS
-          value: "--allow-cors true"
         resources:
           limits:
             memory: "2Gi"
@@ -37,14 +41,12 @@ spec:
             memory: "1Gi"
             cpu: "500m"
         readinessProbe:
-          httpGet:
-            path: /wd/hub/status
-            port: 4444
+          tcpSocket:
+            port: 5555
           initialDelaySeconds: 10
           timeoutSeconds: 5
         livenessProbe:
-          httpGet:
-            path: /wd/hub/status
-            port: 4444
+          tcpSocket:
+            port: 5555
           initialDelaySeconds: 15
           timeoutSeconds: 5

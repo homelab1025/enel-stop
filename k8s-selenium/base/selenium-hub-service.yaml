@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: selenium-hub
+  labels:
+    app: selenium-hub
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4444
+    targetPort: 4444
+    protocol: TCP
+    name: webdriver
+  - port: 4443
+    targetPort: 4443
+    protocol: TCP
+    name: https
+  - port: 4442
+    targetPort: 4442
+    protocol: TCP
+    name: publish
+  selector:
+    app: selenium-hub

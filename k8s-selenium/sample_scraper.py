@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Sample script for scraping using seleniumbase CDP with the Selenium service.
-This script demonstrates how to connect to the Selenium service running in Kubernetes
+Sample script for scraping using seleniumbase CDP locally.
+This script demonstrates how to use seleniumbase for local browser automation
 and perform basic scraping operations using CDP (Chrome DevTools Protocol).
 """
 
@@ -12,8 +12,6 @@ import argparse
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='Sample Selenium CDP scraper')
-    parser.add_argument('--selenium-url', type=str, default='http://192.168.23.107:30661/wd/hub',
-                        help='URL of the Selenium service')
     parser.add_argument('--url', type=str, default='https://www.reteleelectrice.ro/intreruperi/programate/',
                         help='URL to scrape')
     return parser.parse_args()
@@ -21,13 +19,12 @@ def parse_arguments():
 def main():
     args = parse_arguments()
 
-    print(f"Connecting to Selenium at {args.selenium_url}")
+    print("Starting local seleniumbase browser")
     print(f"Scraping URL: {args.url}")
 
-    # Connect to the Selenium service
+    # Initialize local seleniumbase driver
     driver = Driver(
-        uc=True,  # Use undetected-chromedriver mode
-        host=args.selenium_url
+        uc=True  # Use undetected-chromedriver mode
     )
 
     try:
