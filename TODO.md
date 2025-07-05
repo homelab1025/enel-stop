@@ -1,13 +1,15 @@
 # The plan
 
 ## TODO
-- integration tests for web api
 - provide pagination for the table
 - show incidents on a map
 - write integration tests for migration utility
+- implement data migration from Redis to PostgreSQL
 
 
 ## DONE
+- set up Liquibase for PostgreSQL database migration (based on the Incident struct)
+- integration tests for web api
 - show keys and json values in a sorted table (no pagination)
 - move the migration to another workspace so to run it independently
 - use openapi for generating the structures
