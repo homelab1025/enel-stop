@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: liquibase-update
+spec:
+  template:
+    spec:
+      containers:
+      - name: liquibase
+        image: enel-stop-liquibase:latest
+        imagePullPolicy: IfNotPresent
+        args: ["update"]
+        env:
+        - name: DB_HOST
+          value: "postgres-service"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_NAME
+          value: "enel_stop"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: postgres-credentials
+              key: password
+      restartPolicy: Never
+  backoffLimit: 3
