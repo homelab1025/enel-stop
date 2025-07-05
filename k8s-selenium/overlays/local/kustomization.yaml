@@ -8,7 +8,6 @@ patchesStrategicMerge:
 - service-patch.yaml
 
 namePrefix: local-
-namespace: selenium
 
 commonLabels:
   environment: local
