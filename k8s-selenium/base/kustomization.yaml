@@ -6,6 +6,7 @@ namespace: selenium
 resources:
 - selenium-deployment.yaml
 - selenium-service.yaml
+- namespace.yaml
 
 commonLabels:
   app.kubernetes.io/name: selenium-chrome
