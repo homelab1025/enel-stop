@@ -27,7 +27,7 @@ def main():
     # Connect to the Selenium service
     driver = Driver(
         uc=True,  # Use undetected-chromedriver mode
-        remote_address=args.selenium_url
+        command_executor=args.selenium_url
     )
 
     try:
