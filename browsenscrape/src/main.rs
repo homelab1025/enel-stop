@@ -31,8 +31,8 @@ fn main() {
     let mut metrics_registry =
         Registry::with_prefix_and_labels("enel", [("app".into(), "browsenscrape".into())].into_iter());
     let gauge_full: Gauge = Gauge::default();
-    let gauge_browser: Gauge = Gauge::default();
     let incidents_count: Counter = Counter::default();
+    let failures_count: Counter = Counter::default();
 
     metrics_registry.register(
         "incidents_count",
@@ -40,10 +40,11 @@ fn main() {
         incidents_count.clone(),
     );
     metrics_registry.register("full", "Time it takes to run the whole cron job.", gauge_full.clone());
+
     metrics_registry.register(
-        "chrome",
-        "Time it takes to run the browser actions.",
-        gauge_browser.clone(),
+        "failures",
+        "Failures: most probably due to blocking by WAF.",
+        failures_count.clone(),
     );
 
     let cli_arg = env::args().nth(1);
@@ -75,11 +76,11 @@ fn main() {
         None => None,
     };
 
-    let start_time_browser = Instant::now();
-
     let rss_content = get_rss_content(&config.url);
-
     let incidents = parse_rss(&rss_content, &config.categories);
+    if incidents.is_empty() {
+        failures_count.inc();
+    }
 
     debug!("Incidents: {:?}", incidents);
 
@@ -99,7 +100,6 @@ fn main() {
         );
     }
 
-    gauge_browser.set(start_time_browser.elapsed().as_millis().try_into().unwrap());
     gauge_full.set(start_time_program.elapsed().as_millis().try_into().unwrap());
     config.pushgateway_server.map(|pushgw_server| {
         let metrics_push = push_metrics(&metrics_registry, &pushgw_server);
