@@ -7,7 +7,7 @@ and perform basic scraping operations using CDP (Chrome DevTools Protocol).
 
 from seleniumbase import Driver
 import time
-import json
+import requests
 import argparse
 
 def parse_arguments():
@@ -35,29 +35,51 @@ def main():
         # Wait for the page to load
         time.sleep(2)
 
-        # Example: Use CDP to get all cookies
-        cookies = driver.execute_cdp_cmd('Network.getAllCookies', {})
-        print(f"Found {len(cookies['cookies'])} cookies")
+        # Find the RSS link using the provided XPath
+        xpath = "//*[@id=\"page-wrap\"]/div/div/div/div/div[4]/div/a"
+        try:
+            rss_link_element = driver.find_element("xpath", xpath)
 
-        # Example: Use CDP to extract performance metrics
-        performance_metrics = driver.execute_cdp_cmd('Performance.getMetrics', {})
-        print("Performance metrics:")
-        for metric in performance_metrics['metrics']:
-            print(f"  {metric['name']}: {metric['value']}")
+            if rss_link_element:
+                rss_url = rss_link_element.get_attribute('href')
+                print(f"Found RSS link: {rss_url}")
 
-        # Example: Extract all links from the page
-        links = driver.find_elements("tag name", "a")
-        print(f"Found {len(links)} links on the page:")
-        for i, link in enumerate(links[:5]):  # Print first 5 links
-            print(f"  {i+1}. {link.text} -> {link.get_attribute('href')}")
+                # Use requests to get the RSS content directly
+                # This avoids issues with the browser trying to render XML
+                print("Fetching RSS content using requests...")
 
-        # Example: Take a screenshot
-        driver.save_screenshot("screenshot.png")
-        print("Screenshot saved as screenshot.png")
+                # Add headers to mimic a browser request
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
+                    'Referer': 'https://www.reteleelectrice.ro/intreruperi/programate/',
+                    'Accept': 'application/rss+xml, application/xml, text/xml, */*'
+                }
 
-        # Example: Extract HTML content
-        html_content = driver.execute_cdp_cmd('DOM.getOuterHTML', {'nodeId': 1})
-        print(f"HTML content length: {len(html_content['outerHTML'])} characters")
+                response = requests.get(rss_url, headers=headers)
+                if response.status_code == 200:
+                    print("\n--- RSS Content ---")
+                    print(response.text)
+                    print("--- End of RSS Content ---")
+                else:
+                    print(f"Failed to fetch RSS content: {response.status_code}")
+                    print("Attempting to use the browser's cookies for authentication...")
+
+                    # Get cookies from the browser
+                    cookies = driver.get_cookies()
+                    cookies_dict = {cookie['name']: cookie['value'] for cookie in cookies}
+
+                    # Try again with cookies
+                    response = requests.get(rss_url, headers=headers, cookies=cookies_dict)
+                    if response.status_code == 200:
+                        print("\n--- RSS Content (with cookies) ---")
+                        print(response.text)
+                        print("--- End of RSS Content ---")
+                    else:
+                        print(f"Still failed to fetch RSS content: {response.status_code}")
+            else:
+                print("RSS link not found using the provided XPath")
+        except Exception as e:
+            print(f"Error finding or processing RSS link: {e}")
 
     finally:
         # Close the browser
