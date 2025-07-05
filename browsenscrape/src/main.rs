@@ -1,8 +1,7 @@
 use browsenscrape::redis_store::store_record;
 use common::configuration;
 use core::panic;
-use headless_chrome::{Browser, LaunchOptionsBuilder};
-use log::{LevelFilter, debug, error, info, warn};
+use log::{debug, error, info, warn, LevelFilter};
 use prometheus_client::{
     encoding::text::encode,
     metrics::{counter::Counter, gauge::Gauge},
@@ -10,12 +9,7 @@ use prometheus_client::{
 };
 use rss_reader::parse_rss;
 use simple_logger::SimpleLogger;
-use std::{
-    env,
-    path::{Path, PathBuf},
-    thread,
-    time::Instant,
-};
+use std::{env, time::Instant};
 
 mod rss_reader;
 
@@ -151,10 +145,10 @@ fn get_rss_content(starting_url: &str) -> Result<String, String> {
         .header("Referer", REFERER_HEADER_VALUE)
         .header("Accept", ACCEPT_HEADER_VALUE)
         .send()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| format!("Could not fetch rss content: {}", e))?;
 
     match response.text() {
         Ok(content) => Ok(content),
-        Err(err) => Err(err.to_string()),
+        Err(err) => Err(format!("Could not decode text from response: {}", err)),
     }
 }
