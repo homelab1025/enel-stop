@@ -25,3 +25,11 @@ COPY webapp/dist /usr/share/nginx/html
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
+
+FROM python:3.9.23-bookworm as scraper
+COPY scrape.py /scrape.py
+RUN apt-get update
+RUN apt install chromium xvfb
+RUN pip install selenium
+RUN pip install xvfbwrapper
+CMD ["python", "scrape.py"]

@@ -90,6 +90,10 @@ with Xvfb() as xvfb:
 
             if os.path.exists(downloaded_file_path):
                 print(f"File downloaded to: {downloaded_file_path}")
+
+                with open(downloaded_file_path, "rb") as rss_file:
+                    rss_content = rss_file.read()
+                    print(rss_content)
             else:
                 print(f"File not found in download directory after {timeout} seconds.")
 
