@@ -29,7 +29,7 @@ CMD ["nginx", "-g", "daemon off;"]
 FROM python:3.9.23-bookworm as scraper
 COPY scrape.py /scrape.py
 RUN apt-get update
-RUN apt install chromium xvfb
+RUN apt-get -y install chromium xvfb
 RUN pip install selenium
 RUN pip install xvfbwrapper
 CMD ["python", "scrape.py"]
