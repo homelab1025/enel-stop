@@ -1,7 +1,9 @@
 use common::persistence::generate_redis_key;
 use common::Record;
 use redis::cmd;
-use testcontainers::{core::WaitFor, runners::SyncRunner, GenericImage};
+use testcontainers::core::WaitFor;
+use testcontainers::runners::AsyncRunner;
+use testcontainers::GenericImage;
 use web_server::redis_store::store_record;
 
 const REDIS_TAG: &str = "7.4.2";
@@ -14,9 +16,10 @@ async fn test_redis_storage() {
         .with_wait_for(WaitFor::message_on_stdout("Ready to accept connections"))
         .with_wait_for(WaitFor::seconds(5))
         .start()
+        .await
         .unwrap();
-    let redis_host = redis_container.get_host().unwrap();
-    let redis_port = redis_container.get_host_port_ipv4(6379).unwrap();
+    let redis_host = redis_container.get_host().await.unwrap();
+    let redis_port = redis_container.get_host_port_ipv4(6379).await.unwrap();
 
     println!("Container: {}", redis_container.id());
     println!("Redis HOST: {}", redis_host);
