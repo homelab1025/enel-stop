@@ -6,6 +6,7 @@ redis_server = "redis://enel-redis-master/"
 pushgateway_server = "http://prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics/job/enel"
 http_port = 8080
 cors_permissive = true
+web_server_address = "http://enel-web.enel:8080/scraper"
 
 [filter]
 categories = []

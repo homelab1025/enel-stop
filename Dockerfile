@@ -20,7 +20,8 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 
 FROM python:3.9.23-bookworm as scraper
-COPY scrape.py /scrape.py
+COPY scrape.py /app/scrape.py
+COPY conf/config-prod.toml /app/config.toml
 RUN apt-get update
 RUN apt-get -y install chromium xvfb
 RUN pip install selenium

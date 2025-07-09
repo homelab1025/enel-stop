@@ -12,18 +12,18 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: scraper
-              image: ghcr.io/homelab1025/enel-stop-crawler:latest
+              image: ghcr.io/homelab1025/enel-stop-scraper:latest
               imagePullPolicy: Always
               command: ["/bin/sh", "-c"]
               args:
                   - |
-                    # Calculate a random delay between 0 and 50 minutes (3000 seconds)
+                    # Calculate a random delay between 0 and 3 minutes (180 seconds)
                     # You can adjust this range as needed.
-                    RANDOM_DELAY_SECONDS=$(shuf -i 0-3000 -n 1)
+                    RANDOM_DELAY_SECONDS=$(shuf -i 0-180 -n 1)
                     echo "Sleeping for $RANDOM_DELAY_SECONDS seconds before running scraper..."
                     sleep $RANDOM_DELAY_SECONDS
                     echo "Starting scraper now!"
-                    /app/crawler /app/config.toml
+                    python /app/scraper.py /app/config.toml
               resources:
                 limits:
                   memory: "512Mi"
