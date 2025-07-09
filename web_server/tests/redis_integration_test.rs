@@ -4,7 +4,7 @@ use redis::cmd;
 use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::GenericImage;
-use web_server::redis_store::store_record;
+use web_server::scraper::redis_store::store_record;
 
 const REDIS_TAG: &str = "7.4.2";
 

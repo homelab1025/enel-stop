@@ -79,14 +79,12 @@ fn convert_config_categs(config_categs: &[String]) -> Vec<Category> {
 
 #[cfg(test)]
 mod rss_reader_tests {
-
-    use crate::rss_reader::{check_categories, convert_config_categs};
     use chrono::NaiveDate;
     use common::Record;
     use regex::Regex;
     use rss::{Category, Guid, ItemBuilder};
 
-    use super::{LOCATION_PATTERN, convert_item, filter_items};
+    use super::{check_categories, convert_config_categs, convert_item, filter_items, LOCATION_PATTERN};
 
     const FILTER_CATEG_1: &str = "one";
     const FILTER_CATEG_2: &str = "two";

@@ -1,7 +1,7 @@
 use axum::routing::post;
-use axum::{routing::get, Router};
+use axum::{Router, routing::get};
 use common::configuration::{self, ServiceConfiguration};
-use log::{info, LevelFilter};
+use log::{LevelFilter, info};
 use prometheus_client::registry::Registry;
 use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
@@ -12,9 +12,8 @@ use tokio::sync::{Mutex, RwLock};
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-use web_server::metrics::{Metrics};
-use web_server::scraper_api::submit_rss;
-use web_server::{web_api, AppState};
+use web_server::metrics::Metrics;
+use web_server::{AppState, scraper, web_api};
 
 fn main() {
     let config = load_configuration();
@@ -76,7 +75,7 @@ fn create_app(state: AppState<MultiplexedConnection>) -> Router {
         .route("/api/ping", get(web_api::ping))
         .route("/api/incidents/count", get(web_api::count_incidents))
         .route("/api/incidents/all", get(web_api::get_all_incidents))
-        .route("/scraper", post(submit_rss))
+        .route("/scraper", post(scraper::scraper_api::submit_rss))
         .fallback_service(ServeDir::new("web_assets"))
         .with_state(state)
 }

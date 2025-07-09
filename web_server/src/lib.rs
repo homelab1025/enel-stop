@@ -4,9 +4,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
 pub mod metrics;
-pub mod redis_store;
-mod rss_reader;
-pub mod scraper_api;
+pub mod scraper;
 pub mod web_api;
 
 #[derive(Clone, Default)]

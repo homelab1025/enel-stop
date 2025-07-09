@@ -6,8 +6,8 @@ use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, GenericImage};
 use tokio::sync::{Mutex, OnceCell};
+use web_server::scraper::redis_store::store_record;
 use web_server::AppState;
-use web_server::redis_store::store_record;
 
 pub const REDIS_TAG: &str = "7.4.2";
 pub const FILTERING_COUNTY: &str = "test_judet";

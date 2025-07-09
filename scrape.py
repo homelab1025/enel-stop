@@ -1,4 +1,6 @@
+import configparser
 import os
+import sys
 import time
 
 import requests
@@ -9,7 +11,34 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from xvfbwrapper import Xvfb
 
+def get_service_properties(file_path):
+    config = configparser.ConfigParser()
+    try:
+        config.read(file_path)
+        url = config.get('service', 'url', fallback=None)
+        web_server_address = config.get('service', 'web_server_address', fallback=None)
+        return url, web_server_address
+    except configparser.Error as e:
+        print(f"Error parsing the configuration file: {e}")
+        return None, None
+    except FileNotFoundError:
+        print(f"Error: File not found at '{file_path}'")
+        return None, None
+
 with Xvfb() as xvfb:
+    if len(sys.argv) < 2:
+        print("Usage: python your_script_name.py <path_to_config_file>")
+        sys.exit(1)
+
+    file_path = sys.argv[1]
+    url, web_server_address = get_service_properties(file_path)
+
+    if url and web_server_address:
+        print(f"URL: {url}")
+        print(f"Web Server Address: {web_server_address}")
+    else:
+        print("Could not retrieve URL and/or Web Server Address.")
+
     # Set up Chrome options for downloading
     download_dir = os.path.join(os.getcwd(), "rss_downloads")  # Create a subfolder for downloads
     if not os.path.exists(download_dir):
@@ -94,7 +123,7 @@ with Xvfb() as xvfb:
 
                 with open(downloaded_file_path, "rb") as rss_file:
                     rss_content = rss_file.read()
-                    # requests.post(url, rss_content, headers={"Content-Type": "application/rss+xml"})
+                    requests.post(web_server_address, rss_content, headers={"Content-Type": "application/rss+xml"})
                     print(rss_content)
             else:
                 print(f"File not found in download directory after {timeout} seconds.")

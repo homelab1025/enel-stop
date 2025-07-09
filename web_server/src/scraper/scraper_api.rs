@@ -1,13 +1,13 @@
 use crate::AppState;
 use crate::metrics::INCIDENTS_COUNT_NAME;
-use crate::redis_store::store_record;
-use crate::rss_reader::parse_rss;
 use crate::web_api::Ping;
 use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
 use log::{debug, error, info};
 use redis::aio::ConnectionLike;
+use crate::scraper::redis_store::store_record;
+use crate::scraper::rss_reader::parse_rss;
 
 // #[utoipa::path(
 //     get,
