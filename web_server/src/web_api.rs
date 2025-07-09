@@ -1,3 +1,4 @@
+use crate::AppState;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
@@ -8,19 +9,8 @@ use redis::aio::ConnectionLike;
 use redis::{cmd, RedisError, RedisResult};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 use utoipa::r#gen::serde_json;
 use utoipa::{IntoParams, OpenApi, ToSchema};
-
-#[derive(Clone)]
-pub struct AppState<T>
-where
-    T: ConnectionLike + Send + Sync,
-{
-    pub ping_msg: String,
-    pub redis_conn: Arc<Mutex<T>>,
-}
 
 #[derive(OpenApi)]
 #[openapi(
@@ -41,7 +31,7 @@ pub struct RecordCount {
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct Ping {
-    ping: String,
+    pub(crate) ping: String,
 }
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
@@ -152,7 +142,7 @@ where
                 }
             }
 
-            Ok(Json(GetIncidentsResponse{
+            Ok(Json(GetIncidentsResponse {
                 incidents: all_incidents,
                 total_count: 0,
             }))

@@ -14,7 +14,7 @@ pub trait MigrationProcess {
     /// 
     /// returns: () 
     /// 
-    fn migrate(&mut self, conn: &mut dyn ConnectionLike) {}
+    fn migrate(&mut self, _conn: &mut dyn ConnectionLike) {}
     fn migrate_key(&mut self, key: &str, conn: &mut dyn ConnectionLike);
     fn get_start_version(&self) -> u64;
     fn get_description(&self) -> String;

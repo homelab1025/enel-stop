@@ -3,13 +3,13 @@ mod common;
 mod tests {
     use crate::common::{setup_app_state, FILTERING_COUNTY};
     use axum::extract::{Query, State};
-    use web_server::api::{GetIncidentsResponse, Incident, IncidentsFiltering, RecordCount};
+    use web_server::web_api::{GetIncidentsResponse, Incident, IncidentsFiltering, RecordCount};
 
     #[tokio::test]
     async fn test_api_count() {
         let state = setup_app_state().await;
 
-        let resp = web_server::api::count_incidents(State(state)).await;
+        let resp = web_server::web_api::count_incidents(State(state)).await;
         assert!(resp.is_ok());
 
         let json: RecordCount = resp.expect("Should be OK").0;
@@ -22,7 +22,7 @@ mod tests {
 
         let filtering = IncidentsFiltering { ..Default::default() };
 
-        let resp = web_server::api::get_all_incidents(State(state), Query(filtering)).await;
+        let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
         assert!(resp.is_ok());
 
         let json: GetIncidentsResponse = resp.expect("Should be OK").0;
@@ -38,7 +38,7 @@ mod tests {
             ..Default::default()
         };
 
-        let resp = web_server::api::get_all_incidents(State(state), Query(filtering)).await;
+        let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
         assert!(resp.is_ok());
 
         let json: GetIncidentsResponse = resp.expect("Should be OK").0;
@@ -49,7 +49,7 @@ mod tests {
     async fn test_ping() {
         let state = setup_app_state().await;
 
-        let resp = web_server::api::ping(State(state)).await;
+        let resp = web_server::web_api::ping(State(state)).await;
         assert!(resp.is_ok());
     }
 
@@ -60,7 +60,7 @@ mod tests {
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
 
-        let all_resp = web_server::api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
+        let all_resp = web_server::web_api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
         assert!(all_resp.is_ok());
 
         let all_incidents = all_resp.expect("Should be OK").0.incidents;
@@ -72,7 +72,7 @@ mod tests {
             ..Default::default()
         };
 
-        let offset_resp = web_server::api::get_all_incidents(State(state), Query(offset_filtering)).await;
+        let offset_resp = web_server::web_api::get_all_incidents(State(state), Query(offset_filtering)).await;
         assert!(offset_resp.is_ok());
 
         let offset_incidents: GetIncidentsResponse = offset_resp.expect("Should be OK").0;
@@ -91,7 +91,7 @@ mod tests {
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
 
-        let all_resp = web_server::api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
+        let all_resp = web_server::web_api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
         assert!(all_resp.is_ok());
 
         let all_incidents = all_resp.expect("Should be OK").0.incidents;
@@ -103,7 +103,7 @@ mod tests {
             ..Default::default()
         };
 
-        let count_resp = web_server::api::get_all_incidents(State(state), Query(count_filtering)).await;
+        let count_resp = web_server::web_api::get_all_incidents(State(state), Query(count_filtering)).await;
         assert!(count_resp.is_ok());
 
         let count_incidents: Vec<Incident> = count_resp.expect("Should be OK").0.incidents;
@@ -122,7 +122,7 @@ mod tests {
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
 
-        let all_incidents = web_server::api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
+        let all_incidents = web_server::web_api::get_all_incidents(State(state.clone()), Query(all_filtering)).await;
         assert!(all_incidents.is_ok());
 
         let all_incidents: Vec<Incident> = all_incidents.expect("Should be OK").0.incidents;
@@ -135,7 +135,7 @@ mod tests {
             ..Default::default()
         };
 
-        let resp = web_server::api::get_all_incidents(State(state), Query(filtering)).await;
+        let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
         assert!(resp.is_ok());
 
         let incidents: Vec<Incident> = resp.expect("Should be OK").0.incidents;

@@ -1,13 +1,6 @@
 FROM --platform=$TARGETPLATFORM ghcr.io/linuxcontainers/debian-slim as debian_base
 ARG TARGETARCH
 
-FROM debian_base AS crawler
-RUN apt-get update
-RUN apt-get -y install chromium-driver
-COPY target/release/browsenscrape /app/crawler
-COPY conf/config-prod.toml /app/config.toml
-#ENTRYPOINT [ "/app/crawler", "/app/config.toml" ]
-
 FROM debian_base AS web
 COPY target/release/web_server /app/web_server
 COPY conf/config-prod.toml /app/config.toml

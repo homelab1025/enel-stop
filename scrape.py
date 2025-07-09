@@ -1,6 +1,7 @@
 import os
 import time
 
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
@@ -93,6 +94,7 @@ with Xvfb() as xvfb:
 
                 with open(downloaded_file_path, "rb") as rss_file:
                     rss_content = rss_file.read()
+                    # requests.post(url, rss_content, headers={"Content-Type": "application/rss+xml"})
                     print(rss_content)
             else:
                 print(f"File not found in download directory after {timeout} seconds.")

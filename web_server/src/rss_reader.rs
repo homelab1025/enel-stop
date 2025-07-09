@@ -6,7 +6,7 @@ use rss::{Category, Channel};
 
 const LOCATION_PATTERN: &str = r"(.*?) Judet: (\w+)\s+Localitate: (.+)";
 
-pub fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Result<Vec<Record>, String> {
+pub async fn parse_rss(rss_content: &str, filter_categs: &Vec<String>) -> Result<Vec<Record>, String> {
     info!("Filtering for categs: {:?}", filter_categs);
 
     debug!("Content: {}", rss_content);

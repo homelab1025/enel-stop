@@ -1,17 +1,20 @@
+use axum::routing::post;
 use axum::{routing::get, Router};
 use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
+use prometheus_client::registry::Registry;
 use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
 use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, RwLock};
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-use web_server::api;
-use web_server::api::AppState;
+use web_server::metrics::{Metrics};
+use web_server::scraper_api::submit_rss;
+use web_server::{web_api, AppState};
 
 fn main() {
     let config = load_configuration();
@@ -29,6 +32,15 @@ fn main() {
         "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
     );
 
+    let mut metrics_registry = Registry::with_prefix_and_labels("enel", [].into_iter());
+    let app_metrics = Metrics::new(&mut metrics_registry);
+
+    // let gauge_full: Gauge = Gauge::default();
+    // let incidents_count: Counter = Counter::default();
+    // let failures_count: Counter = Counter::default();
+
+    // let _ = register_metrics(&app_metrics);
+
     let tokio_runtime = runtime::Builder::new_multi_thread()
         .enable_io()
         .build()
@@ -43,6 +55,8 @@ fn main() {
         let state = AppState {
             ping_msg: "The state of ping.".to_string(),
             redis_conn: Arc::new(Mutex::new(async_redis_conn)),
+            categories: config.categories,
+            metrics: Arc::new(RwLock::new(app_metrics)),
         };
 
         let mut app = create_app(state);
@@ -56,11 +70,13 @@ fn main() {
         axum::serve(listener, app).await.unwrap();
     });
 }
+
 fn create_app(state: AppState<MultiplexedConnection>) -> Router {
     Router::new()
-        .route("/api/ping", get(api::ping))
-        .route("/api/incidents/count", get(api::count_incidents))
-        .route("/api/incidents/all", get(api::get_all_incidents))
+        .route("/api/ping", get(web_api::ping))
+        .route("/api/incidents/count", get(web_api::count_incidents))
+        .route("/api/incidents/all", get(web_api::get_all_incidents))
+        .route("/scraper", post(submit_rss))
         .fallback_service(ServeDir::new("web_assets"))
         .with_state(state)
 }

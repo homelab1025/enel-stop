@@ -1,12 +1,13 @@
-use browsenscrape::redis_store::{generate_redis_key, store_record};
+use common::persistence::generate_redis_key;
 use common::Record;
-use redis::Commands;
+use redis::cmd;
 use testcontainers::{core::WaitFor, runners::SyncRunner, GenericImage};
+use web_server::redis_store::store_record;
 
 const REDIS_TAG: &str = "7.4.2";
 
-#[test]
-fn test_redis_storage() {
+#[tokio::test]
+async fn test_redis_storage() {
     let container_port = testcontainers::core::ContainerPort::Tcp(6379);
     let redis_container = GenericImage::new("redis", REDIS_TAG)
         .with_exposed_port(container_port)
@@ -25,8 +26,9 @@ fn test_redis_storage() {
 
     let mut conn = redis::Client::open(conn_string)
         .expect("Could not connect to own container.")
-        .get_connection()
-        .expect("Could not create connection.");
+        .get_multiplexed_async_connection()
+        .await
+        .expect("Could not ASYNC connect to Redis.");
 
     let incident = Record {
         id: "test_id".to_string(),
@@ -37,11 +39,13 @@ fn test_redis_storage() {
         localitate: "test_localitate".to_string(),
     };
 
-    let _res = store_record(&incident, &mut conn);
+    let _res = store_record(&incident, &mut conn).await;
 
     let redis_key = generate_redis_key("test_id");
+    // let record = conn.get::<String, String>(redis_key.to_string()).unwrap();
+    let record: String = cmd("GET").arg(redis_key).query_async(&mut conn).await.unwrap();
     assert_eq!(
-        conn.get::<String, String>(redis_key.to_string()).unwrap(),
+        record,
         "{\"id\":\"test_id\",\"date\":\"2023-10-01\",\"judet\":\"test_judet\",\"localitate\":\"test_localitate\",\"title\":\"test_title\",\"description\":\"test_description\"}"
     );
 }

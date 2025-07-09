@@ -1,4 +1,3 @@
-use browsenscrape::redis_store::store_record;
 use common::Record;
 use redis::aio::MultiplexedConnection;
 use redis::Client;
@@ -7,7 +6,8 @@ use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, GenericImage};
 use tokio::sync::{Mutex, OnceCell};
-use web_server::api::AppState;
+use web_server::AppState;
+use web_server::redis_store::store_record;
 
 pub const REDIS_TAG: &str = "7.4.2";
 pub const FILTERING_COUNTY: &str = "test_judet";
@@ -36,7 +36,8 @@ pub async fn setup_redis() -> &'static (Client, ContainerAsync<GenericImage>) {
 
         let redis_client = Client::open(conn_string).expect("Connecting to the redis container");
         let mut conn = redis_client
-            .get_connection()
+            .get_multiplexed_async_connection()
+            .await
             .expect("Creating sync connection to redis");
 
         // create records and insert them
@@ -82,11 +83,11 @@ pub async fn setup_redis() -> &'static (Client, ContainerAsync<GenericImage>) {
             localitate: "test_localitate2".to_string(),
         };
 
-        let _res = store_record(&incident1_county1, &mut conn);
-        let _res = store_record(&incident2_county1, &mut conn);
-        let _res = store_record(&incident3_county2, &mut conn);
-        let _res = store_record(&incident4_county2, &mut conn);
-        let _res = store_record(&incident5_county2, &mut conn);
+        let _res = store_record(&incident1_county1, &mut conn).await;
+        let _res = store_record(&incident2_county1, &mut conn).await;
+        let _res = store_record(&incident3_county2, &mut conn).await;
+        let _res = store_record(&incident4_county2, &mut conn).await;
+        let _res = store_record(&incident5_county2, &mut conn).await;
 
         (redis_client, redis_container)
     })
@@ -104,6 +105,8 @@ pub async fn setup_app_state() -> AppState<MultiplexedConnection> {
     let state = AppState {
         ping_msg: "The state of ping.".to_string(),
         redis_conn: Arc::new(Mutex::new(async_redis_conn)),
+        categories: vec![],
+        metrics: Default::default(),
     };
     state
 }
