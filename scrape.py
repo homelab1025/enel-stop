@@ -15,8 +15,8 @@ def get_service_properties(file_path):
     config = configparser.ConfigParser()
     try:
         config.read(file_path)
-        url = config.get('service', 'url', fallback=None)
-        web_server_address = config.get('service', 'web_server_address', fallback=None)
+        url = config.get('service', 'url', fallback=None).strip('\"')
+        web_server_address = config.get('service', 'web_server_address', fallback=None).strip('\"')
         return url, web_server_address
     except configparser.Error as e:
         print(f"Error parsing the configuration file: {e}")
