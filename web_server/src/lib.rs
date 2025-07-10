@@ -7,7 +7,7 @@ pub mod metrics;
 pub mod scraper;
 pub mod web_api;
 
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct AppState<T>
 where
     T: ConnectionLike + Send + Sync,

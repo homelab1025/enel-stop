@@ -1,8 +1,7 @@
 use axum::routing::post;
-use axum::{Router, routing::get};
+use axum::{routing::get, Router};
 use common::configuration::{self, ServiceConfiguration};
-use log::{LevelFilter, info};
-use prometheus_client::registry::Registry;
+use log::{info, LevelFilter};
 use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
 use std::env;
@@ -12,8 +11,8 @@ use tokio::sync::{Mutex, RwLock};
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
-use web_server::metrics::Metrics;
-use web_server::{AppState, scraper, web_api};
+use web_server::metrics::{serve_metrics, Metrics};
+use web_server::{scraper, web_api, AppState};
 
 fn main() {
     let config = load_configuration();
@@ -31,14 +30,7 @@ fn main() {
         "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
     );
 
-    let mut metrics_registry = Registry::with_prefix_and_labels("enel", [].into_iter());
-    let app_metrics = Metrics::new(&mut metrics_registry);
-
-    // let gauge_full: Gauge = Gauge::default();
-    // let incidents_count: Counter = Counter::default();
-    // let failures_count: Counter = Counter::default();
-
-    // let _ = register_metrics(&app_metrics);
+    let app_metrics = Metrics::default();
 
     let tokio_runtime = runtime::Builder::new_multi_thread()
         .enable_io()
@@ -76,6 +68,7 @@ fn create_app(state: AppState<MultiplexedConnection>) -> Router {
         .route("/api/incidents/count", get(web_api::count_incidents))
         .route("/api/incidents/all", get(web_api::get_all_incidents))
         .route("/scraper", post(scraper::scraper_api::submit_rss))
+        .route("/metrics", get(serve_metrics))
         .fallback_service(ServeDir::new("web_assets"))
         .with_state(state)
 }

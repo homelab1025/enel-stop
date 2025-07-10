@@ -1,13 +1,13 @@
-use crate::AppState;
-use crate::metrics::INCIDENTS_COUNT_NAME;
-use crate::web_api::Ping;
-use axum::Json;
-use axum::extract::State;
-use axum::http::StatusCode;
-use log::{debug, error, info};
-use redis::aio::ConnectionLike;
+use crate::metrics::AppMetrics;
 use crate::scraper::redis_store::store_record;
 use crate::scraper::rss_reader::parse_rss;
+use crate::web_api::Ping;
+use crate::AppState;
+use axum::extract::State;
+use axum::http::StatusCode;
+use axum::Json;
+use log::{debug, error, info};
+use redis::aio::ConnectionLike;
 
 // #[utoipa::path(
 //     get,
@@ -40,11 +40,14 @@ where
                     .expect("Counting stored incidents.");
             }
 
-            state.metrics.read().await
-                .get_gauge(INCIDENTS_COUNT_NAME)
+            state
+                .metrics
+                .read()
+                .await
+                .get_gauge(AppMetrics::RssIncidentsCount)
                 .inspect(|gauge| {
-                gauge.set(stored_incidents);
-            });
+                    gauge.set(stored_incidents);
+                });
 
             info!(
                 "Stored {} incidents out of {} received.",
