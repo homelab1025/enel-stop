@@ -26,4 +26,4 @@ RUN apt-get update
 RUN apt-get -y install chromium xvfb
 RUN pip install selenium
 RUN pip install xvfbwrapper
-CMD ["python", "scrape.py"]
+CMD ["python", "scrape.py", "/app/config.toml"]

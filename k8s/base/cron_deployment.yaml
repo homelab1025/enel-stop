@@ -3,7 +3,7 @@ kind: CronJob
 metadata:
   name: scraper
 spec:
-  schedule: "*/1 * * * *" # Run every 1 minute
+  schedule: "*/5 * * * *" # Run every 5 minute
   jobTemplate:
     spec:
       # concurrencyPolicy: Replace
