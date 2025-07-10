@@ -17,3 +17,10 @@ spec:
                 name: enel-web
                 port:
                   number: 8080
+          - path: /metrics
+            pathType: Prefix
+            backend:
+              service:
+                name: enel-web
+                port:
+                  number: 8080
