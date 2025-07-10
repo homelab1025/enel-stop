@@ -10,7 +10,7 @@ const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
 const CONFIG_HTTP_PORT: &str = "service.http_port";
 const CONFIG_CORS_PERMISSIVE: &str = "service.cors_permissive";
-const CONFIG_LOG_LEVEL: &str = "log_level";
+const CONFIG_LOG_LEVEL: &str = "service.log_level";
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ServiceConfiguration {

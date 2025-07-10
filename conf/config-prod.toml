@@ -1,6 +1,5 @@
-log_level = "info"
-
 [service]
+log_level = "info"
 url = "https://www.reteleelectrice.ro/rss-outages.xml/"
 redis_server = "redis://enel-redis-master/"
 pushgateway_server = "http://prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics/job/enel"
