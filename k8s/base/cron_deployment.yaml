@@ -23,7 +23,7 @@ spec:
                     echo "Sleeping for $RANDOM_DELAY_SECONDS seconds before running scraper..."
                     sleep $RANDOM_DELAY_SECONDS
                     echo "Starting scraper now!"
-                    python /app/scraper.py /app/config.toml
+                    python /app/scrape.py /app/config.toml
               resources:
                 limits:
                   memory: "512Mi"
