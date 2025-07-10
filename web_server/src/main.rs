@@ -1,5 +1,5 @@
 use axum::routing::post;
-use axum::{routing::get, Router};
+use axum::{middleware, routing::get, Router};
 use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
 use redis::aio::MultiplexedConnection;
@@ -10,8 +10,7 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
-use tower_http::services::ServeDir;
-use web_server::metrics::{serve_metrics, Metrics};
+use web_server::metrics::{monitor_endpoint, serve_metrics, Metrics};
 use web_server::{scraper, web_api, AppState};
 
 fn main() {
@@ -69,7 +68,7 @@ fn create_app(state: AppState<MultiplexedConnection>) -> Router {
         .route("/api/incidents/all", get(web_api::get_all_incidents))
         .route("/scraper", post(scraper::scraper_api::submit_rss))
         .route("/metrics", get(serve_metrics))
-        .fallback_service(ServeDir::new("web_assets"))
+        .route_layer(middleware::from_fn_with_state(state.clone(), monitor_endpoint))
         .with_state(state)
 }
 

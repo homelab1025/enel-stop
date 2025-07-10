@@ -1,11 +1,11 @@
+use crate::AppState;
 use crate::metrics::AppMetrics;
 use crate::scraper::redis_store::store_record;
 use crate::scraper::rss_reader::parse_rss;
 use crate::web_api::Ping;
-use crate::AppState;
+use axum::Json;
 use axum::extract::State;
 use axum::http::StatusCode;
-use axum::Json;
 use log::{debug, error, info};
 use redis::aio::ConnectionLike;
 
@@ -40,13 +40,14 @@ where
                     .expect("Counting stored incidents.");
             }
 
+            let labels = vec![];
             state
                 .metrics
                 .read()
                 .await
                 .get_gauge(AppMetrics::RssIncidentsCount)
                 .inspect(|gauge| {
-                    gauge.set(stored_incidents);
+                    gauge.get_or_create(&labels).set(stored_incidents);
                 });
 
             info!(
