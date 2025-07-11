@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: enel-web-monitor # Name of your PodMonitor
+  labels:
+    app.kubernetes.io/name: enel-web-monitor # A label for the PodMonitor itself
+    release: prometheus-stack # Common label if using a Prometheus Helm chart
+spec:
+  selector:
+    matchLabels:
+      app: enel-web
+  podMetricsEndpoints:
+    - targetPort: 8080
+      path: /metrics     # The path to the metrics endpoint (default is /metrics)
+      interval: 15s      # How often to scrape metrics (e.g., 30 seconds)
+      # targetPort: 8080 # Optional: If your port is not named, you can specify the number
+      # scheme: http     # Optional: Protocol to use (http or https, default is http)
+      # honorLabels: true # Optional: If true, Prometheus will not overwrite labels specified in the target.
+      # relabelings:     # Optional: Advanced relabeling configurations
+      #   - sourceLabels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+      #     regex: "true"
+      #     action: keep
