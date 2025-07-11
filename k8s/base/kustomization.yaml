@@ -27,6 +27,7 @@ resources:
   - service-webapp.yaml
   - ingress-web.yaml
   - ingress-webapp.yaml
+  - web-pod-monitor.yaml
 
 configMapGenerator:
   - name: scraper-config
