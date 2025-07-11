@@ -52,7 +52,7 @@ impl Metrics {
             MetricHandle::Histogram(request_processing_time.clone()),
         );
         metrics_registry.register(
-            "Request processing time",
+            "request_processing_time",
             "Total time it took to process the HTTP request.",
             request_processing_time,
         );
@@ -60,7 +60,7 @@ impl Metrics {
         let rss_incidents_count = Family::<Vec<(String, String)>, Gauge>::new_with_constructor(|| Gauge::default());
         metrics.insert(RssIncidentsCount, MetricHandle::Gauge(rss_incidents_count.clone()));
         metrics_registry.register(
-            "number of incidents in the rss file",
+            "rss_incidents_count",
             "This is the number of incidents in the RSS file. It does not consider what we already have persisted.",
             rss_incidents_count.clone(),
         );
