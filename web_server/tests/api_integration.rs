@@ -9,7 +9,7 @@ mod tests {
     async fn test_api_count() {
         let state = setup_app_state().await;
 
-        let resp = web_server::web_api::count_incidents(State(state)).await;
+        let resp = web_server::web_api::count_incidents(State(state.clone())).await;
         assert!(resp.is_ok());
 
         let json: RecordCount = resp.expect("Should be OK").0;
@@ -22,7 +22,7 @@ mod tests {
 
         let filtering = IncidentsFiltering { ..Default::default() };
 
-        let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
+        let resp = web_server::web_api::get_all_incidents(State(state.clone()), Query(filtering)).await;
         assert!(resp.is_ok());
 
         let json: GetIncidentsResponse = resp.expect("Should be OK").0;
@@ -38,7 +38,7 @@ mod tests {
             ..Default::default()
         };
 
-        let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
+        let resp = web_server::web_api::get_all_incidents(State(state.clone()), Query(filtering)).await;
         assert!(resp.is_ok());
 
         let json: GetIncidentsResponse = resp.expect("Should be OK").0;
