@@ -5,17 +5,14 @@ use std::sync::Arc;
 use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, GenericImage};
-use tokio::sync::{Mutex, OnceCell};
+use tokio::sync::Mutex;
 use web_server::AppState;
 use web_server::scraper::redis_store::store_record;
 
 pub const REDIS_TAG: &str = "7.4.2";
 pub const FILTERING_COUNTY: &str = "test_judet";
 
-// static INIT: OnceCell<(Client, ContainerAsync<GenericImage>)> = OnceCell::const_new();
-
 pub async fn setup_redis() -> (Client, ContainerAsync<GenericImage>) {
-    // INIT.get_or_init(|| async {
     let container_port = testcontainers::core::ContainerPort::Tcp(6379);
     let redis_container = GenericImage::new("redis", REDIS_TAG)
         .with_exposed_port(container_port)
@@ -90,8 +87,6 @@ pub async fn setup_redis() -> (Client, ContainerAsync<GenericImage>) {
     let _res = store_record(&incident5_county2, &mut conn).await;
 
     (redis_client, redis_container)
-    // })
-    // .await
 }
 
 pub async fn setup_app_state() -> (AppState<MultiplexedConnection>, ContainerAsync<GenericImage>) {
@@ -109,5 +104,5 @@ pub async fn setup_app_state() -> (AppState<MultiplexedConnection>, ContainerAsy
         metrics: Default::default(),
     };
 
-    return (state, redis_container)
+    (state, redis_container)
 }

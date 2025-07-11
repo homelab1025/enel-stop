@@ -31,7 +31,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_filter_county() {
-        let (state, container) = setup_app_state().await;
+        let (state, _container) = setup_app_state().await;
 
         let filtering = IncidentsFiltering {
             county: Some(FILTERING_COUNTY.to_string()),
@@ -47,7 +47,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_ping() {
-        let (state, container) = setup_app_state().await;
+        let (state, _container) = setup_app_state().await;
 
         let resp = web_server::web_api::ping(State(state)).await;
         assert!(resp.is_ok());
@@ -55,7 +55,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_offset() {
-        let (state, container) = setup_app_state().await;
+        let (state, _container) = setup_app_state().await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
@@ -86,7 +86,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_count() {
-        let (state, container) = setup_app_state().await;
+        let (state, _container) = setup_app_state().await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
@@ -117,7 +117,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_offset_and_count() {
-        let (state, container) = setup_app_state().await;
+        let (state, _container) = setup_app_state().await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
