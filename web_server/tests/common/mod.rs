@@ -94,18 +94,20 @@ pub async fn setup_redis() -> (Client, ContainerAsync<GenericImage>) {
     // .await
 }
 
-pub async fn setup_app_state() -> AppState<MultiplexedConnection> {
-    let (redis_client, _redis_container) = setup_redis().await;
+pub async fn setup_app_state() -> (AppState<MultiplexedConnection>, ContainerAsync<GenericImage>) {
+    let (redis_client, redis_container) = setup_redis().await;
 
     let async_redis_conn = redis_client
         .get_multiplexed_tokio_connection()
         .await
         .expect("Async connection to Redis");
 
-    AppState {
+    let state = AppState {
         ping_msg: "The state of ping.".to_string(),
         redis_conn: Arc::new(Mutex::new(async_redis_conn)),
         categories: vec![],
         metrics: Default::default(),
-    }
+    };
+
+    return (state, redis_container)
 }
