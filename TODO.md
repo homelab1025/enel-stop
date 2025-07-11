@@ -1,11 +1,10 @@
 # The plan
 
 ## TODO
+- implement data migration from Redis to PostgreSQL
 - provide pagination for the table
 - show incidents on a map
 - write integration tests for migration utility
-- implement data migration from Redis to PostgreSQL
-
 
 ## DONE
 - set up Liquibase for PostgreSQL database migration (based on the Incident struct)
