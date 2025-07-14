@@ -37,5 +37,5 @@ COPY db/docker-liquibase.properties /liquibase/liquibase.properties
 # Set the working directory
 WORKDIR /liquibase
 # Default command
-ENTRYPOINT ["liquibase"]
-CMD ["--help"]
+ENTRYPOINT ["/bin/bash"]
+#CMD ["--help"]
