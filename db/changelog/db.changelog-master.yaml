@@ -1,3 +1,7 @@
 databaseChangeLog:
   - include:
       file: changelog/changes/001-create-incidents-table.sql
+  - include:
+      file: changelog/changes/002-create-sequence.sql
+  - include:
+      file: changelog/changes/003-add-seq-id.sql
