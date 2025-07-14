@@ -1,0 +1,2 @@
+# Exclude JDBC drivers from version control
+*.jar
