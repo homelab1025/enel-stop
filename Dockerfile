@@ -29,7 +29,7 @@ RUN pip install requests
 RUN pip install xvfbwrapper
 #CMD ["python", "/app/scrape.py", "/app/config.toml"]
 
-FROM liquibase/liquibase:4.23
+FROM liquibase/liquibase:4.23 as liquibase
 # Copy the changelog files
 COPY db/changelog/ /liquibase/changelog/
 # Copy the liquibase.properties file
