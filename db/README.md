@@ -33,6 +33,10 @@ This directory contains the Liquibase setup for managing database schema changes
    - Download the PostgreSQL JDBC driver if needed
    - Run the Liquibase container with the default command (status)
 
+```
+liquibase update --url=jdbc:postgresql://$host:$port/$name --username=$username --password=$password
+```
+
 ## Running Liquibase Commands
 
 ### Docker Execution
