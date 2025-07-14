@@ -28,3 +28,14 @@ RUN pip install selenium
 RUN pip install requests
 RUN pip install xvfbwrapper
 #CMD ["python", "/app/scrape.py", "/app/config.toml"]
+
+FROM liquibase/liquibase:4.23
+# Copy the changelog files
+COPY db/changelog/ /liquibase/changelog/
+# Copy the liquibase.properties file
+COPY db/docker-liquibase.properties /liquibase/liquibase.properties
+# Set the working directory
+WORKDIR /liquibase
+# Default command
+ENTRYPOINT ["liquibase"]
+CMD ["--help"]

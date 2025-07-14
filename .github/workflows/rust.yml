@@ -110,11 +110,11 @@ jobs:
 
       - name: Build and push Docker image for liquibase
         uses: docker/build-push-action@v4
-        working-directory: ./db/
         with:
           context: .
           platforms: linux/amd64
           push: true
+          target: liquibase
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-liquibase:v${{ needs.build.outputs.release_version }}
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-liquibase:latest
