@@ -10,7 +10,7 @@ CREATE TABLE incidents
     day         DATE,
     county      VARCHAR(255) NOT NULL,
     location    VARCHAR(255) NOT NULL,
-    description TEXT         NOT NULL,
+    description TEXT         NOT NULL
 );
 
 CREATE INDEX incident_day ON incidents (day);
