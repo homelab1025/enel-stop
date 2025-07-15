@@ -23,7 +23,7 @@ fn main() {
 
     if let Some(config) = config {
         info!("Using redis server: {:?}", &config.redis_server.clone());
-        let redis_string = config.redis_server.expect("Redis server must be configured.");
+        let redis_string = config.redis_server.clone().expect("Redis server must be configured.");
         let client = redis::Client::open(redis_string);
         match client {
             Ok(client) => match client.get_connection() {
@@ -42,7 +42,7 @@ fn main() {
                         "Migrations: {:?}",
                         migrations.iter().map(|m| m.get_description()).collect::<Vec<_>>()
                     );
-                    call_migration(&mut migrations, &mut redis_conn);
+                    call_migration(&mut migrations, &mut redis_conn, &config);
                 }
                 Err(err) => {
                     error!("Could not connect to redis server: {}", err);

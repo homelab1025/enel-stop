@@ -1,13 +1,18 @@
 use crate::migrations::MigrationProcess;
+use common::configuration::ServiceConfiguration;
 use log::{error, info};
-use redis::{ConnectionLike, RedisError, cmd};
+use redis::{cmd, ConnectionLike, RedisError};
 use std::ops::DerefMut;
 
 pub mod migrations;
 
 const DB_VERSION_KEY: &str = "db_version";
 
-pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_conn: &mut dyn ConnectionLike) {
+pub fn call_migration(
+    migrations: &mut Vec<&mut dyn MigrationProcess>,
+    redis_conn: &mut dyn ConnectionLike,
+    service_config: &ServiceConfiguration,
+) {
     let current_version: Result<u64, RedisError> = cmd("GET").arg(DB_VERSION_KEY).query(redis_conn);
 
     let current_version = match current_version {
@@ -15,19 +20,25 @@ pub fn call_migration(migrations: &mut Vec<&mut dyn MigrationProcess>, redis_con
         Err(err) => panic!("{}", err),
     };
 
+    info!("Current version: {}", current_version);
+
     migrations
         .iter_mut()
         .filter(|migration_function| migration_function.get_start_version() >= current_version)
         .for_each(|migration_function| {
-            migration_function.migrate(redis_conn);
-            migrate_records(migration_function.deref_mut(), redis_conn);
+            migration_function.migrate(redis_conn, service_config);
+            migrate_records(migration_function.deref_mut(), redis_conn, service_config);
             migration_function.print_results();
             next_version(redis_conn);
         })
 }
 
 /// Blocking function for migrating the records stored in redis to another structure.
-fn migrate_records(migration: &mut dyn MigrationProcess, redis_conn: &mut dyn ConnectionLike) {
+fn migrate_records(
+    migration: &mut dyn MigrationProcess,
+    redis_conn: &mut dyn ConnectionLike,
+    _service_config: &ServiceConfiguration,
+) {
     let mut cursor = String::from("0");
     loop {
         let (next_cursor, keys): (String, Vec<String>) = cmd("SCAN")
@@ -65,9 +76,10 @@ fn next_version(redis_conn: &mut dyn ConnectionLike) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{DB_VERSION_KEY, MigrationProcess, call_migration};
+    use crate::{call_migration, MigrationProcess, DB_VERSION_KEY};
+    use common::configuration::ServiceConfigurationBuilder;
     use redis::Value::SimpleString;
-    use redis::{ConnectionLike, Value, cmd};
+    use redis::{cmd, ConnectionLike, Value};
     use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
@@ -174,7 +186,12 @@ mod tests {
         let mut m2: MockMigration2 = Default::default();
         let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut m1, &mut m2];
 
-        call_migration(&mut migrations, &mut conn);
+        let sc = ServiceConfigurationBuilder::default()
+            .url("https://google.com".to_string())
+            .build()
+            .unwrap();
+
+        call_migration(&mut migrations, &mut conn, &sc);
 
         assert_eq!(1, m1.get_key1_counter());
         assert_eq!(1, m1.get_key2_counter());

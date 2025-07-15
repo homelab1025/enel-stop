@@ -2,6 +2,7 @@ use crate::migrations::MigrationProcess;
 use common::Record;
 use log::{error, info};
 use redis::{cmd, ConnectionLike, RedisError};
+use common::configuration::ServiceConfiguration;
 use common::persistence::SORTED_INCIDENTS_KEY;
 
 // Search for keys "incidents:incident" and "incidents:sorted" and remove them.
@@ -12,11 +13,11 @@ pub struct RecreateSortedSet {
 }
 
 impl MigrationProcess for RecreateSortedSet {
-    fn migrate(&mut self, redis_conn: &mut dyn ConnectionLike) {
+    fn migrate(&mut self, _conn: &mut dyn ConnectionLike, _service_config: &ServiceConfiguration) {
         let keys_to_remove = vec!["incidents:incident", "incidents:sorted"];
 
         for key in keys_to_remove {
-            let result: Result<i16, RedisError> = cmd("DEL").arg(key).query(redis_conn);
+            let result: Result<i16, RedisError> = cmd("DEL").arg(key).query(_conn);
             match result {
                 Ok(_) => {
                     info!("Found and deleted key {}", key);
