@@ -1,9 +1,9 @@
 use crate::migrations::MigrationProcess;
+use common::configuration::ServiceConfiguration;
+use common::persistence::SORTED_INCIDENTS_KEY;
 use common::Record;
 use log::{error, info};
 use redis::{cmd, ConnectionLike, RedisError};
-use common::configuration::ServiceConfiguration;
-use common::persistence::SORTED_INCIDENTS_KEY;
 
 // Search for keys "incidents:incident" and "incidents:sorted" and remove them.
 // Also recreate the sorted set containing all the keys
@@ -69,7 +69,7 @@ impl MigrationProcess for RecreateSortedSet {
         String::from("Recreate the sorted set")
     }
 
-    fn print_results(&mut self) {
+    fn print_results(&self) {
         info!("FINISHED RENAME FOR {}", self.get_start_version());
         info!("Failed RENAME FOR {:?}", self.failed_migrations);
     }

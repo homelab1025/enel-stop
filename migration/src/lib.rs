@@ -1,7 +1,7 @@
 use crate::migrations::MigrationProcess;
 use common::configuration::ServiceConfiguration;
 use log::{error, info};
-use redis::{cmd, ConnectionLike, RedisError};
+use redis::{ConnectionLike, RedisError, cmd};
 use std::ops::DerefMut;
 
 pub mod migrations;
@@ -76,10 +76,10 @@ fn next_version(redis_conn: &mut dyn ConnectionLike) {
 
 #[cfg(test)]
 mod tests {
-    use crate::{call_migration, MigrationProcess, DB_VERSION_KEY};
+    use crate::{DB_VERSION_KEY, MigrationProcess, call_migration};
     use common::configuration::ServiceConfigurationBuilder;
     use redis::Value::SimpleString;
-    use redis::{cmd, ConnectionLike, Value};
+    use redis::{ConnectionLike, Value, cmd};
     use redis_test::{MockCmd, MockRedisConnection};
 
     #[test]
@@ -133,7 +133,7 @@ mod tests {
                 "MockMigration1".to_string()
             }
 
-            fn print_results(&mut self) {}
+            fn print_results(&self) {}
         }
         impl MockMigration1 {
             fn get_key1_counter(&self) -> i32 {
@@ -171,7 +171,7 @@ mod tests {
                 "MockMigration2".to_string()
             }
 
-            fn print_results(&mut self) {}
+            fn print_results(&self) {}
         }
         impl MockMigration2 {
             fn get_key1_counter(&self) -> i32 {
@@ -186,10 +186,9 @@ mod tests {
         let mut m2: MockMigration2 = Default::default();
         let mut migrations: Vec<&mut dyn MigrationProcess> = vec![&mut m1, &mut m2];
 
-        let sc = ServiceConfigurationBuilder::default()
-            .url("https://google.com".to_string())
-            .build()
-            .unwrap();
+        let mut builder = ServiceConfigurationBuilder::default();
+        builder.url("https://google.com".to_string());
+        let sc = builder.build().unwrap();
 
         call_migration(&mut migrations, &mut conn, &sc);
 

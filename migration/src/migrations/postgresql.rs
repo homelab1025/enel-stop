@@ -1,7 +1,7 @@
 use crate::migrations::MigrationProcess;
 use common::configuration::ServiceConfiguration;
 use log::{error, info};
-use redis::{ConnectionLike, RedisError, cmd};
+use redis::{cmd, ConnectionLike, RedisError};
 use sqlx::postgres::PgPoolOptions;
 
 /// CURRENT: data is stored in redis
@@ -29,7 +29,7 @@ impl MigrationProcess for PosgresqlMigration {
             let external_id = key_components[1];
             let result: Result<String, RedisError> = cmd("GET").arg(key).query(redis_conn);
             match result {
-                Ok(valid) => {
+                Ok(_valid) => {
                     info!("Moved key {} to postgresql", key);
                 }
                 Err(error) => {
@@ -51,7 +51,7 @@ impl MigrationProcess for PosgresqlMigration {
         String::from("Migrate to Postgresql")
     }
 
-    fn print_results(&mut self) {
+    fn print_results(&self) {
         info!("FINISHED RENAME FOR {}", self.get_start_version());
         info!("Skipped RENAME FOR {:?}", self.skipped);
         info!("Failed RENAME FOR {:?}", self.failed_migrations);

@@ -19,7 +19,7 @@ pub trait MigrationProcess {
     fn migrate_key(&mut self, key: &str, conn: &mut dyn ConnectionLike);
     fn get_start_version(&self) -> u64;
     fn get_description(&self) -> String;
-    fn print_results(&mut self);
+    fn print_results(&self);
 }
 
 impl Debug for dyn MigrationProcess {

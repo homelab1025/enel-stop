@@ -1,7 +1,7 @@
+use crate::migrations::MigrationProcess;
 use common::Record;
 use log::{debug, error, info};
 use redis::{cmd, ConnectionLike, RedisError};
-use crate::migrations::MigrationProcess;
 
 /// CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.
 /// NEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.
@@ -60,22 +60,24 @@ impl MigrationProcess for SortedSetMigration {
             self.failed_migrations.push(record_json);
             return;
         }
-        
+
         let del_result: Result<u16, RedisError> = cmd("DEL").arg(record.id).query(redis_conn);
         if del_result.is_err() {
             error!("Could NOT delete key: {}", del_result.unwrap_err());
             self.recycle_bin.push(record_json);
         }
     }
-fn get_start_version(&self) -> u64 {
-    0
-}
-
-    fn get_description(&self) -> String {
-        String::from("CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.\nNEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.")
+    fn get_start_version(&self) -> u64 {
+        0
     }
 
-    fn print_results(&mut self) {
+    fn get_description(&self) -> String {
+        String::from(
+            "CURRENT: The incident is serialized to json and the json string is mapped to a key which is the guid of the RSS element.\nNEXT: Add the incident ID in a sorted set and use the timestamp as score. Create a new entry and remove the old one.",
+        )
+    }
+
+    fn print_results(&self) {
         info!("Printing results for {}", self.get_start_version());
         info!("Failed migration {:?}", self.failed_migrations);
     }
@@ -83,11 +85,11 @@ fn get_start_version(&self) -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use crate::migrations::sorted_set::SortedSetMigration;
+    use crate::migrations::MigrationProcess;
     use common::Record;
     use redis::{cmd, Value};
     use redis_test::{MockCmd, MockRedisConnection};
-    use crate::migrations::MigrationProcess;
-    use crate::migrations::sorted_set::SortedSetMigration;
 
     #[test]
     fn test_migrate_happy_path() {
@@ -118,11 +120,7 @@ mod tests {
                     .arg("incident:test-id"),
                 Ok(Value::Int(1)),
             ),
-            MockCmd::new(
-                cmd("DEL")
-                    .arg("test-id"),
-                Ok(Value::Int(1)),
-            ),
+            MockCmd::new(cmd("DEL").arg("test-id"), Ok(Value::Int(1))),
         ];
         let mut mocked_conn = MockRedisConnection::new(commands);
 
@@ -136,11 +134,10 @@ mod tests {
             "There should be no failed migrations."
         );
 
-        println!("Lingering records (migrated, but not removed): {:?}", migration.recycle_bin);
-        assert_eq!(
-            0,
-            migration.recycle_bin.len(),
-            "There should be no lingering records."
+        println!(
+            "Lingering records (migrated, but not removed): {:?}",
+            migration.recycle_bin
         );
+        assert_eq!(0, migration.recycle_bin.len(), "There should be no lingering records.");
     }
 }

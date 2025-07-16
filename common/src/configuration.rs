@@ -1,7 +1,6 @@
+use config::{Config, ConfigError, FileFormat};
 use std::error::Error;
 use std::fmt::{Debug, Display, Formatter};
-
-use config::{Config, ConfigError, FileFormat};
 
 const CONFIG_URL: &str = "service.url";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
@@ -100,79 +99,79 @@ impl Default for ServiceConfigurationBuilder {
 
 impl ServiceConfigurationBuilder {
     /// Sets the URL for the service configuration. This field is mandatory.
-    pub fn url(mut self, url: String) -> Self {
+    pub fn url(&mut self, url: String) -> &mut Self {
         self.url = Some(url);
         self
     }
 
     /// Sets the categories for the service configuration.
-    pub fn categories(mut self, categories: Vec<String>) -> Self {
+    pub fn categories(&mut self, categories: Vec<String>) -> &mut Self {
         self.categories = categories;
         self
     }
 
     /// Adds a single category to the service configuration.
-    pub fn add_category(mut self, category: String) -> Self {
+    pub fn add_category(&mut self, category: String) -> &mut Self {
         self.categories.push(category);
         self
     }
 
     /// Sets the Redis server address.
-    pub fn redis_server(mut self, redis_server: String) -> Self {
+    pub fn redis_server(&mut self, redis_server: String) -> &mut Self {
         self.redis_server = Some(redis_server);
         self
     }
 
     /// Sets the Pushgateway server address.
-    pub fn pushgateway_server(mut self, pushgateway_server: String) -> Self {
+    pub fn pushgateway_server(&mut self, pushgateway_server: String) -> &mut Self {
         self.pushgateway_server = Some(pushgateway_server);
         self
     }
 
     /// Sets the HTTP port.
-    pub fn http_port(mut self, http_port: u32) -> Self {
+    pub fn http_port(&mut self, http_port: u32) -> &mut Self {
         self.http_port = http_port;
         self
     }
 
     /// Sets whether CORS is permissive.
-    pub fn cors_permissive(mut self, cors_permissive: bool) -> Self {
+    pub fn cors_permissive(&mut self, cors_permissive: bool) -> &mut Self {
         self.cors_permissive = cors_permissive;
         self
     }
 
     /// Sets the log level.
-    pub fn log_level(mut self, log_level: String) -> Self {
+    pub fn log_level(&mut self, log_level: String) -> &mut Self {
         self.log_level = log_level;
         self
     }
 
     /// Sets the database host.
-    pub fn db_host(mut self, db_host: String) -> Self {
+    pub fn db_host(&mut self, db_host: String) -> &mut Self {
         self.db_host = Some(db_host);
         self
     }
 
     /// Sets the database port.
-    pub fn db_port(mut self, db_port: u32) -> Self {
+    pub fn db_port(&mut self, db_port: u32) -> &mut Self {
         self.db_port = Some(db_port);
         self
     }
 
     /// Sets the database user.
-    pub fn db_user(mut self, db_user: String) -> Self {
+    pub fn db_user(&mut self, db_user: String) -> &mut Self {
         self.db_user = Some(db_user);
         self
     }
 
     /// Sets the database password.
-    pub fn db_password(mut self, db_password: String) -> Self {
+    pub fn db_password(&mut self, db_password: String) -> &mut Self {
         self.db_password = Some(db_password);
         self
     }
 
     /// Sets the database name.
-    pub fn db_name(mut self, db_name: String) -> Self {
+    pub fn db_name(&mut self, db_name: String) -> &mut Self {
         self.db_name = Some(db_name);
         self
     }
@@ -239,21 +238,34 @@ fn convert_configuration(raw_config: &Config) -> Result<ServiceConfiguration, Co
         .map(|x| x.into_string().unwrap())
         .collect();
 
-    let sc_builder = ServiceConfigurationBuilder::default()
+    let mut config_builder = ServiceConfigurationBuilder::default();
+
+    config_builder
         .url(raw_config.get_string(CONFIG_URL)?)
         .log_level(raw_config.get_string(CONFIG_LOG_LEVEL)?)
         .redis_server(raw_config.get_string(CONFIG_REDIS_SERVER)?)
         .cors_permissive(raw_config.get_bool(CONFIG_CORS_PERMISSIVE)?)
         .http_port(raw_config.get::<u32>(CONFIG_HTTP_PORT)?)
         .categories(categories)
-        .pushgateway_server(raw_config.get_string(CONFIG_PUSHGATEWAY_SERVER)?)
-        .db_host(raw_config.get_string(CONFIG_DB_HOST)?)
-        .db_name(raw_config.get_string(CONFIG_DB_NAME)?)
-        .db_port(raw_config.get::<u32>(CONFIG_DB_PORT)?)
-        .db_user(raw_config.get_string(CONFIG_DB_USERNAME)?)
-        .db_password(raw_config.get_string(CONFIG_DB_PASSWORD)?);
+        .pushgateway_server(raw_config.get_string(CONFIG_PUSHGATEWAY_SERVER)?);
 
-    sc_builder.build()
+    let _ = raw_config.get_string(CONFIG_DB_HOST).inspect(|value| {
+        config_builder.db_host(value.clone());
+    });
+    let _ = raw_config.get_string(CONFIG_DB_NAME).inspect(|value| {
+        config_builder.db_name(value.clone());
+    });
+    let _ = raw_config.get::<u32>(CONFIG_DB_PORT).inspect(|value| {
+        config_builder.db_port(*value);
+    });
+    let _ = raw_config.get_string(CONFIG_DB_USERNAME).inspect(|value| {
+        config_builder.db_user(value.clone());
+    });
+    let _ = raw_config.get_string(CONFIG_DB_PASSWORD).inspect(|value| {
+        config_builder.db_password(value.clone());
+    });
+
+    config_builder.build()
 }
 
 #[cfg(test)]
@@ -261,17 +273,17 @@ mod configuration_tests {
     use config::Config;
 
     use crate::configuration::{
-        CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT, CONFIG_LOG_LEVEL, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER,
-        ConfigurationError, ServiceConfigurationBuilder, convert_configuration,
+        convert_configuration, ConfigurationError, ServiceConfigurationBuilder, CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT,
+        CONFIG_LOG_LEVEL, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER,
     };
 
-    use super::{CONFIG_FILTER_CATEGORIES, CONFIG_URL, ServiceConfiguration};
+    use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
     #[test]
     fn test_service_configuration_builder_minimal() {
-        let config = ServiceConfigurationBuilder::default()
-            .url("http://localhost:8000".to_string())
-            .build()
-            .unwrap();
+        let mut builder = ServiceConfigurationBuilder::default();
+        builder.url("http://localhost:8000".to_string());
+
+        let config = builder.build().unwrap();
 
         assert_eq!(config.url, "http://localhost:8000");
         assert_eq!(config.categories.len(), 0);
@@ -283,7 +295,8 @@ mod configuration_tests {
 
     #[test]
     fn test_service_configuration_builder_full() {
-        let config = ServiceConfigurationBuilder::default()
+        let mut builder = ServiceConfigurationBuilder::default();
+        builder
             .url("http://api.example.com".to_string())
             .categories(vec!["web".to_string(), "api".to_string()])
             .redis_server("redis://127.0.0.1:6379".to_string())
@@ -295,9 +308,8 @@ mod configuration_tests {
             .db_port(5432)
             .db_user("admin".to_string())
             .db_password("secret".to_string())
-            .db_name("myapp_db".to_string())
-            .build()
-            .unwrap();
+            .db_name("myapp_db".to_string());
+        let config = builder.build().unwrap();
 
         assert_eq!(config.url, "http://api.example.com");
         assert_eq!(config.categories, vec!["web", "api"]);
@@ -315,12 +327,12 @@ mod configuration_tests {
 
     #[test]
     fn test_service_configuration_builder_add_category() {
-        let config = ServiceConfigurationBuilder::default()
+        let mut builder = ServiceConfigurationBuilder::default();
+        builder
             .url("http://test.com".to_string())
             .add_category("test1".to_string())
-            .add_category("test2".to_string())
-            .build()
-            .unwrap();
+            .add_category("test2".to_string());
+        let config = builder.build().unwrap();
 
         assert_eq!(config.categories, vec!["test1", "test2"]);
     }
@@ -358,7 +370,11 @@ mod configuration_tests {
             http_port: 8090,
             cors_permissive: true,
             log_level: "debug".to_string(),
-            ..Default::default()
+            db_host: None,
+            db_password: None,
+            db_user: None,
+            db_port: None,
+            db_name: None,
         };
 
         assert_eq!(service_config, expected_config);

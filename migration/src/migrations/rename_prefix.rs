@@ -41,7 +41,7 @@ impl MigrationProcess for RenamePrefixMigration {
         String::from("Rename prefix from incident to incidents")
     }
 
-    fn print_results(&mut self) {
+    fn print_results(&self) {
         info!("FINISHED RENAME FOR {}", self.get_start_version());
         info!("Skipped RENAME FOR {:?}", self.skipped);
         info!("Failed RENAME FOR {:?}", self.failed_migrations);
