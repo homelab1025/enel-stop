@@ -7,6 +7,7 @@ use migration::migrations::rename_prefix::RenamePrefixMigration;
 use migration::migrations::sorted_set::SortedSetMigration;
 use simple_logger::SimpleLogger;
 use std::env;
+use migration::migrations::postgresql::PostgresqlMigration;
 
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
@@ -31,11 +32,13 @@ fn main() {
                     let mut sorted_set_migration = SortedSetMigration::default();
                     let mut rename_migration = RenamePrefixMigration::default();
                     let mut recreate_migration = RecreateSortedSet::default();
+                    let mut postgres_migration = PostgresqlMigration::new(&config);
 
                     let mut migrations: Vec<&mut dyn MigrationProcess> = vec![
                         &mut sorted_set_migration,
                         &mut rename_migration,
                         &mut recreate_migration,
+                        &mut postgres_migration,
                     ];
                     migrations.sort_by_key(|f| f.get_start_version());
                     info!(
