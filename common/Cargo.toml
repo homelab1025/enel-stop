@@ -8,4 +8,5 @@ edition = "2024"
 serde = { workspace = true }
 chrono = { workspace = true }
 config = { workspace = true }
+sqlx = { workspace = true }
 log = { workspace = true }

@@ -1,6 +1,7 @@
 # The plan
 
 ## TODO
+- move postgres migration to a synch postgres client so to avoid the issues with sqlx in a synch env
 - implement data migration from Redis to PostgreSQL
 - provide pagination for the table
 - show incidents on a map

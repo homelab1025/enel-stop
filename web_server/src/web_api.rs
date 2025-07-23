@@ -119,13 +119,13 @@ where
                                 let show = filtering
                                     .county
                                     .clone()
-                                    .map_or_else(|| true, |county| county == record.judet);
+                                    .map_or_else(|| true, |county| county == record.county);
 
                                 if show {
                                     all_incidents.push(Incident {
                                         id: record.id,
-                                        county: record.judet,
-                                        location: record.localitate,
+                                        county: record.county,
+                                        location: record.location,
                                         datetime: record.date.to_string(),
                                         description: record.description,
                                     })

@@ -58,8 +58,8 @@ fn convert_item(rss_item: &rss::Item, location_extractor: &Regex) -> Option<Reco
         Some(Record {
             id: id.value.to_string(),
             date: incident_datetime,
-            judet: judet.to_string(),
-            localitate: localitate.to_string(),
+            county: judet.to_string(),
+            location: localitate.to_string(),
             title: rss_item.title.as_ref()?.to_string(),
             description: rss_item.description.as_ref()?.to_string(),
         })
@@ -154,8 +154,8 @@ mod rss_reader_tests {
             id,
             // date: "1985-02-21".to_string(),
             date: NaiveDate::parse_from_str("1985-02-21", "%Y-%m-%d").unwrap(),
-            judet: "X".to_string(),
-            localitate: "Y".to_string(),
+            county: "X".to_string(),
+            location: "Y".to_string(),
             description,
             title,
         };

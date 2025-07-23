@@ -38,8 +38,8 @@ async fn test_redis_storage() {
         title: "test_title".to_string(),
         description: "test_description".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
-        judet: "test_judet".to_string(),
-        localitate: "test_localitate".to_string(),
+        county: "test_judet".to_string(),
+        location: "test_localitate".to_string(),
     };
 
     let _res = store_record(&incident, &mut conn).await;

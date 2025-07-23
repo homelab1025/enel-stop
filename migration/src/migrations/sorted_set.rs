@@ -96,8 +96,8 @@ mod tests {
         let record = Record {
             description: String::from("description"),
             id: String::from("test-id"),
-            judet: String::from("judet"),
-            localitate: String::from("localitate"),
+            county: String::from("judet"),
+            location: String::from("localitate"),
             title: String::from("title"),
             date: chrono::NaiveDate::from_ymd_opt(2020, 1, 1).expect("Could not get date."),
         };

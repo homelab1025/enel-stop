@@ -44,40 +44,40 @@ pub async fn setup_redis() -> (Client, ContainerAsync<GenericImage>) {
         title: "test_title".to_string(),
         description: "test_description".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
-        judet: FILTERING_COUNTY.to_string(),
-        localitate: "test_localitate".to_string(),
+        county: FILTERING_COUNTY.to_string(),
+        location: "test_localitate".to_string(),
     };
     let incident2_county1 = Record {
         id: "test_id2".to_string(),
         title: "test_title2".to_string(),
         description: "test_description2".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 11, 1).unwrap(),
-        judet: FILTERING_COUNTY.to_string(),
-        localitate: "test_localitate".to_string(),
+        county: FILTERING_COUNTY.to_string(),
+        location: "test_localitate".to_string(),
     };
     let incident3_county2 = Record {
         id: "test_id3".to_string(),
         title: "test_title3".to_string(),
         description: "test_description3".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        judet: "test_judet2".to_string(),
-        localitate: "test_localitate2".to_string(),
+        county: "test_judet2".to_string(),
+        location: "test_localitate2".to_string(),
     };
     let incident4_county2 = Record {
         id: "test_id4".to_string(),
         title: "test_title3".to_string(),
         description: "test_description3".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        judet: "test_judet2".to_string(),
-        localitate: "test_localitate2".to_string(),
+        county: "test_judet2".to_string(),
+        location: "test_localitate2".to_string(),
     };
     let incident5_county2 = Record {
         id: "test_id5".to_string(),
         title: "test_title3".to_string(),
         description: "test_description3".to_string(),
         date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        judet: "test_judet2".to_string(),
-        localitate: "test_localitate2".to_string(),
+        county: "test_judet2".to_string(),
+        location: "test_localitate2".to_string(),
     };
 
     let _res = store_record(&incident1_county1, &mut conn).await;
