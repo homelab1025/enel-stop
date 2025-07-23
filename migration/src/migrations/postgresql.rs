@@ -1,12 +1,9 @@
 use crate::migrations::MigrationProcess;
 use chrono::Datelike;
 use common::Record;
-use common::configuration::ServiceConfiguration;
-use log::{error, info};
+use log::{debug, error, info};
 use redis::{ConnectionLike, RedisError, cmd};
-use sqlx::pool::PoolConnection;
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{Error, Pool, Postgres};
+use sqlx::{Pool, Postgres};
 
 /// CURRENT: data is stored in redis
 /// NEXT: data is stored in postgresql
@@ -14,28 +11,17 @@ use sqlx::{Error, Pool, Postgres};
 pub struct PostgresqlMigration {
     failed_migrations: Vec<String>,
     skipped: Vec<String>,
+    // TODO: this should be a reference and the ref should live as long as this struct lives
     pool: Pool<Postgres>,
 }
 
 impl PostgresqlMigration {
-    pub fn new(service_config: &ServiceConfiguration) -> Self {
-        let db_user = &service_config.db_user.clone().unwrap();
-        let db_password = &service_config.db_password.clone().unwrap();
-        let db_host = &service_config.db_host.clone().unwrap();
-        let connection_string = format!("postgres://{}:{}@{}", db_user, db_password, db_host);
-
-        tokio::runtime::Builder::new_current_thread()
-            .build()
-            .unwrap()
-            .block_on(async {
-                let pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
-
-                PostgresqlMigration {
-                    pool,
-                    skipped: vec![],
-                    failed_migrations: vec![],
-                }
-            })
+    pub fn new(pg_pool: Pool<Postgres>) -> Self {
+        PostgresqlMigration {
+            pool: pg_pool,
+            skipped: vec![],
+            failed_migrations: vec![],
+        }
     }
 }
 
@@ -56,23 +42,20 @@ impl MigrationProcess for PostgresqlMigration {
                 Ok(str_val) => {
                     let incident: Record = serde_json::from_str(&str_val).unwrap();
 
-                    tokio::runtime::Builder::new_current_thread()
-                        .build()
-                        .unwrap()
-                        .block_on(async {
-                            let res = sqlx::query(INSERT_QUERY)
-                                .bind(external_id)
-                                .bind(incident.date.to_string())
-                                // TODO: not actually what we want
-                                .bind(incident.date.day().to_string())
-                                .bind(incident.judet)
-                                .bind(incident.localitate)
-                                .bind(incident.description)
-                                .execute(&self.pool)
-                                .await;
-
-                            info!("Moved key {} to postgresql", key);
-                        });
+                    tokio::runtime::Runtime::new().unwrap().block_on(async {
+                        let res = sqlx::query(INSERT_QUERY)
+                            .bind(external_id)
+                            .bind(incident.date.to_string())
+                            // TODO: not actually what we want
+                            .bind(incident.date.day().to_string())
+                            .bind(incident.county)
+                            .bind(incident.location)
+                            .bind(incident.description)
+                            .execute(&self.pool)
+                            .await;
+                        debug!("INSERT result: {:?}", res);
+                        info!("Moved key {} to postgresql", key);
+                    });
                 }
                 Err(error) => {
                     self.failed_migrations.push(String::from(key));
@@ -97,5 +80,97 @@ impl MigrationProcess for PostgresqlMigration {
         info!("FINISHED RENAME FOR {}", self.get_start_version());
         info!("Skipped RENAME FOR {:?}", self.skipped);
         info!("Failed RENAME FOR {:?}", self.failed_migrations);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::migrations::MigrationProcess;
+    use crate::migrations::postgresql::PostgresqlMigration;
+    use common::Record;
+    use log::LevelFilter;
+    use redis::Value;
+    use redis_test::{MockCmd, MockRedisConnection};
+    use simple_logger::SimpleLogger;
+    use sqlx::Error;
+    use sqlx::postgres::PgPoolOptions;
+    use testcontainers::runners::SyncRunner;
+    use testcontainers_modules::postgres::Postgres;
+
+    const INIT_SCRIPT: &str = "
+    CREATE TABLE incidents
+    (
+    id          VARCHAR(255) PRIMARY KEY,
+    datetime    VARCHAR(255) NOT NULL,
+    day         DATE,
+    county      VARCHAR(255) NOT NULL,
+    location    VARCHAR(255) NOT NULL,
+    description TEXT         NOT NULL
+    );
+CREATE INDEX incident_day ON incidents (day);
+CREATE INDEX incident_county ON incidents (county);
+CREATE SEQUENCE incidents_id
+    INCREMENT BY 1
+    MINVALUE 1
+    MAXVALUE 9223372036854775807
+    START 1
+	CACHE 1
+	NO CYCLE;
+ALTER TABLE incidents DROP CONSTRAINT IF EXISTS incidents_pkey;
+ALTER TABLE incidents RENAME COLUMN id TO external_id;
+ALTER TABLE incidents ADD COLUMN id BIGINT DEFAULT nextval('incidents_id');
+ALTER TABLE incidents ALTER COLUMN id SET NOT NULL;
+ALTER TABLE incidents ADD PRIMARY KEY (id);
+CREATE UNIQUE INDEX unique_external_id ON incidents(external_id);";
+
+    #[test]
+    fn test_migration() {
+        SimpleLogger::new().env().with_level(LevelFilter::Debug).init().unwrap();
+
+        let record = Record {
+            id: "123".to_string(),
+            title: "test_title".to_string(),
+            description: "test_description".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            county: "test_judet".to_string(),
+            location: "test_localitate".to_string(),
+        };
+
+        // mock connection so to return a set of records
+        let record_ser = serde_json::to_string(&record).unwrap();
+        let redis_key = format!("incidents:{}", record.id);
+        let mut conn = MockRedisConnection::new(vec![MockCmd::new(
+            redis::cmd("GET").arg(redis_key.clone()),
+            Ok(Value::SimpleString(record_ser)),
+        )]);
+
+        let pg_server = Postgres::default()
+            .with_init_sql(INIT_SCRIPT.to_string().into_bytes())
+            // .with_host_auth()
+            .with_user("postgres")
+            .with_password("postgres")
+            .start()
+            .unwrap();
+        let pg_host = pg_server.get_host().unwrap();
+        let pg_port = pg_server.get_host_port_ipv4(5432).unwrap();
+        let connection_string = format!("postgres://postgres:postgres@{}:{}/postgres", pg_host, pg_port);
+
+        let pool = tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
+            pool
+        });
+
+        let mut migration = PostgresqlMigration::new(pool);
+        migration.migrate_key(redis_key.as_str(), &mut conn);
+        // tokio::runtime::Builder::new_current_thread()
+        //     .enable_time()
+        //     .enable_io()
+        //     .build()
+        //     .unwrap()
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            let pool2 = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
+            let res: Result<Record, Error> = sqlx::query_as("SELECT * FROM incidents").fetch_one(&pool2).await;
+            println!("Successfully: {}", res.err().unwrap());
+        });
     }
 }

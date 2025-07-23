@@ -3,13 +3,14 @@ pub mod persistence;
 
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 
-#[derive(Debug, Serialize, PartialEq, Deserialize)]
+#[derive(Debug, Serialize, PartialEq, Deserialize, FromRow)]
 pub struct Record {
     pub id: String,
     pub date: NaiveDate,
-    pub judet: String,
-    pub localitate: String,
+    pub county: String,
+    pub location: String,
     pub title: String,
     pub description: String,
 }
@@ -58,4 +59,3 @@ pub enum RomanianCounty {
     Vrancea,
     Bucuresti, // The capital city, often considered a county-level administrative unit
 }
-

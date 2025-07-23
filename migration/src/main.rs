@@ -1,13 +1,16 @@
 use common::configuration;
-use log::{LevelFilter, error, info};
+use common::configuration::ServiceConfiguration;
+use log::{error, info, LevelFilter};
 use migration::call_migration;
-use migration::migrations::MigrationProcess;
+use migration::migrations::postgresql::PostgresqlMigration;
 use migration::migrations::recreate_sorted_set::RecreateSortedSet;
 use migration::migrations::rename_prefix::RenamePrefixMigration;
 use migration::migrations::sorted_set::SortedSetMigration;
+use migration::migrations::MigrationProcess;
 use simple_logger::SimpleLogger;
+use sqlx::postgres::PgPoolOptions;
+use sqlx::{Pool, Postgres};
 use std::env;
-use migration::migrations::postgresql::PostgresqlMigration;
 
 fn main() {
     SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
@@ -29,10 +32,12 @@ fn main() {
         match client {
             Ok(client) => match client.get_connection() {
                 Ok(mut redis_conn) => {
+                    let pg_conn = connect_pg(&config);
+
                     let mut sorted_set_migration = SortedSetMigration::default();
                     let mut rename_migration = RenamePrefixMigration::default();
                     let mut recreate_migration = RecreateSortedSet::default();
-                    let mut postgres_migration = PostgresqlMigration::new(&config);
+                    let mut postgres_migration = PostgresqlMigration::new(pg_conn);
 
                     let mut migrations: Vec<&mut dyn MigrationProcess> = vec![
                         &mut sorted_set_migration,
@@ -59,4 +64,19 @@ fn main() {
             }
         }
     }
+}
+
+fn connect_pg(service_config: &ServiceConfiguration) -> Pool<Postgres> {
+    let db_user = &service_config.db_user.clone().unwrap();
+    let db_password = &service_config.db_password.clone().unwrap();
+    let db_host = &service_config.db_host.clone().unwrap();
+    let connection_string = format!("postgres://{}:{}@{}", db_user, db_password, db_host);
+
+    tokio::runtime::Builder::new_current_thread()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
+            pool
+        })
 }
