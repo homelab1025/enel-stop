@@ -1,34 +1,32 @@
 use crate::migrations::MigrationProcess;
-use chrono::Datelike;
 use common::Record;
-use log::{debug, error, info};
-use redis::{ConnectionLike, RedisError, cmd};
-use sqlx::{Pool, Postgres};
+use log::{error, info};
+use postgres::Client;
+use redis::{cmd, ConnectionLike, RedisError};
 
 /// CURRENT: data is stored in redis
 /// NEXT: data is stored in postgresql
-#[derive(Debug)]
 pub struct PostgresqlMigration {
     failed_migrations: Vec<String>,
     skipped: Vec<String>,
     // TODO: this should be a reference and the ref should live as long as this struct lives
-    pool: Pool<Postgres>,
+    pg_client: Client,
 }
 
 impl PostgresqlMigration {
-    pub fn new(pg_pool: Pool<Postgres>) -> Self {
+    pub fn new(pg_pool: Client) -> Self {
         PostgresqlMigration {
-            pool: pg_pool,
+            pg_client: pg_pool,
             skipped: vec![],
             failed_migrations: vec![],
         }
     }
 }
 
-const INSERT_QUERY: &str = "INSERT INTO incidents(external_id, datetime, day, county, location, description) \
- VALUES ($1, $2, $3, $4, $5, $6) \
+const INSERT_QUERY: &str = "INSERT INTO incidents(external_id, day, county, location, description) \
+ VALUES ($1, $2, $3, $4, $5) \
  ON CONFLICT (external_id) DO \
- UPDATE SET datetime = $2, day = $3, county = $4, location = $5, description = $6";
+ UPDATE SET day = $2, county = $3, location = $4, description = $5";
 
 impl MigrationProcess for PostgresqlMigration {
     fn migrate_key(&mut self, key: &str, redis_conn: &mut dyn ConnectionLike) {
@@ -42,20 +40,18 @@ impl MigrationProcess for PostgresqlMigration {
                 Ok(str_val) => {
                     let incident: Record = serde_json::from_str(&str_val).unwrap();
 
-                    tokio::runtime::Runtime::new().unwrap().block_on(async {
-                        let res = sqlx::query(INSERT_QUERY)
-                            .bind(external_id)
-                            .bind(incident.date.to_string())
-                            // TODO: not actually what we want
-                            .bind(incident.date.day().to_string())
-                            .bind(incident.county)
-                            .bind(incident.location)
-                            .bind(incident.description)
-                            .execute(&self.pool)
-                            .await;
-                        debug!("INSERT result: {:?}", res);
-                        info!("Moved key {} to postgresql", key);
-                    });
+                    let insert_res = self.pg_client.execute(
+                        INSERT_QUERY,
+                        &[
+                            &external_id,
+                            &incident.date,
+                            &incident.county.to_string(),
+                            &incident.location.to_string(),
+                            &incident.description.to_string(),
+                        ],
+                    );
+
+                    info!("INSERT result: {:?}", insert_res);
                 }
                 Err(error) => {
                     self.failed_migrations.push(String::from(key));
@@ -85,15 +81,17 @@ impl MigrationProcess for PostgresqlMigration {
 
 #[cfg(test)]
 mod tests {
-    use crate::migrations::MigrationProcess;
     use crate::migrations::postgresql::PostgresqlMigration;
+    use crate::migrations::MigrationProcess;
+    use chrono::NaiveDate;
     use common::Record;
     use log::LevelFilter;
+    use postgres::{Client, NoTls};
     use redis::Value;
     use redis_test::{MockCmd, MockRedisConnection};
     use simple_logger::SimpleLogger;
-    use sqlx::Error;
-    use sqlx::postgres::PgPoolOptions;
+    use std::thread;
+    use std::time::Duration;
     use testcontainers::runners::SyncRunner;
     use testcontainers_modules::postgres::Postgres;
 
@@ -101,7 +99,6 @@ mod tests {
     CREATE TABLE incidents
     (
     id          VARCHAR(255) PRIMARY KEY,
-    datetime    VARCHAR(255) NOT NULL,
     day         DATE,
     county      VARCHAR(255) NOT NULL,
     location    VARCHAR(255) NOT NULL,
@@ -125,7 +122,7 @@ CREATE UNIQUE INDEX unique_external_id ON incidents(external_id);";
 
     #[test]
     fn test_migration() {
-        SimpleLogger::new().env().with_level(LevelFilter::Debug).init().unwrap();
+        SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
 
         let record = Record {
             id: "123".to_string(),
@@ -146,31 +143,38 @@ CREATE UNIQUE INDEX unique_external_id ON incidents(external_id);";
 
         let pg_server = Postgres::default()
             .with_init_sql(INIT_SCRIPT.to_string().into_bytes())
-            // .with_host_auth()
             .with_user("postgres")
             .with_password("postgres")
+            .with_db_name("enel")
             .start()
             .unwrap();
+
+        thread::sleep(Duration::from_secs(3));
+
         let pg_host = pg_server.get_host().unwrap();
         let pg_port = pg_server.get_host_port_ipv4(5432).unwrap();
-        let connection_string = format!("postgres://postgres:postgres@{}:{}/postgres", pg_host, pg_port);
 
-        let pool = tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
-            pool
-        });
+        let connection_info = format!(
+            "host={} user=postgres password=postgres dbname=enel port={}",
+            pg_host, pg_port
+        );
+        let pg_client = Client::connect(connection_info.as_str(), NoTls).unwrap();
 
-        let mut migration = PostgresqlMigration::new(pool);
+        let mut migration = PostgresqlMigration::new(pg_client);
         migration.migrate_key(redis_key.as_str(), &mut conn);
-        // tokio::runtime::Builder::new_current_thread()
-        //     .enable_time()
-        //     .enable_io()
-        //     .build()
-        //     .unwrap()
-        tokio::runtime::Runtime::new().unwrap().block_on(async {
-            let pool2 = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
-            let res: Result<Record, Error> = sqlx::query_as("SELECT * FROM incidents").fetch_one(&pool2).await;
-            println!("Successfully: {}", res.err().unwrap());
-        });
+
+        let mut pg_client2 = Client::connect(connection_info.as_str(), NoTls).unwrap();
+        let row = pg_client2
+            .query_one("SELECT * FROM incidents WHERE external_id = $1", &[&record.id])
+            .unwrap();
+
+        assert_eq!(0, migration.failed_migrations.len());
+        assert_eq!(0, migration.skipped.len());
+
+        assert_eq!(record.id, row.get::<_, String>("external_id"));
+        assert_eq!(record.description, row.get::<_, String>("description"));
+        assert_eq!(record.date, row.get::<_, NaiveDate>("day"));
+        assert_eq!(record.county, row.get::<_, String>("county"));
+        assert_eq!(record.location, row.get::<_, String>("location"));
     }
 }
