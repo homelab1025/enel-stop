@@ -7,9 +7,8 @@ use migration::migrations::recreate_sorted_set::RecreateSortedSet;
 use migration::migrations::rename_prefix::RenamePrefixMigration;
 use migration::migrations::sorted_set::SortedSetMigration;
 use migration::migrations::MigrationProcess;
+use postgres::{Client, Config, Error, NoTls};
 use simple_logger::SimpleLogger;
-use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres};
 use std::env;
 
 fn main() {
@@ -32,7 +31,7 @@ fn main() {
         match client {
             Ok(client) => match client.get_connection() {
                 Ok(mut redis_conn) => {
-                    let pg_conn = connect_pg(&config);
+                    let pg_conn = connect_pg(&config).expect("Could not connect to Postgres");
 
                     let mut sorted_set_migration = SortedSetMigration::default();
                     let mut rename_migration = RenamePrefixMigration::default();
@@ -66,17 +65,11 @@ fn main() {
     }
 }
 
-fn connect_pg(service_config: &ServiceConfiguration) -> Pool<Postgres> {
+fn connect_pg(service_config: &ServiceConfiguration) -> Result<Client, Error> {
     let db_user = &service_config.db_user.clone().unwrap();
     let db_password = &service_config.db_password.clone().unwrap();
     let db_host = &service_config.db_host.clone().unwrap();
-    let connection_string = format!("postgres://{}:{}@{}", db_user, db_password, db_host);
 
-    tokio::runtime::Builder::new_current_thread()
-        .build()
-        .unwrap()
-        .block_on(async {
-            let pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
-            pool
-        })
+    let connection_info = format!("host={} user={} password={}", db_host, db_user, db_password);
+    Client::connect(connection_info.as_str(), NoTls)
 }
