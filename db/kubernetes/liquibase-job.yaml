@@ -12,20 +12,29 @@ spec:
         args: ["update"]
         env:
         - name: DB_HOST
-          value: "postgres-service"
+          valueFrom:
+            secretKeyRef:
+              name: enel-db-password
+              key: host
         - name: DB_PORT
-          value: "5432"
+          valueFrom:
+            secretKeyRef:
+              name: enel-db-password
+              key: port
         - name: DB_NAME
-          value: "enel"
+          valueFrom:
+            secretKeyRef:
+              name: enel-db-password
+              key: name
         - name: DB_USER
           valueFrom:
             secretKeyRef:
-              name: postgres-credentials
+              name: enel-db-password
               key: username
         - name: DB_PASSWORD
           valueFrom:
             secretKeyRef:
-              name: postgres-credentials
+              name: enel-db-password
               key: password
       restartPolicy: Never
   backoffLimit: 3

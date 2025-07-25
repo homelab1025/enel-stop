@@ -6,6 +6,7 @@
 CREATE TABLE incidents
 (
     id          VARCHAR(255) PRIMARY KEY,
+    datetime    VARCHAR(255) NOT NULL,
     day         DATE,
     county      VARCHAR(255) NOT NULL,
     location    VARCHAR(255) NOT NULL,
