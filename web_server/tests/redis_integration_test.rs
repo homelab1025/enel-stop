@@ -49,6 +49,6 @@ async fn test_redis_storage() {
     let record: String = cmd("GET").arg(redis_key).query_async(&mut conn).await.unwrap();
     assert_eq!(
         record,
-        "{\"id\":\"test_id\",\"date\":\"2023-10-01\",\"judet\":\"test_judet\",\"localitate\":\"test_localitate\",\"title\":\"test_title\",\"description\":\"test_description\"}"
+        "{\"id\":\"test_id\",\"date\":\"2023-10-01\",\"county\":\"test_judet\",\"location\":\"test_localitate\",\"title\":\"test_title\",\"description\":\"test_description\"}"
     );
 }
