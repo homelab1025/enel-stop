@@ -33,7 +33,7 @@ FROM liquibase/liquibase:4.23 as liquibase
 # Copy the changelog files
 COPY db/changelog/ /liquibase/changelog/
 # Copy the liquibase.properties file
-#COPY db/docker-liquibase.properties /liquibase/liquibase.properties
+COPY db/liquibase.properties /liquibase/liquibase.properties
 # Set the working directory
 WORKDIR /liquibase
 # Default command
