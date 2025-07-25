@@ -9,7 +9,7 @@ spec:
       containers:
       - name: liquibase
         image: ghcr.io/homelab1025/enel-stop-liquibase:latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         args: ["update"]
         env:
         - name: DB_HOST
