@@ -7,3 +7,5 @@ databaseChangeLog:
       file: changelog/changes/003-add-seq-id.sql
   - include:
       file: changelog/changes/004-uniq-external-id.sql
+  - include:
+      file: changelog/changes/005-remove-datetime.sql
