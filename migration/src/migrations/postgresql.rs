@@ -65,7 +65,7 @@ impl MigrationProcess for PostgresqlMigration {
     }
 
     fn get_start_version(&self) -> u64 {
-        3
+        9999
     }
 
     fn get_description(&self) -> String {
