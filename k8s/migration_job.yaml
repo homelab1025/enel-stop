@@ -12,8 +12,7 @@ spec:
           imagePullPolicy: Always
           env:
             - name: APP_service_redis_server
-              value: redis://enel-redis-master.enel/
-
+              value: "redis://enel-redis-master.enel/"
             - name: APP_service_db_host
               valueFrom:
                 secretKeyRef:
