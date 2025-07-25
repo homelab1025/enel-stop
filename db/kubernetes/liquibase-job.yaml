@@ -2,12 +2,13 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: liquibase-update
+  namespace: enel
 spec:
   template:
     spec:
       containers:
       - name: liquibase
-        image: enel-stop-liquibase:latest
+        image: ghcr.io/homelab1025/enel-stop-liquibase:latest
         imagePullPolicy: IfNotPresent
         args: ["update"]
         env:
