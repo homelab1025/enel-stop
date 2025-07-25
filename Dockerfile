@@ -37,5 +37,5 @@ COPY db/changelog/ /liquibase/changelog/
 # Set the working directory
 WORKDIR /liquibase
 # Default command
-ENTRYPOINT ["/bin/bash"]
+ENTRYPOINT ["liquibase"]
 #CMD ["--help"]
