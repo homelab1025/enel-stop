@@ -15,6 +15,16 @@ pub struct Record {
     pub description: String,
 }
 
+#[derive(Debug, Serialize, PartialEq, Deserialize, FromRow)]
+pub struct RecordOld {
+    pub id: String,
+    pub date: NaiveDate,
+    pub judet: String,
+    pub localitate: String,
+    pub title: String,
+    pub description: String,
+}
+
 pub enum RomanianCounty {
     Alba,
     Arad,

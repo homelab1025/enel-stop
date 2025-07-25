@@ -1,5 +1,5 @@
 use crate::migrations::MigrationProcess;
-use common::Record;
+use common::{Record, RecordOld};
 use log::{error, info};
 use postgres::Client;
 use redis::{cmd, ConnectionLike, RedisError};
@@ -38,15 +38,15 @@ impl MigrationProcess for PostgresqlMigration {
             let ser_incident: Result<String, RedisError> = cmd("GET").arg(key).query(redis_conn);
             match ser_incident {
                 Ok(str_val) => {
-                    let incident: Record = serde_json::from_str(&str_val).unwrap();
+                    let incident: RecordOld = serde_json::from_str(&str_val).unwrap();
 
                     let insert_res = self.pg_client.execute(
                         INSERT_QUERY,
                         &[
                             &external_id,
                             &incident.date,
-                            &incident.county.to_string(),
-                            &incident.location.to_string(),
+                            &incident.judet.to_string(),
+                            &incident.localitate.to_string(),
                             &incident.description.to_string(),
                         ],
                     );
@@ -84,7 +84,7 @@ mod tests {
     use crate::migrations::postgresql::PostgresqlMigration;
     use crate::migrations::MigrationProcess;
     use chrono::NaiveDate;
-    use common::Record;
+    use common::RecordOld;
     use log::LevelFilter;
     use postgres::{Client, NoTls};
     use redis::Value;
@@ -124,13 +124,13 @@ CREATE UNIQUE INDEX unique_external_id ON incidents(external_id);";
     fn test_migration() {
         SimpleLogger::new().env().with_level(LevelFilter::Info).init().unwrap();
 
-        let record = Record {
+        let record = RecordOld {
             id: "123".to_string(),
             title: "test_title".to_string(),
             description: "test_description".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
-            county: "test_judet".to_string(),
-            location: "test_localitate".to_string(),
+            date: NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            judet: "test_judet".to_string(),
+            localitate: "test_localitate".to_string(),
         };
 
         // mock connection so to return a set of records
@@ -174,7 +174,7 @@ CREATE UNIQUE INDEX unique_external_id ON incidents(external_id);";
         assert_eq!(record.id, row.get::<_, String>("external_id"));
         assert_eq!(record.description, row.get::<_, String>("description"));
         assert_eq!(record.date, row.get::<_, NaiveDate>("day"));
-        assert_eq!(record.county, row.get::<_, String>("county"));
-        assert_eq!(record.location, row.get::<_, String>("location"));
+        assert_eq!(record.judet, row.get::<_, String>("county"));
+        assert_eq!(record.localitate, row.get::<_, String>("location"));
     }
 }
