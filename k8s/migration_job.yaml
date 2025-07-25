@@ -11,6 +11,9 @@ spec:
           image: ghcr.io/homelab1025/enel-stop-migration:latest
           imagePullPolicy: Always
           env:
+            - name: APP_service_redis_server
+              value: redis://enel-redis-master.enel/
+
             - name: APP_service_db_host
               valueFrom:
                 secretKeyRef:
