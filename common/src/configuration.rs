@@ -223,7 +223,7 @@ pub fn get_configuration(config_cli_arg: &str) -> Result<ServiceConfiguration, C
             config::Environment::default()
                 .prefix("APP")
                 .prefix_separator("_")
-                .separator("__"),
+                .separator("_"),
         )
         .build()
         .map_err(|x| ConfigurationError::from_string(x.to_string()))?;
