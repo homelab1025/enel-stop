@@ -10,6 +10,8 @@ ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 FROM debian_base AS migration
 COPY target/release/migration /app/migration
 COPY conf/config-prod.toml /app/config.toml
+RUN apt update
+RUN apt install libssl3
 RUN chmod +x /app/migration
 CMD [ "/app/migration", "/app/config.toml" ]
 
