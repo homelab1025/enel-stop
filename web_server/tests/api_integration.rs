@@ -1,13 +1,14 @@
 mod common;
 
 mod tests {
-    use crate::common::{setup_app_state, FILTERING_COUNTY};
+    use crate::common::{create_app_state, TestInfrastructure, FILTERING_COUNTY};
     use axum::extract::{Query, State};
     use web_server::web_api::{GetIncidentsResponse, Incident, IncidentsFiltering, RecordCount};
 
     #[tokio::test]
     async fn test_api_count() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         let resp = web_server::web_api::count_incidents(State(state)).await;
         assert!(resp.is_ok());
@@ -18,7 +19,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         let filtering = IncidentsFiltering { ..Default::default() };
 
@@ -31,7 +33,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_filter_county() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         let filtering = IncidentsFiltering {
             county: Some(FILTERING_COUNTY.to_string()),
@@ -47,7 +50,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_ping() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         let resp = web_server::web_api::ping(State(state)).await;
         assert!(resp.is_ok());
@@ -55,7 +59,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_offset() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
@@ -86,7 +91,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_count() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();
@@ -117,7 +123,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_get_all_incidents_with_offset_and_count() {
-        let (state, _container) = setup_app_state().await;
+        let infra = TestInfrastructure::new().await;
+        let state = create_app_state(&infra).await;
 
         // Get all incidents first to determine their order
         let all_filtering = Default::default();

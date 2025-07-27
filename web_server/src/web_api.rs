@@ -1,12 +1,12 @@
 use crate::AppState;
+use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::Json;
-use common::persistence::SORTED_INCIDENTS_KEY;
 use common::Record;
+use common::persistence::SORTED_INCIDENTS_KEY;
 use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::{cmd, RedisError, RedisResult};
+use redis::{RedisError, RedisResult, cmd};
 use serde::{Deserialize, Serialize};
 use std::ops::Deref;
 use utoipa::r#gen::serde_json;
@@ -147,7 +147,10 @@ where
                 total_count: 0,
             }))
         }
-        Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
+        Err(err) => {
+            error!("Could not get incidents: {:?}", err);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
+        }
     }
 }
 

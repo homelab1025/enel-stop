@@ -4,6 +4,7 @@ use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
 use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
+use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
@@ -42,11 +43,19 @@ fn main() {
             .await
             .expect("Could not ASYNC connect to Redis.");
 
+        //TODO: refactor this
+        let db_user = config.db_user.clone().unwrap();
+        let db_password = config.db_password.clone().unwrap();
+        let db_host = config.db_host.clone().unwrap();
+        let connection_string = format!("postgres://{}:{}@{}", db_user, db_password, db_host);
+        let pg_pool = PgPoolOptions::new().connect(connection_string.as_str()).await.unwrap();
+
         let state = AppState {
             ping_msg: "The state of ping.".to_string(),
             redis_conn: Arc::new(Mutex::new(async_redis_conn)),
             categories: config.categories,
             metrics: Arc::new(RwLock::new(app_metrics)),
+            pg_pool: Arc::new(pg_pool),
         };
 
         let mut app = create_app(state);

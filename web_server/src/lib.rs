@@ -1,5 +1,6 @@
 use crate::metrics::Metrics;
 use redis::aio::ConnectionLike;
+use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
@@ -14,6 +15,7 @@ where
 {
     pub ping_msg: String,
     pub redis_conn: Arc<Mutex<T>>,
+    pub pg_pool: Arc<Pool<Postgres>>,
     pub categories: Vec<String>,
     pub metrics: Arc<RwLock<Metrics>>,
 }

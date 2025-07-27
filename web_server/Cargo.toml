@@ -18,6 +18,8 @@ chrono = { workspace = true }
 regex = { workspace = true }
 rss = { workspace = true }
 prometheus-client = { workspace = true }
+sqlx = { workspace = true }
 
 [dev-dependencies]
 testcontainers = { workspace = true }
+testcontainers-modules = { workspace = true }

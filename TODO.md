@@ -1,13 +1,14 @@
 # The plan
 
 ## TODO
-- move postgres migration to a synch postgres client so to avoid the issues with sqlx in a synch env
-- implement data migration from Redis to PostgreSQL
+- switch to storage in postgres using sqlx
 - provide pagination for the table
 - show incidents on a map
 - write integration tests for migration utility
 
 ## DONE
+- implement data migration from Redis to PostgreSQL
+- move postgres migration to a synch postgres client so to avoid the issues with sqlx in a synch env
 - set up Liquibase for PostgreSQL database migration (based on the Incident struct)
 - integration tests for web api
 - show keys and json values in a sorted table (no pagination)
