@@ -4,7 +4,7 @@ use redis::cmd;
 use testcontainers::core::WaitFor;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::GenericImage;
-use web_server::scraper::redis_store::store_record;
+use web_server::scraper::persistence::store_record;
 
 const REDIS_TAG: &str = "7.4.2";
 
@@ -42,7 +42,7 @@ async fn test_redis_storage() {
         location: "test_localitate".to_string(),
     };
 
-    let _res = store_record(&incident, &mut conn).await;
+    let _res = store_record(&incident, &mut conn, ).await;
 
     let redis_key = generate_redis_key("test_id");
     // let record = conn.get::<String, String>(redis_key.to_string()).unwrap();

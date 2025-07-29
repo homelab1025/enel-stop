@@ -1,11 +1,11 @@
-use crate::AppState;
 use crate::metrics::AppMetrics;
-use crate::scraper::redis_store::store_record;
+use crate::scraper::persistence::new_store_record;
 use crate::scraper::rss_reader::parse_rss;
 use crate::web_api::Ping;
-use axum::Json;
+use crate::AppState;
 use axum::extract::State;
 use axum::http::StatusCode;
+use axum::Json;
 use log::{debug, error, info};
 use redis::aio::ConnectionLike;
 
@@ -22,17 +22,13 @@ where
     T: ConnectionLike + Send + Sync,
 {
     let incidents = parse_rss(&body, &state.categories);
-
-    let mut conn_guard = state.redis_conn.lock().await;
-    let redis_connection = &mut *conn_guard;
-
     match incidents.await {
         Ok(incidents) => {
             debug!("Incidents: {:?}", incidents);
 
             let mut stored_incidents = 0;
             for incident in incidents.iter() {
-                store_record(incident, redis_connection)
+                new_store_record(incident, state.pg_pool.clone())
                     .await
                     .map(|_t| {
                         stored_incidents += 1;

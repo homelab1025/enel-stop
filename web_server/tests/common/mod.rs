@@ -1,11 +1,11 @@
 use common::Record;
-use log::{error, info, LevelFilter};
-use redis::aio::MultiplexedConnection;
+use log::{LevelFilter, error, info};
 use redis::Client;
+use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
-use sqlx::postgres::PgPoolOptions;
 use sqlx::Pool;
 use sqlx::Postgres;
+use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, OnceLock};
@@ -16,8 +16,8 @@ use testcontainers_modules::postgres;
 use testcontainers_modules::redis::Redis;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
-use web_server::scraper::redis_store::store_record;
 use web_server::AppState;
+use web_server::scraper::persistence::store_record;
 
 pub const FILTERING_COUNTY: &str = "test_judet";
 
@@ -68,52 +68,13 @@ static LOG_SETUP_ONCE: OnceLock<bool> = OnceLock::new();
 static GENERATE_DB_DDL_ONCE: OnceLock<String> = OnceLock::new();
 
 pub async fn create_app_state(infra: &TestInfrastructure) -> AppState<MultiplexedConnection> {
-    LOG_SETUP_ONCE.get_or_init(|| {
-        let re = SimpleLogger::new().env().with_level(LevelFilter::Info).init();
-
-        match re {
-            Ok(_) => {
-                info!("Logging initialized.")
-            }
-            Err(error) => {
-                println!("Failed to initialize logging: {}", error)
-            }
-        }
-
-        true
-    });
+    setup_logging();
 
     GENERATE_DB_DDL_ONCE.get_or_init(|| {
-        let mut db_path = env::current_dir().unwrap();
-        // TODO: make this more generic as it's custom made for integration tests in web_server workspace
-        db_path.pop();
-        db_path.push("db");
-
-        println!("DB path: {:?}", db_path);
-
-        let _ = Command::new("rm")
-            .current_dir(&db_path)
-            .stdout(Stdio::piped())
-            .args(["databasechangelog.csv"])
-            .output()
-            .unwrap();
-
-        let output = Command::new("liquibase")
-            .current_dir(&db_path)
-            .stdout(Stdio::piped())
-            .args(["--url=offline:postgresq", "updateSQL"])
-            .output()
-            .unwrap();
-
-        if !output.status.success() {
-            error!(
-                "Failed to run liquibase update sql: {}",
-                String::from_utf8(output.stderr).unwrap()
-            );
-            return String::from("");
+        match generate_ddl() {
+            Ok(value) => value,
+            Err(value) => return value,
         }
-
-        String::from_utf8(output.stdout).unwrap()
     });
 
     let async_redis_conn = setup_redis(&infra).await;
@@ -128,7 +89,53 @@ pub async fn create_app_state(infra: &TestInfrastructure) -> AppState<Multiplexe
     }
 }
 
-async fn setup_postgres(infra: &&TestInfrastructure, ddl: &str) -> Pool<Postgres> {
+pub fn setup_logging() {
+    LOG_SETUP_ONCE.get_or_init(|| {
+        let re = SimpleLogger::new().env().with_level(LevelFilter::Info).init();
+
+        match re {
+            Ok(_) => info!("Logging initialized."),
+            Err(error) => println!("Failed to initialize logging: {}", error),
+        }
+
+        true
+    });
+}
+
+pub fn generate_ddl() -> Result<String, String> {
+    let mut db_path = env::current_dir().unwrap();
+    // TODO: make this more generic as it's custom made for integration tests in web_server workspace
+    db_path.pop();
+    db_path.push("db");
+
+    println!("DB path: {:?}", db_path);
+
+    let _ = Command::new("rm")
+        .current_dir(&db_path)
+        .stdout(Stdio::piped())
+        .args(["databasechangelog.csv"])
+        .output()
+        .unwrap();
+
+    let output = Command::new("liquibase")
+        .current_dir(&db_path)
+        .stdout(Stdio::piped())
+        .args(["--url=offline:postgresq", "updateSQL"])
+        .output()
+        .unwrap();
+
+    if !output.status.success() {
+        error!(
+                "Failed to run liquibase update sql: {}",
+                String::from_utf8(output.stderr).unwrap()
+            );
+        return Err(String::from(""));
+    }
+
+    Ok(String::from_utf8(output.stdout).unwrap())
+}
+
+async fn setup_postgres(infra: &TestInfrastructure, ddl: &str) -> Pool<Postgres> {
     let pg_conn_string = format!(
         "postgres://postgres:postgres@{}:{}/enel",
         &infra.postgres_host, &infra.postgres_port

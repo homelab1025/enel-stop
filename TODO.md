@@ -2,6 +2,8 @@
 
 ## TODO
 - switch to storage in postgres using sqlx
+- query postgres for serving incidents
+- populate posgres for testing purposes
 - provide pagination for the table
 - show incidents on a map
 - write integration tests for migration utility

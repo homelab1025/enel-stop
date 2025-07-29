@@ -2,7 +2,7 @@ use crate::migrations::MigrationProcess;
 use common::{Record, RecordOld};
 use log::{error, info};
 use postgres::Client;
-use redis::{cmd, ConnectionLike, RedisError};
+use redis::{ConnectionLike, RedisError, cmd};
 
 /// CURRENT: data is stored in redis
 /// NEXT: data is stored in postgresql
@@ -45,9 +45,9 @@ impl MigrationProcess for PostgresqlMigration {
                         &[
                             &external_id,
                             &incident.date,
-                            &incident.judet.to_string(),
-                            &incident.localitate.to_string(),
-                            &incident.description.to_string(),
+                            &incident.judet,
+                            &incident.localitate,
+                            &incident.description,
                         ],
                     );
 
@@ -81,8 +81,8 @@ impl MigrationProcess for PostgresqlMigration {
 
 #[cfg(test)]
 mod tests {
-    use crate::migrations::postgresql::PostgresqlMigration;
     use crate::migrations::MigrationProcess;
+    use crate::migrations::postgresql::PostgresqlMigration;
     use chrono::NaiveDate;
     use common::RecordOld;
     use log::LevelFilter;

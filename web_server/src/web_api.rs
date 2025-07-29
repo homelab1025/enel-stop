@@ -1,13 +1,15 @@
 use crate::AppState;
-use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use common::Record;
+use axum::Json;
+use chrono::NaiveDate;
 use common::persistence::SORTED_INCIDENTS_KEY;
+use common::Record;
 use log::{debug, error};
 use redis::aio::ConnectionLike;
-use redis::{RedisError, RedisResult, cmd};
+use redis::{cmd, RedisError, RedisResult};
 use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use std::ops::Deref;
 use utoipa::r#gen::serde_json;
 use utoipa::{IntoParams, OpenApi, ToSchema};
@@ -34,13 +36,15 @@ pub struct Ping {
     pub(crate) ping: String,
 }
 
-#[derive(Debug, Serialize, Clone, ToSchema)]
+#[derive(Debug, Serialize, Clone, ToSchema, FromRow)]
 pub struct Incident {
-    pub id: String,
+    pub external_id: String,
     pub county: String,
     pub location: String,
-    pub datetime: String,
+    #[schema(value_type = String, format = Date)]
+    pub day: NaiveDate,
     pub description: String,
+    pub id: i64,
 }
 
 #[utoipa::path(
@@ -123,11 +127,13 @@ where
 
                                 if show {
                                     all_incidents.push(Incident {
-                                        id: record.id,
+                                        external_id: record.id,
                                         county: record.county,
                                         location: record.location,
-                                        datetime: record.date.to_string(),
+                                        day: record.date,
                                         description: record.description,
+                                        // TODO: wrong const id
+                                        id: 0,
                                     })
                                 }
                             }
