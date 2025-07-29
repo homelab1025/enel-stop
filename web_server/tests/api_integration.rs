@@ -10,11 +10,17 @@ mod tests {
         let infra = TestInfrastructure::new().await;
         let state = create_app_state(&infra).await;
 
-        let resp = web_server::web_api::count_incidents(State(state)).await;
+        let resp = web_server::web_api::count_incidents(State(state.clone())).await;
         assert!(resp.is_ok());
 
         let json: RecordCount = resp.expect("Should be OK").0;
         assert_eq!(5, json.total_count);
+
+        let pg_pool = state.clone().pg_pool;
+        let _res = sqlx::query("SELECT COUNT(*) FROM incidents")
+            .execute(pg_pool.as_ref())
+            .await
+            .unwrap();
     }
 
     #[tokio::test]

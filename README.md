@@ -14,6 +14,7 @@ Web crawler that whenever a new maintenance window is reported notifies users of
 - cargo
 - docker (rootless or runnable by non-root)
 - openapi-generator
+- liquibase
 
 ### How to run test coverage
 
