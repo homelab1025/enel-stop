@@ -79,7 +79,7 @@ const searchIncidentsByCounty = async (countyName?: string) => {
         <td>{{ item.id }}</td>
         <td>{{ item.county }}</td>
         <td>{{ item.location }}</td>
-        <td>{{ item.datetime }}</td>
+        <td>{{ item.day }}</td>
         <td>{{ item.description }}</td>
       </tr>
       </tbody>
