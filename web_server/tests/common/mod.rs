@@ -1,12 +1,13 @@
 use common::Record;
-use log::{LevelFilter, error, info};
-use redis::Client;
+use log::{error, info, LevelFilter};
 use redis::aio::MultiplexedConnection;
+use redis::Client;
 use simple_logger::SimpleLogger;
+use sqlx::postgres::PgPoolOptions;
 use sqlx::Pool;
 use sqlx::Postgres;
-use sqlx::postgres::PgPoolOptions;
 use std::env;
+use std::ops::Deref;
 use std::process::{Command, Stdio};
 use std::sync::{Arc, OnceLock};
 use std::time::Duration;
@@ -16,8 +17,8 @@ use testcontainers_modules::postgres;
 use testcontainers_modules::redis::Redis;
 use tokio::sync::Mutex;
 use tokio::time::sleep;
+use web_server::scraper::persistence::{new_store_record, store_record};
 use web_server::AppState;
-use web_server::scraper::persistence::store_record;
 
 pub const FILTERING_COUNTY: &str = "test_judet";
 
@@ -70,22 +71,20 @@ static GENERATE_DB_DDL_ONCE: OnceLock<String> = OnceLock::new();
 pub async fn create_app_state(infra: &TestInfrastructure) -> AppState<MultiplexedConnection> {
     setup_logging();
 
-    GENERATE_DB_DDL_ONCE.get_or_init(|| {
-        match generate_ddl() {
-            Ok(value) => value,
-            Err(value) => return value,
-        }
+    GENERATE_DB_DDL_ONCE.get_or_init(|| match generate_ddl() {
+        Ok(value) => value,
+        Err(value) => return value,
     });
 
-    let async_redis_conn = setup_redis(&infra).await;
-    let pg_pool = setup_postgres(&infra, GENERATE_DB_DDL_ONCE.get().unwrap()).await;
+    let async_redis_conn = setup_redis(infra).await;
+    let pg_pool = setup_postgres(infra, GENERATE_DB_DDL_ONCE.get().unwrap()).await;
 
     AppState {
         ping_msg: "The state of ping.".to_string(),
         redis_conn: Arc::new(Mutex::new(async_redis_conn)),
         categories: vec![],
         metrics: Default::default(),
-        pg_pool: Arc::new(pg_pool),
+        pg_pool: pg_pool.clone(),
     }
 }
 
@@ -126,28 +125,36 @@ pub fn generate_ddl() -> Result<String, String> {
 
     if !output.status.success() {
         error!(
-                "Failed to run liquibase update sql: {}",
-                String::from_utf8(output.stderr).unwrap()
-            );
+            "Failed to run liquibase update sql: {}",
+            String::from_utf8(output.stderr).unwrap()
+        );
         return Err(String::from(""));
     }
 
     Ok(String::from_utf8(output.stdout).unwrap())
 }
 
-async fn setup_postgres(infra: &TestInfrastructure, ddl: &str) -> Pool<Postgres> {
+async fn setup_postgres(infra: &TestInfrastructure, ddl: &str) -> Arc<Pool<Postgres>> {
     let pg_conn_string = format!(
         "postgres://postgres:postgres@{}:{}/enel",
         &infra.postgres_host, &infra.postgres_port
     );
     info!("Connecting to postgres: {}", &pg_conn_string);
-    let pg_pool = PgPoolOptions::new().connect(&pg_conn_string).await.unwrap();
-    let _res = sqlx::raw_sql(ddl).execute(&pg_pool).await.unwrap();
+    let pg_pool = Arc::new(PgPoolOptions::new().connect(&pg_conn_string).await.unwrap());
 
-    pg_pool
+    let _res = sqlx::raw_sql(ddl).execute(pg_pool.clone().deref()).await.unwrap();
+    populate_postgres(pg_pool.clone(), get_records().as_ref()).await;
+
+    pg_pool.clone()
 }
 
-async fn setup_redis(infra: &&TestInfrastructure) -> MultiplexedConnection {
+async fn populate_postgres(pool: Arc<Pool<Postgres>>, records: &[Record]) {
+    for record in records {
+        let _res = new_store_record(record, pool.clone()).await;
+    }
+}
+
+async fn setup_redis(infra: &TestInfrastructure) -> MultiplexedConnection {
     let conn_string = format!("redis://{}:{}/", &infra.redis_host, &infra.redis_port);
     info!("Connecting to REDIS: {}", &conn_string);
     let redis_client = Client::open(conn_string).expect("Connecting to the redis container");
@@ -156,55 +163,58 @@ async fn setup_redis(infra: &&TestInfrastructure) -> MultiplexedConnection {
         .get_multiplexed_tokio_connection()
         .await
         .expect("Async connection to Redis");
-    populate_redis(&mut async_redis_conn.clone()).await;
+    populate_redis(&mut async_redis_conn.clone(), get_records().as_ref()).await;
     async_redis_conn
 }
 
-async fn populate_redis(conn: &mut MultiplexedConnection) {
-    let incident1_county1 = Record {
-        id: "test_id".to_string(),
-        title: "test_title".to_string(),
-        description: "test_description".to_string(),
-        date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
-        county: FILTERING_COUNTY.to_string(),
-        location: "test_localitate".to_string(),
-    };
-    let incident2_county1 = Record {
-        id: "test_id2".to_string(),
-        title: "test_title2".to_string(),
-        description: "test_description2".to_string(),
-        date: chrono::NaiveDate::from_ymd_opt(2023, 11, 1).unwrap(),
-        county: FILTERING_COUNTY.to_string(),
-        location: "test_localitate".to_string(),
-    };
-    let incident3_county2 = Record {
-        id: "test_id3".to_string(),
-        title: "test_title3".to_string(),
-        description: "test_description3".to_string(),
-        date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        county: "test_judet2".to_string(),
-        location: "test_localitate2".to_string(),
-    };
-    let incident4_county2 = Record {
-        id: "test_id4".to_string(),
-        title: "test_title3".to_string(),
-        description: "test_description3".to_string(),
-        date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        county: "test_judet2".to_string(),
-        location: "test_localitate2".to_string(),
-    };
-    let incident5_county2 = Record {
-        id: "test_id5".to_string(),
-        title: "test_title3".to_string(),
-        description: "test_description3".to_string(),
-        date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
-        county: "test_judet2".to_string(),
-        location: "test_localitate2".to_string(),
-    };
+async fn populate_redis(conn: &mut MultiplexedConnection, records: &Vec<Record>) {
+    for record in records {
+        let _res = store_record(record, conn).await;
+    }
+}
 
-    let _res = store_record(&incident1_county1, conn).await;
-    let _res = store_record(&incident2_county1, conn).await;
-    let _res = store_record(&incident3_county2, conn).await;
-    let _res = store_record(&incident4_county2, conn).await;
-    let _res = store_record(&incident5_county2, conn).await;
+fn get_records() -> Vec<Record> {
+    let records = vec![
+        Record {
+            id: "test_id".to_string(),
+            title: "test_title".to_string(),
+            description: "test_description".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            county: FILTERING_COUNTY.to_string(),
+            location: "test_localitate".to_string(),
+        },
+        Record {
+            id: "test_id2".to_string(),
+            title: "test_title2".to_string(),
+            description: "test_description2".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 11, 1).unwrap(),
+            county: FILTERING_COUNTY.to_string(),
+            location: "test_localitate".to_string(),
+        },
+        Record {
+            id: "test_id3".to_string(),
+            title: "test_title3".to_string(),
+            description: "test_description3".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            county: "test_judet2".to_string(),
+            location: "test_localitate2".to_string(),
+        },
+        Record {
+            id: "test_id4".to_string(),
+            title: "test_title3".to_string(),
+            description: "test_description3".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            county: "test_judet2".to_string(),
+            location: "test_localitate2".to_string(),
+        },
+        Record {
+            id: "test_id5".to_string(),
+            title: "test_title3".to_string(),
+            description: "test_description3".to_string(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            county: "test_judet2".to_string(),
+            location: "test_localitate2".to_string(),
+        },
+    ];
+    records
 }

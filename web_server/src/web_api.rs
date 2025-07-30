@@ -3,15 +3,11 @@ use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::Json;
 use chrono::NaiveDate;
-use common::persistence::SORTED_INCIDENTS_KEY;
-use common::Record;
-use log::{debug, error};
+use log::error;
 use redis::aio::ConnectionLike;
-use redis::{cmd, RedisError, RedisResult};
 use serde::{Deserialize, Serialize};
-use sqlx::FromRow;
+use sqlx::{Error, FromRow, QueryBuilder};
 use std::ops::Deref;
-use utoipa::r#gen::serde_json;
 use utoipa::{IntoParams, OpenApi, ToSchema};
 
 #[derive(OpenApi)]
@@ -28,7 +24,7 @@ pub struct ApiDoc;
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct RecordCount {
-    pub total_count: u64,
+    pub total_count: i64,
 }
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
@@ -59,9 +55,9 @@ pub async fn count_incidents<T>(state: State<AppState<T>>) -> Result<Json<Record
 where
     T: ConnectionLike + Send + Sync,
 {
-    let mut conn_guard = state.redis_conn.lock().await;
-    let conn = &mut *conn_guard;
-    let counter: Result<u64, RedisError> = redis::cmd("ZCARD").arg(SORTED_INCIDENTS_KEY).query_async(conn).await;
+    let counter: Result<i64, Error> = sqlx::query_scalar("SELECT COUNT(*) FROM incidents")
+        .fetch_one(state.pg_pool.deref())
+        .await;
 
     match counter {
         Ok(key_count) => Ok(Json(RecordCount { total_count: key_count })),
@@ -101,83 +97,37 @@ pub async fn get_all_incidents<T>(
 where
     T: ConnectionLike + Send + Sync,
 {
-    let offset = filtering.offset.unwrap_or(0);
-    let count = filtering.count.unwrap_or(0);
+    let offset = filtering.offset;
+    let count = filtering.count.unwrap_or(10);
 
-    let mut conn_guard = state.redis_conn.lock().await;
-    let conn = &mut *conn_guard;
-    let rev_ordered_incidents = get_rev_ordered_incidents(conn, offset, count).await;
+    let mut query_builder = QueryBuilder::new("SELECT * FROM incidents");
+    if let Some(county) = &filtering.county {
+        query_builder.push(" WHERE ");
+        query_builder.push("county = ").push_bind(county);
+    }
 
-    match rev_ordered_incidents {
-        Ok(incidents_keys) => {
-            debug!("Found {} incidents", incidents_keys.len());
+    query_builder.push(" LIMIT ").push(count);
 
-            let mut all_incidents: Vec<Incident> = vec![];
+    if let Some(offset) = offset {
+        query_builder.push(" OFFSET ").push_bind(offset as i64);
+    }
 
-            for incident_key in incidents_keys {
-                match cmd("GET").arg(incident_key).query_async::<String>(conn).await {
-                    Ok(result) => {
-                        let record_des_result = serde_json::from_str::<Record>(&result);
-                        match record_des_result {
-                            Ok(record) => {
-                                let show = filtering
-                                    .county
-                                    .clone()
-                                    .map_or_else(|| true, |county| county == record.county);
+    let incidents_query_result: Result<Vec<Incident>, Error> =
+        query_builder.build_query_as().fetch_all(state.pg_pool.deref()).await;
 
-                                if show {
-                                    all_incidents.push(Incident {
-                                        external_id: record.id,
-                                        county: record.county,
-                                        location: record.location,
-                                        day: record.date,
-                                        description: record.description,
-                                        // TODO: wrong const id
-                                        id: 0,
-                                    })
-                                }
-                            }
-                            Err(error) => {
-                                error!("Could not deserialize record: {:?}", error);
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        error!("{}", err);
-                    }
-                }
-            }
-
+    match incidents_query_result {
+        Ok(incidents) => {
+            let incidents_count = incidents.len() as u64;
             Ok(Json(GetIncidentsResponse {
-                incidents: all_incidents,
-                total_count: 0,
+                incidents,
+                total_count: incidents_count,
             }))
         }
         Err(err) => {
-            error!("Could not get incidents: {:?}", err);
-            Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string()))
+            error!("{}", err);
+            Err((StatusCode::INTERNAL_SERVER_ERROR, String::from("Internal Server Error")))
         }
     }
-}
-
-async fn get_rev_ordered_incidents<T>(conn: &mut T, from: u64, to: u64) -> RedisResult<Vec<String>>
-where
-    T: ConnectionLike + Send + Sync,
-{
-    let final_to: i64 = match to {
-        0 => -1,
-        to => (to + from - 1) as i64,
-    };
-
-    let ordered_incidents: RedisResult<Vec<String>> = redis::cmd("ZRANGE")
-        .arg(SORTED_INCIDENTS_KEY)
-        .arg(from)
-        .arg(final_to)
-        .arg("REV")
-        .query_async(conn)
-        .await;
-
-    ordered_incidents
 }
 
 #[utoipa::path(
