@@ -22,7 +22,7 @@ pub async fn new_store_record(record: &Record, pg_pool: Arc<Pool<Postgres>>) -> 
     match pg_incident {
         Ok(incident) => Ok(incident.rows_affected()),
         Err(e) => {
-            error!("Could not store record as incident: {}", e);
+            error!("Could not store record as incident: {} for record {:?}", e, record);
             Err(e.to_string())
         }
     }

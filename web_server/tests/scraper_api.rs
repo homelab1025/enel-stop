@@ -10,7 +10,7 @@ async fn test_scraper_api() {
     let infra = TestInfrastructure::new().await;
     let state = create_app_state(&infra).await;
 
-    let body: String = read_rss_file("tests/rss-outages-test.xml").await;
+    let body: String = read_rss_file("tests/rss-outages.xml").await;
     let resp = web_server::scraper::scraper_api::submit_rss(State(state.clone()), body).await;
     assert!(resp.is_ok());
 
@@ -19,7 +19,7 @@ async fn test_scraper_api() {
         .await;
 
     assert!(res.is_ok());
-    assert_eq!(res.unwrap(), 9);
+    assert_eq!(res.unwrap(), 186);
 }
 
 async fn read_rss_file(file_path: &str) -> String {

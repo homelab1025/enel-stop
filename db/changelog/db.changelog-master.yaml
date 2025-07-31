@@ -9,3 +9,5 @@ databaseChangeLog:
       file: changelog/changes/004-uniq-external-id.sql
   - include:
       file: changelog/changes/005-remove-datetime.sql
+  - include:
+      file: changelog/changes/006-increase-length.sql
