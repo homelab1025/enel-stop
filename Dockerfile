@@ -9,14 +9,6 @@ RUN apt install libssl3
 RUN chmod +x /app/web_server
 ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 
-FROM debian_base AS migration
-COPY target/release/migration /app/migration
-COPY conf/config-prod.toml /app/config.toml
-RUN apt update
-RUN apt install libssl3
-RUN chmod +x /app/migration
-CMD [ "/app/migration", "/app/config.toml" ]
-
 FROM nginx:stable-alpine as webapp
 COPY webapp/dist /usr/share/nginx/html
 COPY webapp/nginx.conf /etc/nginx/conf.d/default.conf
