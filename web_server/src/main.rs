@@ -34,6 +34,7 @@ fn main() {
 
     let tokio_runtime = runtime::Builder::new_multi_thread()
         .enable_io()
+        .enable_time()
         .build()
         .expect("Runtime was expected to be created.");
 
