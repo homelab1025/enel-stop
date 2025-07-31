@@ -7,7 +7,7 @@ resolver = "2"
 [workspace.dependencies]
 prometheus-client = "0.23.1"
 
-tokio = { version = "1.42.0", features = [
+tokio = { version = "1.46.1", features = [
     "macros",
     "time",
     "rt-multi-thread",
