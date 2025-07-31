@@ -123,8 +123,8 @@ with Xvfb() as xvfb:
 
                 with open(downloaded_file_path, "rb") as rss_file:
                     rss_content = rss_file.read()
-                    requests.post(web_server_address, rss_content, headers={"Content-Type": "application/rss+xml"})
                     print(rss_content)
+                    requests.post(web_server_address, rss_content, headers={"Content-Type": "application/rss+xml"})
             else:
                 print(f"File not found in download directory after {timeout} seconds.")
 
