@@ -4,6 +4,8 @@ ARG TARGETARCH
 FROM debian_base AS web
 COPY target/release/web_server /app/web_server
 COPY conf/config-prod.toml /app/config.toml
+RUN apt update
+RUN apt install libssl3
 RUN chmod +x /app/web_server
 ENTRYPOINT [ "/app/web_server", "/app/config.toml" ]
 
