@@ -26,6 +26,27 @@ spec:
             - mountPath: /app/config.toml
               name: web-config-file
               subPath: config.toml
+          env:
+            - name: APP_service-db_host
+              valueFrom:
+                secretKeyRef:
+                  key: host
+                  name: enel-db-password
+            - name: APP_service-db_name
+              valueFrom:
+                secretKeyRef:
+                  key: name
+                  name: enel-db-password
+            - name: APP_service-db_password
+              valueFrom:
+                secretKeyRef:
+                  key: password
+                  name: enel-db-password
+            - name: APP_service-db_username
+              valueFrom:
+                secretKeyRef:
+                  key: username
+                  name: enel-db-password
       restartPolicy: Always
       volumes:
         - name: web-config-file
