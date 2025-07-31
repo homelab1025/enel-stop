@@ -2,6 +2,7 @@
 
 ## TODO
 - switch to storage in postgres using sqlx
+- synch secrets across namespaces (app and cnpg-cluster)
 - query postgres for serving incidents
 - populate posgres for testing purposes
 - provide pagination for the table

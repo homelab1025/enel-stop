@@ -7,7 +7,7 @@ use migration::migrations::recreate_sorted_set::RecreateSortedSet;
 use migration::migrations::rename_prefix::RenamePrefixMigration;
 use migration::migrations::sorted_set::SortedSetMigration;
 use migration::migrations::MigrationProcess;
-use postgres::{Client, Config, Error, NoTls};
+use postgres::{Client, Error, NoTls};
 use simple_logger::SimpleLogger;
 use std::env;
 
