@@ -7,7 +7,6 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::Json;
 use log::{debug, error, info};
-use redis::aio::ConnectionLike;
 
 // #[utoipa::path(
 //     get,
@@ -17,10 +16,7 @@ use redis::aio::ConnectionLike;
 //             (status=500, description = "Server is not ready to serve."),
 //     )
 // )]
-pub async fn submit_rss<T>(State(state): State<AppState<T>>, body: String) -> Result<Json<Ping>, (StatusCode, String)>
-where
-    T: ConnectionLike + Send + Sync,
-{
+pub async fn submit_rss(State(state): State<AppState>, body: String) -> Result<Json<Ping>, (StatusCode, String)> {
     let incidents = parse_rss(&body, &state.categories);
     match incidents.await {
         Ok(incidents) => {

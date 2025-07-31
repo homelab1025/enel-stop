@@ -1,7 +1,6 @@
 [service]
 log_level = "info"
 url = "https://www.reteleelectrice.ro/rss-outages.xml/"
-redis_server = "redis://enel-redis-master.enel/"
 pushgateway_server = "http://prometheus-pushgateway.monitoring.svc.cluster.local:9091/metrics/job/enel"
 http_port = 8080
 cors_permissive = true

@@ -2,13 +2,12 @@ use axum::routing::post;
 use axum::{middleware, routing::get, Router};
 use common::configuration::{self, ServiceConfiguration};
 use log::{info, LevelFilter};
-use redis::aio::MultiplexedConnection;
 use simple_logger::SimpleLogger;
 use sqlx::postgres::PgPoolOptions;
 use std::env;
 use std::str::FromStr;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::RwLock;
 use tokio::{net::TcpListener, runtime};
 use tower_http::cors::CorsLayer;
 use web_server::metrics::{monitor_endpoint, serve_metrics, Metrics};
@@ -25,11 +24,6 @@ fn main() {
 
     info!("Using configuration: {:?}", config);
 
-    let redis_string = config.redis_server.expect("Redis server must be configured.");
-    let client = redis::Client::open(redis_string).expect(
-        "Redis client could not be created. Check connection string or remove it if you don't want to store results.",
-    );
-
     let app_metrics = Metrics::default();
 
     let tokio_runtime = runtime::Builder::new_multi_thread()
@@ -39,11 +33,6 @@ fn main() {
         .expect("Runtime was expected to be created.");
 
     tokio_runtime.block_on(async move {
-        let async_redis_conn = client
-            .get_multiplexed_async_connection()
-            .await
-            .expect("Could not ASYNC connect to Redis.");
-
         //TODO: refactor this
         let db_user = config.db_user.clone().unwrap();
         let db_password = config.db_password.clone().unwrap();
@@ -53,7 +42,6 @@ fn main() {
 
         let state = AppState {
             ping_msg: "The state of ping.".to_string(),
-            redis_conn: Arc::new(Mutex::new(async_redis_conn)),
             categories: config.categories,
             metrics: Arc::new(RwLock::new(app_metrics)),
             pg_pool: Arc::new(pg_pool),
@@ -71,7 +59,7 @@ fn main() {
     });
 }
 
-fn create_app(state: AppState<MultiplexedConnection>) -> Router {
+fn create_app(state: AppState) -> Router {
     Router::new()
         .route("/api/ping", get(web_api::ping))
         .route("/api/incidents/count", get(web_api::count_incidents))

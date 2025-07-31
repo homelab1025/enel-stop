@@ -4,7 +4,6 @@ use axum::http::StatusCode;
 use axum::Json;
 use chrono::NaiveDate;
 use log::error;
-use redis::aio::ConnectionLike;
 use serde::{Deserialize, Serialize};
 use sqlx::{Error, FromRow, QueryBuilder};
 use std::ops::Deref;
@@ -51,10 +50,7 @@ pub struct Incident {
             (status=500, description = "Error counting the number of records in the DB."),
     )
 )]
-pub async fn count_incidents<T>(state: State<AppState<T>>) -> Result<Json<RecordCount>, (StatusCode, String)>
-where
-    T: ConnectionLike + Send + Sync,
-{
+pub async fn count_incidents(state: State<AppState>) -> Result<Json<RecordCount>, (StatusCode, String)> {
     let counter: Result<i64, Error> = sqlx::query_scalar("SELECT COUNT(*) FROM incidents")
         .fetch_one(state.pg_pool.deref())
         .await;
@@ -90,13 +86,10 @@ pub struct GetIncidentsResponse {
         (status=500, description = "Error getting all incidents.")
     )
 )]
-pub async fn get_all_incidents<T>(
-    state: State<AppState<T>>,
+pub async fn get_all_incidents(
+    state: State<AppState>,
     filtering: Query<IncidentsFiltering>,
-) -> Result<Json<GetIncidentsResponse>, (StatusCode, String)>
-where
-    T: ConnectionLike + Send + Sync,
-{
+) -> Result<Json<GetIncidentsResponse>, (StatusCode, String)> {
     let offset = filtering.offset;
     let count = filtering.count.unwrap_or(10);
 
@@ -140,10 +133,7 @@ where
             (status=500, description = "Server is not ready to serve."),
     )
 )]
-pub async fn ping<T>(state: State<AppState<T>>) -> Result<Json<Ping>, (StatusCode, String)>
-where
-    T: ConnectionLike + Send + Sync,
-{
+pub async fn ping(state: State<AppState>) -> Result<Json<Ping>, (StatusCode, String)> {
     let a = state.ping_msg.deref();
     let response = format!("Hello {}!", a);
     Ok(Json(Ping { ping: response }))

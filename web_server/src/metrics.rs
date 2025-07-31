@@ -10,7 +10,6 @@ use prometheus_client::metrics::family::Family;
 use prometheus_client::metrics::gauge::Gauge;
 use prometheus_client::metrics::histogram::Histogram;
 use prometheus_client::registry::Registry;
-use redis::aio::ConnectionLike;
 use std::collections::HashMap;
 use tokio::time::Instant;
 
@@ -57,7 +56,7 @@ impl Metrics {
             request_processing_time,
         );
 
-        let rss_incidents_count = Family::<Vec<(String, String)>, Gauge>::new_with_constructor(|| Gauge::default());
+        let rss_incidents_count = Family::<Vec<(String, String)>, Gauge>::new_with_constructor(Gauge::default);
         metrics.insert(RssIncidentsCount, MetricHandle::Gauge(rss_incidents_count.clone()));
         metrics_registry.register(
             "rss_incidents_count",
@@ -86,10 +85,7 @@ impl Metrics {
     }
 }
 
-pub async fn monitor_endpoint<T>(state: State<AppState<T>>, request: Request, next: Next) -> Response
-where
-    T: ConnectionLike + Send + Sync,
-{
+pub async fn monitor_endpoint(state: State<AppState>, request: Request, next: Next) -> Response {
     let start_time = Instant::now();
     debug!("Processing request: {:?}", request);
     let mut labels: Vec<(String, String)> = vec![("method".to_string(), request.method().to_string())];
@@ -111,7 +107,7 @@ where
         .metrics
         .read()
         .await
-        .get_histogram(AppMetrics::RequestProcessingTime)
+        .get_histogram(RequestProcessingTime)
         .inspect(|histogram| {
             histogram
                 .get_or_create(&labels)
@@ -120,10 +116,7 @@ where
     response
 }
 
-pub async fn serve_metrics<T>(state: State<AppState<T>>) -> Result<String, (StatusCode, String)>
-where
-    T: ConnectionLike + Send + Sync,
-{
+pub async fn serve_metrics(state: State<AppState>) -> Result<String, (StatusCode, String)> {
     let mut buffer = String::new();
     let metrics_registry = &state.metrics.read().await.registry;
     let r = encode_registry(&mut buffer, metrics_registry);

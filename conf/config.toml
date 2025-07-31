@@ -1,7 +1,6 @@
 [service]
 log_level = "Debug"
 url = "https://www.reteleelectrice.ro/rss-outages.xml/"
-#redis_server = "redis://192.168.23.107/"
 # pushgateway_server = "https://prometheus-pushgateway-prometheus"
 http_port = 8080
 cors_permissive = true

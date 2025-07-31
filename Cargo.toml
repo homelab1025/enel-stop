@@ -1,5 +1,5 @@
 [workspace]
-members = ["web_server", "common", "api_gen", "migration"]
+members = ["web_server", "common", "api_gen"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -17,7 +17,6 @@ tokio = { version = "1.42.0", features = [
 ] }
 
 sqlx = { version = "0.8.6", features = ["postgres", "runtime-tokio-native-tls", "chrono"] }
-postgres = { version = "0.19.10", features = ["with-chrono-0_4"] }
 
 axum = { version = "0.8.1" }
 tower-http = { version = "0.6.2", features = ["fs", "cors"] }
@@ -28,14 +27,10 @@ config = "0.15.11"
 log = "0.4.27"
 simple_logger = "5.0.0"
 serde = { version = "1.0.210", features = ["derive"] }
-serde_json = "1.0.128"
-
-redis = { version = "0.30.0", features = ["tokio-comp"] }
-redis-test = { version = "0.10.0", features = ["bytes"] }
 
 regex = "1.4.2"
 
 chrono = { version = "0.4.39", features = ["serde"] }
 
 testcontainers = { version = "0.24.0", features = ["blocking"] }
-testcontainers-modules = { version = "0.12.1", features = ["postgres", "redis"] }
+testcontainers-modules = { version = "0.12.1", features = ["postgres"] }

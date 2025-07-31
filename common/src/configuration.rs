@@ -4,7 +4,6 @@ use std::fmt::{Debug, Display, Formatter};
 
 const CONFIG_URL: &str = "service.url";
 const CONFIG_FILTER_CATEGORIES: &str = "filter.categories";
-const CONFIG_REDIS_SERVER: &str = "service.redis_server";
 const CONFIG_PUSHGATEWAY_SERVER: &str = "service.pushgateway_server";
 const CONFIG_HTTP_PORT: &str = "service.http_port";
 const CONFIG_CORS_PERMISSIVE: &str = "service.cors_permissive";
@@ -19,7 +18,6 @@ const CONFIG_DB_PASSWORD: &str = "service.db_password";
 pub struct ServiceConfiguration {
     pub url: String,
     pub categories: Vec<String>,
-    pub redis_server: Option<String>,
     pub pushgateway_server: Option<String>,
     pub http_port: u32,
     pub cors_permissive: bool,
@@ -34,7 +32,6 @@ pub struct ServiceConfiguration {
 pub struct ServiceConfigurationBuilder {
     url: Option<String>,
     categories: Vec<String>,
-    redis_server: Option<String>,
     pushgateway_server: Option<String>,
     http_port: u32,
     cors_permissive: bool,
@@ -83,7 +80,6 @@ impl Default for ServiceConfigurationBuilder {
         ServiceConfigurationBuilder {
             url: None, // Mandatory, so starts as None
             categories: Vec::new(),
-            redis_server: None,
             pushgateway_server: None,
             http_port: 8080,               // Default value
             cors_permissive: false,        // Default value
@@ -113,12 +109,6 @@ impl ServiceConfigurationBuilder {
     /// Adds a single category to the service configuration.
     pub fn add_category(&mut self, category: String) -> &mut Self {
         self.categories.push(category);
-        self
-    }
-
-    /// Sets the Redis server address.
-    pub fn redis_server(&mut self, redis_server: String) -> &mut Self {
-        self.redis_server = Some(redis_server);
         self
     }
 
@@ -186,7 +176,6 @@ impl ServiceConfigurationBuilder {
         Ok(ServiceConfiguration {
             url,
             categories: self.categories,
-            redis_server: self.redis_server,
             pushgateway_server: self.pushgateway_server,
             http_port: self.http_port,
             cors_permissive: self.cors_permissive,
@@ -204,8 +193,8 @@ impl Display for ServiceConfiguration {
     fn fmt(&self, formatter: &mut Formatter<'_>) -> std::fmt::Result {
         writeln!(
             formatter,
-            "\nurl: {}\ncategories: {:?}\nredis_server: {:?}\n pushgateway: {:?}\nhttp_port: {:?}\ncors_permissive: {:?}",
-            self.url, self.categories, self.redis_server, self.pushgateway_server, self.http_port, self.cors_permissive
+            "\nurl: {}\ncategories: {:?}\n pushgateway: {:?}\nhttp_port: {:?}\ncors_permissive: {:?}",
+            self.url, self.categories, self.pushgateway_server, self.http_port, self.cors_permissive
         )
     }
 }
@@ -243,7 +232,6 @@ fn convert_configuration(raw_config: &Config) -> Result<ServiceConfiguration, Co
     config_builder
         .url(raw_config.get_string(CONFIG_URL)?)
         .log_level(raw_config.get_string(CONFIG_LOG_LEVEL)?)
-        .redis_server(raw_config.get_string(CONFIG_REDIS_SERVER)?)
         .cors_permissive(raw_config.get_bool(CONFIG_CORS_PERMISSIVE)?)
         .http_port(raw_config.get::<u32>(CONFIG_HTTP_PORT)?)
         .categories(categories)
@@ -274,7 +262,7 @@ mod configuration_tests {
 
     use crate::configuration::{
         convert_configuration, ConfigurationError, ServiceConfigurationBuilder, CONFIG_CORS_PERMISSIVE, CONFIG_HTTP_PORT,
-        CONFIG_LOG_LEVEL, CONFIG_PUSHGATEWAY_SERVER, CONFIG_REDIS_SERVER,
+        CONFIG_LOG_LEVEL, CONFIG_PUSHGATEWAY_SERVER,
     };
 
     use super::{ServiceConfiguration, CONFIG_FILTER_CATEGORIES, CONFIG_URL};
@@ -287,7 +275,6 @@ mod configuration_tests {
 
         assert_eq!(config.url, "http://localhost:8000");
         assert_eq!(config.categories.len(), 0);
-        assert_eq!(config.redis_server, None);
         assert_eq!(config.http_port, 8080);
         assert_eq!(config.cors_permissive, false);
         assert_eq!(config.log_level, "info");
@@ -299,7 +286,6 @@ mod configuration_tests {
         builder
             .url("http://api.example.com".to_string())
             .categories(vec!["web".to_string(), "api".to_string()])
-            .redis_server("redis://127.0.0.1:6379".to_string())
             .pushgateway_server("http://prometheus:9091".to_string())
             .http_port(9000)
             .cors_permissive(true)
@@ -313,7 +299,6 @@ mod configuration_tests {
 
         assert_eq!(config.url, "http://api.example.com");
         assert_eq!(config.categories, vec!["web", "api"]);
-        assert_eq!(config.redis_server, Some("redis://127.0.0.1:6379".to_string()));
         assert_eq!(config.pushgateway_server, Some("http://prometheus:9091".to_string()));
         assert_eq!(config.http_port, 9000);
         assert_eq!(config.cors_permissive, true);
@@ -351,7 +336,6 @@ mod configuration_tests {
         let config_sample = Config::builder()
             .set_default(CONFIG_URL, "https://google.com")
             .and_then(|x| x.set_default(CONFIG_FILTER_CATEGORIES, vec!["first", "second"]))
-            .and_then(|x| x.set_default(CONFIG_REDIS_SERVER, "redis"))
             .and_then(|x| x.set_default(CONFIG_PUSHGATEWAY_SERVER, "pushgateway"))
             .and_then(|x| x.set_default(CONFIG_HTTP_PORT, 8090))
             .and_then(|x| x.set_default(CONFIG_CORS_PERMISSIVE, "true"))
@@ -365,7 +349,6 @@ mod configuration_tests {
         let expected_config = ServiceConfiguration {
             url: "https://google.com".to_string(),
             categories: vec!["first".to_string(), "second".to_string()],
-            redis_server: Some("redis".to_string()),
             pushgateway_server: Some("pushgateway".to_string()),
             http_port: 8090,
             cors_permissive: true,

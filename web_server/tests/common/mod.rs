@@ -1,7 +1,5 @@
 use common::Record;
 use log::{error, info, LevelFilter};
-use redis::aio::MultiplexedConnection;
-use redis::Client;
 use simple_logger::SimpleLogger;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::Pool;
@@ -14,24 +12,18 @@ use std::time::Duration;
 use testcontainers::runners::AsyncRunner;
 use testcontainers::{ContainerAsync, ImageExt};
 use testcontainers_modules::postgres;
-use testcontainers_modules::redis::Redis;
-use tokio::sync::Mutex;
 use tokio::time::sleep;
-use web_server::scraper::persistence::{new_store_record, store_record};
+use web_server::scraper::persistence::new_store_record;
 use web_server::AppState;
 
 pub const FILTERING_COUNTY: &str = "test_judet";
 
 pub struct TestInfrastructure {
-    pub _redis_container: ContainerAsync<Redis>,
     pub _postgres_container: ContainerAsync<postgres::Postgres>,
     pub postgres_port: u16,
-    pub redis_port: u16,
-    pub redis_host: String,
     pub postgres_host: String,
 }
 
-pub const REDIS_TAG: &str = "7.4.2";
 impl TestInfrastructure {
     pub async fn new() -> TestInfrastructure {
         let pg = postgres::Postgres::default()
@@ -44,23 +36,12 @@ impl TestInfrastructure {
         let pg_port = pg.get_host_port_ipv4(5432).await.unwrap();
         let pg_host = pg.get_host().await.unwrap();
 
-        let redis = testcontainers_modules::redis::Redis::default()
-            .with_tag(REDIS_TAG)
-            .start()
-            .await
-            .unwrap();
-        let redis_port = redis.get_host_port_ipv4(6379).await.unwrap();
-        let redis_host = redis.get_host().await.unwrap();
-
         sleep(Duration::from_secs(5)).await;
 
         Self {
             _postgres_container: pg,
-            _redis_container: redis,
             postgres_port: pg_port,
-            redis_port: redis_port,
             postgres_host: pg_host.to_string(),
-            redis_host: redis_host.to_string(),
         }
     }
 }
@@ -68,20 +49,18 @@ impl TestInfrastructure {
 static LOG_SETUP_ONCE: OnceLock<bool> = OnceLock::new();
 static GENERATE_DB_DDL_ONCE: OnceLock<String> = OnceLock::new();
 
-pub async fn create_app_state(infra: &TestInfrastructure) -> AppState<MultiplexedConnection> {
+pub async fn create_app_state(infra: &TestInfrastructure) -> AppState {
     setup_logging();
 
     GENERATE_DB_DDL_ONCE.get_or_init(|| match generate_ddl() {
         Ok(value) => value,
-        Err(value) => return value,
+        Err(err) => return err,
     });
 
-    let async_redis_conn = setup_redis(infra).await;
     let pg_pool = setup_postgres(infra, GENERATE_DB_DDL_ONCE.get().unwrap()).await;
 
     AppState {
         ping_msg: "The state of ping.".to_string(),
-        redis_conn: Arc::new(Mutex::new(async_redis_conn)),
         categories: vec![],
         metrics: Default::default(),
         pg_pool: pg_pool.clone(),
@@ -151,25 +130,6 @@ async fn setup_postgres(infra: &TestInfrastructure, ddl: &str) -> Arc<Pool<Postg
 async fn populate_postgres(pool: Arc<Pool<Postgres>>, records: &[Record]) {
     for record in records {
         let _res = new_store_record(record, pool.clone()).await;
-    }
-}
-
-async fn setup_redis(infra: &TestInfrastructure) -> MultiplexedConnection {
-    let conn_string = format!("redis://{}:{}/", &infra.redis_host, &infra.redis_port);
-    info!("Connecting to REDIS: {}", &conn_string);
-    let redis_client = Client::open(conn_string).expect("Connecting to the redis container");
-
-    let async_redis_conn = redis_client
-        .get_multiplexed_tokio_connection()
-        .await
-        .expect("Async connection to Redis");
-    populate_redis(&mut async_redis_conn.clone(), get_records().as_ref()).await;
-    async_redis_conn
-}
-
-async fn populate_redis(conn: &mut MultiplexedConnection, records: &Vec<Record>) {
-    for record in records {
-        let _res = store_record(record, conn).await;
     }
 }
 
