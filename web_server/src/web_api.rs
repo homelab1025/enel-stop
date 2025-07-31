@@ -106,13 +106,13 @@ where
         query_builder.push("county = ").push_bind(county);
     }
 
+    query_builder.push(" ORDER BY day DESC");
+
     query_builder.push(" LIMIT ").push(count);
 
     if let Some(offset) = offset {
         query_builder.push(" OFFSET ").push_bind(offset as i64);
     }
-
-    query_builder.push(" ORDER BY day DESC");
 
     let incidents_query_result: Result<Vec<Incident>, Error> =
         query_builder.build_query_as().fetch_all(state.pg_pool.deref()).await;
