@@ -15,7 +15,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">HOME: {{ response }}</h1>
+  <h1 class="text-4xl font-semibold tracking-tight pt-4">HOME: {{ response }}</h1>
 </template>
 
 <style scoped>

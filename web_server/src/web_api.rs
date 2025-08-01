@@ -91,7 +91,7 @@ pub async fn get_all_incidents(
     filtering: Query<IncidentsFiltering>,
 ) -> Result<Json<GetIncidentsResponse>, (StatusCode, String)> {
     let offset = filtering.offset;
-    let count = filtering.count.unwrap_or(10);
+    let count = filtering.count.unwrap_or(50);
 
     let mut query_builder = QueryBuilder::new("SELECT * FROM incidents");
     if let Some(county) = &filtering.county {

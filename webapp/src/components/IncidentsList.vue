@@ -1,67 +1,64 @@
 <script setup lang="ts">
 
-import {DefaultApi, Configuration, type Incident} from "../lib/server";
-import {onMounted} from "vue";
-import {ref} from "vue";
+import {Configuration, DefaultApi, type Incident} from "../lib/server";
+import {onMounted, ref} from "vue";
 
-let response = ref("")
+let total_count = ref("")
 let incidents = ref(<Incident[]>[]);
 let searchCounty = ref("");
-let error = ref<string | null>(null);
+let currentPage = ref(1);
 
 const configuration = new Configuration();
 let server_api = new DefaultApi(configuration);
 
 onMounted(async () => {
   let db_size = await server_api.countIncidents();
-  response.value = String(db_size.data.total_count);
+  total_count.value = String(db_size.data.total_count);
 
   let all_incidents = await server_api.getAllIncidents();
   incidents.value = all_incidents.data.incidents;
 })
 
 const handleCountySearch = () => {
-  // Clear any previous error message
-  error.value = null;
-
-  // Check if the search county input is not empty after trimming whitespace
-  if (searchCounty.value.trim()) {
-    searchIncidentsByCounty(searchCounty.value.trim());
-  } else {
-    // If input is empty, show all incidents again
-    error.value = "County name cannot be empty. Displaying all incidents.";
-    searchIncidentsByCounty();
-  }
+  updateIncidentsTable();
 }
 
-const searchIncidentsByCounty = async (countyName?: string) => {
-  const incidentsByCounty = await server_api.getAllIncidents(countyName);
-  incidents.value = incidentsByCounty.data.incidents;
-  response.value = String(incidentsByCounty.data.total_count); // Update total count for filtered results
-};
+async function updateIncidentsTable() {
+  let county = searchCounty.value.trim().toUpperCase() || null;
+  let incidentsSearch = await server_api.getAllIncidents(county, 50 * (currentPage.value - 1));
+  incidents.value = incidentsSearch.data.incidents;
+}
+
+const previousPage = async () => {
+  if (currentPage.value > 1) {
+    currentPage.value = currentPage.value - 1;
+  }
+
+  await updateIncidentsTable();
+}
+
+const nextPage = async () => {
+  currentPage.value = currentPage.value + 1;
+  await updateIncidentsTable();
+}
 
 </script>
 
 <template>
-  <h1 class="text-4xl font-semibold tracking-tight text-gray-600 pt-4">Total number of incidents: {{ response }}</h1>
+  <h1 class="text-4xl font-semibold tracking-tight pt-4">Total number of incidents: {{ total_count }}</h1>
   <div class="card grid h-10">
     <label class="input">
       Judet
       <input type="text" class="grow" placeholder="" v-model="searchCounty" @keyup.enter="handleCountySearch"/>
-    </label></div>
-  <div class="divider"></div>
+    </label>
+  </div>
 
-<!--  <div class="join">-->
-<!--    <input-->
-<!--        class="join-item btn btn-square"-->
-<!--        type="radio"-->
-<!--        name="options"-->
-<!--        aria-label="1"-->
-<!--    />-->
-<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="2" />-->
-<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="3" />-->
-<!--    <input class="join-item btn btn-square" type="radio" name="options" aria-label="4" />-->
-<!--  </div>-->
+  <div class="join flex justify-center">
+    <button class="join-item btn btn-sm" @mouseup="previousPage">«</button>
+    <button class="join-item btn btn-sm">Page {{ currentPage }}</button>
+    <button class="join-item btn btn-sm" @mouseup="nextPage">»</button>
+  </div>
+  <div class="divider"/>
 
   <div class="card">
     <table class="table table-fixed table-pin-rows">
