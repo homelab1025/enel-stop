@@ -2,13 +2,12 @@
 
 ## TODO
 - synch secrets across namespaces (app and cnpg-cluster)
-- populate posgres for testing purposes
-- provide pagination for the table
 - show incidents on a map
-- write integration tests for migration utility
 
 ## DONE
+- provide pagination for the table
 - query postgres for serving incidents
+- populate postgres for testing purposes
 - switch to storage in postgres using sqlx
 - implement data migration from Redis to PostgreSQL
 - move postgres migration to a synch postgres client so to avoid the issues with sqlx in a synch env
