@@ -2,6 +2,7 @@
 
 ## TODO
 - synch secrets across namespaces (app and cnpg-cluster)
+- implement notification based on rules
 - show incidents on a map
 
 ## DONE
