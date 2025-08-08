@@ -1,11 +1,11 @@
 # The plan
 
 ## TODO
-- synch secrets across namespaces (app and cnpg-cluster)
 - implement notification based on rules
 - show incidents on a map
 
 ## DONE
+- synch secrets across namespaces (app and cnpg-cluster)
 - provide pagination for the table
 - query postgres for serving incidents
 - populate postgres for testing purposes
