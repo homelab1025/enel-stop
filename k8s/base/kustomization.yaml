@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: enel
 
 resources:
-  - namespace.yaml
   - cron_deployment.yaml
   - deployment-web.yaml
   - deployment-webapp.yaml

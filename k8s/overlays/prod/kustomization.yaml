@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - ../../base
-  - db-secret.yaml
 
 patchesStrategicMerge:
   - cron-deployment-patch.yaml
