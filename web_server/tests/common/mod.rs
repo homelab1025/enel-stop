@@ -1,3 +1,4 @@
+use chrono::NaiveDate;
 use common::Record;
 use log::{error, info, LevelFilter};
 use simple_logger::SimpleLogger;
@@ -17,6 +18,7 @@ use web_server::scraper::persistence::new_store_record;
 use web_server::AppState;
 
 pub const FILTERING_COUNTY: &str = "test_judet";
+pub const FILTERING_DAY: NaiveDate = NaiveDate::from_ymd_opt(2023, 12, 1).unwrap();
 
 pub struct TestInfrastructure {
     pub _postgres_container: ContainerAsync<postgres::Postgres>,
@@ -139,7 +141,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id".to_string(),
             title: "test_title".to_string(),
             description: "test_description".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 10, 1).unwrap(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 10, 2).unwrap(),
             county: FILTERING_COUNTY.to_string(),
             location: "test_localitate".to_string(),
         },
@@ -147,7 +149,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id2".to_string(),
             title: "test_title2".to_string(),
             description: "test_description2".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 11, 1).unwrap(),
+            date: FILTERING_DAY,
             county: FILTERING_COUNTY.to_string(),
             location: "test_localitate".to_string(),
         },
@@ -155,7 +157,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id3".to_string(),
             title: "test_title3".to_string(),
             description: "test_description3".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 2).unwrap(),
             county: "test_judet2".to_string(),
             location: "test_localitate2".to_string(),
         },
@@ -163,7 +165,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id4".to_string(),
             title: "test_title3".to_string(),
             description: "test_description3".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            date: FILTERING_DAY,
             county: "test_judet2".to_string(),
             location: "test_localitate2".to_string(),
         },
@@ -171,7 +173,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id5".to_string(),
             title: "test_title3".to_string(),
             description: "test_description3".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 1).unwrap(),
+            date: FILTERING_DAY,
             county: "test_judet2".to_string(),
             location: "test_localitate2".to_string(),
         },

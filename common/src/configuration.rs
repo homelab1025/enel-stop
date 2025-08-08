@@ -234,8 +234,11 @@ fn convert_configuration(raw_config: &Config) -> Result<ServiceConfiguration, Co
         .log_level(raw_config.get_string(CONFIG_LOG_LEVEL)?)
         .cors_permissive(raw_config.get_bool(CONFIG_CORS_PERMISSIVE)?)
         .http_port(raw_config.get::<u32>(CONFIG_HTTP_PORT)?)
-        .categories(categories)
-        .pushgateway_server(raw_config.get_string(CONFIG_PUSHGATEWAY_SERVER)?);
+        .categories(categories);
+
+    let _ = raw_config.get_string(CONFIG_PUSHGATEWAY_SERVER).inspect(|value| {
+        config_builder.pushgateway_server(value.clone());
+    });
 
     let _ = raw_config.get_string(CONFIG_DB_HOST).inspect(|value| {
         config_builder.db_host(value.clone());

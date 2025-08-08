@@ -1,7 +1,8 @@
 mod common;
 
-use crate::common::{FILTERING_COUNTY, TestInfrastructure, create_app_state};
+use crate::common::{FILTERING_COUNTY, FILTERING_DAY, TestInfrastructure, create_app_state};
 use axum::extract::{Query, State};
+use std::collections::HashSet;
 use web_server::web_api::{GetIncidentsResponse, Incident, IncidentsFiltering, RecordCount};
 
 #[tokio::test]
@@ -51,6 +52,57 @@ async fn test_get_all_incidents_filter_county() {
 
     let json: GetIncidentsResponse = resp.expect("Should be OK").0;
     assert_eq!(2, json.incidents.len());
+}
+
+#[tokio::test]
+async fn test_get_all_incidents_filter_day() {
+    let infra = TestInfrastructure::new().await;
+    let state = create_app_state(&infra).await;
+
+    let filtering = IncidentsFiltering {
+        day: Some(FILTERING_DAY.to_string()),
+        ..Default::default()
+    };
+
+    let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
+    assert!(resp.is_ok());
+
+    let json: GetIncidentsResponse = resp.expect("Should be OK").0;
+    assert_eq!(3, json.incidents.len());
+
+    assert_eq!(
+        HashSet::from(["test_id2", "test_id4", "test_id5"]),
+        json.incidents
+            .iter()
+            .map(|i| i.external_id.as_str())
+            .collect::<HashSet<&str>>()
+    );
+}
+
+#[tokio::test]
+async fn test_get_all_incidents_filter_day_and_county() {
+    let infra = TestInfrastructure::new().await;
+    let state = create_app_state(&infra).await;
+
+    let filtering = IncidentsFiltering {
+        day: Some(FILTERING_DAY.to_string()),
+        county: Some(FILTERING_COUNTY.to_string()),
+        ..Default::default()
+    };
+
+    let resp = web_server::web_api::get_all_incidents(State(state), Query(filtering)).await;
+    assert!(resp.is_ok());
+
+    let json: GetIncidentsResponse = resp.expect("Should be OK").0;
+    assert_eq!(1, json.incidents.len());
+
+    assert_eq!(
+        HashSet::from(["test_id2"]),
+        json.incidents
+            .iter()
+            .map(|i| i.external_id.as_str())
+            .collect::<HashSet<&str>>()
+    );
 }
 
 #[tokio::test]
