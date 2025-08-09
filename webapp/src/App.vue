@@ -5,14 +5,17 @@ import ThemeSwitcher from "./components/ThemeSwitcher.vue";
 
 <template>
   <div class="flex h-screen">
-    <ul class="menu rounded-box w-48">
+    <ul class="menu rounded-box w-56 p-2">
       <li>
         <RouterLink to="/">Home</RouterLink>
       </li>
       <li>
         <RouterLink to="/list">Lister</RouterLink>
       </li>
-      <li><ThemeSwitcher/></li>
+      <li>
+        <RouterLink to="/map">Map</RouterLink>
+      </li>
+      <li class="mt-auto"><ThemeSwitcher/></li>
     </ul>
     <div class="flex-1 p-4 overflow-auto">
       <RouterView/>
