@@ -1,10 +1,10 @@
 # The plan
 
 ## TODO
-- implement notification based on rules
-- show incidents on a map
+- implement notification based on rules (RSS seems to be NOT updated anymore)
 
 ## DONE
+- show incidents on a map
 - synch secrets across namespaces (app and cnpg-cluster)
 - provide pagination for the table
 - query postgres for serving incidents
