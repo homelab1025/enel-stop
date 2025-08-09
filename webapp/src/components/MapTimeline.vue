@@ -3,8 +3,10 @@ import {onMounted, ref, watch, computed} from 'vue'
 import {Configuration, DefaultApi, type Incident} from "../lib/server";
 import { normalizeCountyName, COUNTY_COORDS } from "../data/counties";
 
-import * as Leaflet from 'leaflet'
-import 'leaflet/dist/leaflet.css'
+// Using Leaflet via ESM CDN to avoid adding a dependency
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import * as Leaflet from 'https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js'
 
 const configuration = new Configuration();
 const server_api = new DefaultApi(configuration);
@@ -195,5 +197,6 @@ async function refreshMarkers() {
 </template>
 
 <style scoped>
+@import url('https://unpkg.com/leaflet@1.9.4/dist/leaflet.css');
 #map { height: 70vh; }
 </style>
