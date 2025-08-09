@@ -157,7 +157,7 @@ fn get_records() -> Vec<Record> {
             id: "test_id3".to_string(),
             title: "test_title3".to_string(),
             description: "test_description3".to_string(),
-            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 2).unwrap(),
+            date: chrono::NaiveDate::from_ymd_opt(2023, 12, 3).unwrap(),
             county: "test_judet2".to_string(),
             location: "test_localitate2".to_string(),
         },

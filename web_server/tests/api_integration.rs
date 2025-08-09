@@ -2,6 +2,7 @@ mod common;
 
 use crate::common::{FILTERING_COUNTY, FILTERING_DAY, TestInfrastructure, create_app_state};
 use axum::extract::{Query, State};
+use chrono::NaiveDate;
 use std::collections::HashSet;
 use web_server::web_api::{GetIncidentsResponse, Incident, IncidentsFiltering, RecordCount};
 
@@ -15,12 +16,8 @@ async fn test_api_count() {
 
     let json: RecordCount = resp.expect("Should be OK").0;
     assert_eq!(5, json.total_count);
-
-    let pg_pool = state.clone().pg_pool;
-    let _res = sqlx::query("SELECT COUNT(*) FROM incidents")
-        .execute(pg_pool.as_ref())
-        .await
-        .unwrap();
+    assert_eq!(NaiveDate::from_ymd_opt(2023, 10, 2).unwrap(), json.start_date);
+    assert_eq!(NaiveDate::from_ymd_opt(2023, 12, 3).unwrap(), json.end_date);
 }
 
 #[tokio::test]

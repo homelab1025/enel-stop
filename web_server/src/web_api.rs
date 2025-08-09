@@ -1,11 +1,11 @@
 use crate::AppState;
+use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::Json;
 use chrono::NaiveDate;
 use log::error;
 use serde::{Deserialize, Serialize};
-use sqlx::{Error, FromRow, QueryBuilder};
+use sqlx::{Error, FromRow, QueryBuilder, Row};
 use std::ops::Deref;
 use utoipa::{IntoParams, OpenApi, ToSchema};
 
@@ -24,6 +24,10 @@ pub struct ApiDoc;
 #[derive(Debug, Serialize, Clone, ToSchema)]
 pub struct RecordCount {
     pub total_count: i64,
+    #[schema(value_type = String, format = Date)]
+    pub start_date: NaiveDate,
+    #[schema(value_type = String, format = Date)]
+    pub end_date: NaiveDate,
 }
 
 #[derive(Debug, Serialize, Clone, ToSchema)]
@@ -51,12 +55,17 @@ pub struct Incident {
     )
 )]
 pub async fn count_incidents(state: State<AppState>) -> Result<Json<RecordCount>, (StatusCode, String)> {
-    let counter: Result<i64, Error> = sqlx::query_scalar("SELECT COUNT(*) FROM incidents")
-        .fetch_one(state.pg_pool.deref())
-        .await;
+    let row =
+        sqlx::query("SELECT COUNT(*) as total_count, MIN(day) as start_date, MAX(day) as end_date FROM incidents")
+            .fetch_one(state.pg_pool.deref())
+            .await;
 
-    match counter {
-        Ok(key_count) => Ok(Json(RecordCount { total_count: key_count })),
+    match row {
+        Ok(row) => Ok(Json(RecordCount {
+            total_count: row.get("total_count"),
+            start_date: row.get("start_date"),
+            end_date: row.get("end_date"),
+        })),
         Err(err) => Err((StatusCode::INTERNAL_SERVER_ERROR, err.to_string())),
     }
 }
