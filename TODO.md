@@ -2,9 +2,9 @@
 
 ## TODO
 - implement notification based on rules
-- show incidents on a map
 
 ## DONE
+- show incidents on a map
 - synch secrets across namespaces (app and cnpg-cluster)
 - provide pagination for the table
 - query postgres for serving incidents
