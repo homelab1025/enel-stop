@@ -26,7 +26,7 @@ rss = "2.0.5"
 config = "0.15.11"
 log = "0.4.27"
 simple_logger = "5.0.0"
-serde = { version = "1.0.210", features = ["derive"] }
+serde = { version = "1.0.228", features = ["derive"] }
 
 regex = "1.4.2"
 
