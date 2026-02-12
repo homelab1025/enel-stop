@@ -1,6 +1,21 @@
 # enel-stop
 
-Web crawler that whenever a new maintenance window is reported notifies users of the service using an SMS.
+This project is a tool for monitoring and visualizing planned electricity maintenance windows reported by utility providers (specifically "Retele Electrice", formerly Enel, in Romania).
+
+## Functionality
+
+The system consists of several integrated components that automate the process of data collection, storage, and visualization:
+
+1.  **Automated Scraping**: A Python-based scraper (`scrape.py`) uses Selenium and a headless Chrome browser to navigate the utility provider's website. It bypasses cookie consents, triggers the generation of an RSS feed for planned outages, and downloads it.
+2.  **Data Processing & Backend**: A Rust web server (`web_server`) receives the RSS data. It:
+    *   Parses the RSS feed and extracts incident details (location, time, description).
+    *   Filters incidents based on user-defined categories or locations.
+    *   Stores the processed data in a **PostgreSQL** database for persistent storage and querying.
+    *   Provides a REST API for the frontend and exposes Prometheus metrics for monitoring.
+3.  **Visualization Frontend**: A Vue.js-based single-page application (`webapp`) that allows users to:
+    *   View a list of planned outages with pagination and filtering.
+    *   Visualize the geographic distribution of outages on an interactive map.
+4.  **Notifications (In Development)**: The project is designed to eventually notify users via SMS when new maintenance windows are reported in their areas of interest.
 
 ## Next steps
 
@@ -10,11 +25,12 @@ Web crawler that whenever a new maintenance window is reported notifies users of
 ## Development Tools
 
 ### Dependencies
-- npm
-- cargo
+- npm (for frontend)
+- cargo (for backend)
+- python3, selenium, requests, xvfbwrapper (for scraper)
 - docker (rootless or runnable by non-root)
 - openapi-generator
-- liquibase
+- liquibase (for database migrations)
 
 ### How to run test coverage
 
@@ -49,7 +65,7 @@ You can profile the executable using valgrind tools. This should reflect the req
 whole container.
 
 ```bash
-valgrind --tool=massif target/release/browsenscrape conf/config.toml
+valgrind --tool=massif target/release/web_server conf/config.toml
 ```
 
 After the process is finished you get a massif.out file which has the PID as a suffix. You can view that using ms_print
@@ -75,13 +91,8 @@ Example: ``exec env service.refresh_ms=1000 RUST_LOG=debug cargo run config.toml
 
 ## How to generate the TS SDK
 
-Generate the openapi spec using the api_get app.
+Generate the openapi spec using the api_gen app.
 
 ```bash
 openapi-generator generate -g typescript-axios -i openapi.yml -o webapp/src/lib/server/
-```
-
-## Backup redis DB
-
-```bash
 ```
